@@ -45,10 +45,24 @@ FOV_DEG = 90.0                                 # pinhole FOV for back-projection
 CAMERA_HEIGHT_M = 1.6                          # approximate camera height above ground
 MAX_STEPS = 80                                 # BFS crawl budget
 RATE_LIMIT_S = 0.05
+NUM_SAMPLES = 30
 
 # Depth scaling: MiDaS depth is relative; multiply to get "meters-ish".
 # You can calibrate this later by matching inter-pano spacing or known heights.
 DEPTH_SCALE = 12.0
+
+def interpolate_points(start: Tuple[float, float],
+                       end: Tuple[float, float],
+                       num: int) -> list[Tuple[float, float]]:
+    """Linearly interpolate lat/lon between start and end."""
+    (lat1, lon1), (lat2, lon2) = start, end
+    pts = []
+    for i in range(num):
+        t = i / max(1, num - 1)
+        lat = lat1 + (lat2 - lat1) * t
+        lon = lon1 + (lon2 - lon1) * t
+        pts.append((lat, lon))
+    return pts
 
 # =========================
 # API setup
@@ -63,13 +77,16 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 # =========================
 # MiDaS-small ONNX (download once if absent)
 # =========================
-MODEL_URL = "https://github.com/isl-org/MiDaS/releases/download/v3_1_small/model-small.onnx"
-MODEL_PATH = os.path.join(OUTPUT_DIR, "midas_small.onnx")
+MODEL_URL = None#"https://github.com/isl-org/MiDaS/releases/download/v3_1_small/model-small.onnx"
+MODEL_PATH = os.path.join(OUTPUT_DIR, "dpt_swin2_large_384.onnx")
 
 def ensure_model():
     if not os.path.exists(MODEL_PATH):
-        print(f"[download] MiDaS-small ONNX → {MODEL_PATH}")
-        urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
+        raise SystemExit(
+             f"Model not found at {MODEL_PATH}. "
+        )
+        #print(f"[download] MiDaS-small ONNX → {MODEL_PATH}")
+        #urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
 
 # Preprocess for MiDaS-small (expected 256x256, NCHW, float32, normalized)
 # def midas_preprocess(img_bgr: np.ndarray) -> Tuple[np.ndarray, Tuple[int,int]]:
@@ -103,7 +120,7 @@ def ensure_model():
 def midas_preprocess(rgb: np.ndarray) -> tuple[np.ndarray, tuple[int,int]]:
     # rgb: HxWx3 uint8
     h0, w0 = rgb.shape[:2]
-    target = 256
+    target = 384
 
     # resize shortest side to 256 with aspect
     scale = target / min(h0, w0)
@@ -154,56 +171,48 @@ def meta_by_pano(pano_id):
     r = requests.get(META_URL, params={"pano": pano_id, "key": API_KEY})
     return r.json()
 
-def crawl_path(start_latlng, end_latlng, max_steps=MAX_STEPS):
-    sm = meta_by_location(*start_latlng)
-    em = meta_by_location(*end_latlng)
-    if sm.get("status") != "OK":
-        raise RuntimeError(f"No imagery at start: {sm}")
-    if em.get("status") != "OK":
-        raise RuntimeError(f"No imagery at end: {em}")
-    start_pano = sm["pano_id"]
-    end_pano   = em["pano_id"]
+def crawl_path(start_latlng, end_latlng, max_steps=None):
+    """
+    Sample points along the line from start to end, and get the
+    closest Street View pano for each sample via metadata.
+    Returns an ordered, de-duplicated list of pano_ids.
+    """
+    samples = interpolate_points(start_latlng, end_latlng, NUM_SAMPLES)
+    pano_ids: list[str] = []
 
-    visited = set()
-    parents = {start_pano: None}
-    q = deque([start_pano])
-    found = False
-
-    while q and len(visited) < max_steps:
-        p = q.popleft()
-        if p in visited:
+    for i, (lat, lng) in enumerate(samples):
+        m = meta_by_location(lat, lng)
+        status = m.get("status")
+        if status != "OK":
+            print(f"[crawl] sample {i}/{len(samples)} at {lat:.6f},{lng:.6f} -> {status}")
             continue
-        visited.add(p)
-        if p == end_pano:
-            found = True
+
+        pid = m.get("pano_id")
+        if not pid:
+            print(f"[crawl] sample {i} has no pano_id in metadata")
+            continue
+
+        # avoid duplicates if multiple samples snap to same pano
+        if not pano_ids or pid != pano_ids[-1]:
+            pano_ids.append(pid)
+            print(f"[crawl] sample {i} -> pano {pid}")
+
+        # optional: stop early if we already have enough
+        if max_steps is not None and len(pano_ids) >= max_steps:
             break
-        m = meta_by_pano(p)
-        for link in m.get("links", []):
-            nxt = link.get("pano_id")
-            if nxt and nxt not in visited and nxt not in q:
-                parents[nxt] = p
-                q.append(nxt)
+
         time.sleep(RATE_LIMIT_S)
 
-    chain = []
-    if found:
-        cur = end_pano
-        while cur is not None:
-            chain.append(cur)
-            cur = parents.get(cur)
-        chain.reverse()
-    else:
-        # fallback: linearize visited order
-        chain = list(visited)
-    return chain
+    print(f"[crawl] collected {len(pano_ids)} unique panos")
+    return pano_ids
 
-def fetch_image_by_pano(pano_id, heading_deg):
+def fetch_image_by_pano(pano_id, heading_deg, pitch_deg=PITCH):
     params = {
         "pano": pano_id,
         "size": f"{IMAGE_SIZE[0]}x{IMAGE_SIZE[1]}",
         "scale": SCALE,
         "heading": heading_deg,
-        "pitch": PITCH,
+        "pitch": pitch_deg,
         "fov": FOV_DEG,
         "source": "outdoor",
         "key": API_KEY
@@ -295,19 +304,19 @@ def main():
     ensure_model()
     sess = ort.InferenceSession(
         MODEL_PATH,
-        providers=["CPUExecutionProvider"]
+        providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
     )
 
     print("[crawl] finding pano chain...")
     chain = crawl_path(START_POINT, END_POINT, MAX_STEPS)
     print(f"[crawl] panos found: {len(chain)}")
 
-    # Reference origin = first pano lat/lon, zero height
     ref_lat, ref_lon = START_POINT
     ref_h = 0.0
     ref_ecef = llh_to_ecef(ref_lat, ref_lon, ref_h)
 
     all_pts_enu = []
+    all_colors = []   # NEW: store colors for each point
 
     for i, pano_id in enumerate(chain):
         meta = meta_by_pano(pano_id)
@@ -317,7 +326,6 @@ def main():
         plat = meta["location"]["lat"]
         plon = meta["location"]["lng"]
 
-        # Camera translation (ENU) at pano center; add camera height
         t_enu = enu_of_latlon(plat, plon, 0.0, ref_lat, ref_lon, ref_h, ref_ecef)
         t_enu[2] += CAMERA_HEIGHT_M
 
@@ -328,49 +336,104 @@ def main():
                 print(f"[warn] fetch failed for {pano_id} h={heading}: {e}")
                 continue
 
-            depth_rel = run_midas_onnx(sess, rgb)  # relative depth
+            depth_rel = run_midas_onnx(sess, rgb)
             depth_m = depth_rel * DEPTH_SCALE
 
-            pts_cam = backproject_depth_to_points(depth_m, FOV_DEG)  # camera coords
+            pts_cam = backproject_depth_to_points(depth_m, FOV_DEG)
 
-            # Re-orient camera coords to ENU:
-            # Our back-projection used forward ~ +Z. We want ENU basis where +X=East, +Y=North, +Z=Up.
-            # We'll treat camera local forward as +Y_ENU for a "car-style" forward; then rotate by heading.
-            # First, map (x_cam,y_cam,z_cam) -> provisional ENU: (E,N,U)
-            # Choose: forward(+z) -> +N, right(+x) -> +E, up(-y) -> +U
-            E = pts_cam[:, 0]          # right → East
-            N = pts_cam[:, 2]          # forward → North
-            U = -pts_cam[:, 1]         # up     → Up
+            # map camera coords -> provisional ENU: (E,N,U)
+            E = pts_cam[:, 0]
+            N = pts_cam[:, 2]
+            U = -pts_cam[:, 1]
             pts_enu_local = np.stack([E, N, U], axis=1)
 
-            # Rotate around Up by heading (degrees from North, clockwise)
             pts_enu_rot = rotate_yaw(pts_enu_local, heading)
-
-            # Translate to pano center in ENU
             pts_enu = pts_enu_rot + t_enu[None, :]
 
-            # Optional: simple filtering (clip extreme depths)
+            # colors (flatten in same order as depth/points)
+            colors = rgb.reshape(-1, 3).astype(np.float32) / 255.0  # NEW
+
             zmax = np.percentile(depth_m, 99.5)
-            keep = (np.linalg.norm(pts_enu_rot, axis=1) < 3*zmax)
+            keep = (np.linalg.norm(pts_enu_rot, axis=1) < 3 * zmax)
+
             all_pts_enu.append(pts_enu[keep])
+            all_colors.append(colors[keep])  # NEW
 
             print(f"[ok] pano {i+1}/{len(chain)} heading {heading} -> {keep.sum()} pts")
-
             time.sleep(RATE_LIMIT_S)
 
     if not all_pts_enu:
         raise SystemExit("No points reconstructed. Check API key / coverage.")
 
     P = np.concatenate(all_pts_enu, axis=0)
+    C = np.concatenate(all_colors, axis=0)  # NEW
 
     # Downsample and save PLY
-    pcd = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(P))
-    pcd = pcd.voxel_down_sample(voxel_size=0.2)  # 20cm voxels
-    out_ply = os.path.join(OUTPUT_DIR, "streetview_pointcloud.ply")
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(P)
+    pcd.colors = o3d.utility.Vector3dVector(C)  # NEW: colorized
+
+    pcd = pcd.voxel_down_sample(voxel_size=0.15)
+
+    # ---- NEW: estimate normals for meshing ----
+    pcd.estimate_normals(
+        search_param=o3d.geometry.KDTreeSearchParamHybrid(
+            radius=1.0, max_nn=30
+        )
+    )
+    pcd.orient_normals_consistent_tangent_plane(20)
+
+    # ---- NEW: Poisson surface reconstruction ----
+    print("[mesh] running Poisson reconstruction...")
+    mesh, densities = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
+        pcd, depth=9  # 8–10 is usually a good start
+    )
+    densities = np.asarray(densities)
+
+    # Optional: crop out low-density junk (very far / noisy regions)
+    density_thresh = np.quantile(densities, 0.02)
+    vertices_to_keep = densities > density_thresh
+    mesh = mesh.select_by_index(
+        np.where(vertices_to_keep)[0]
+    )
+
+    mesh.compute_vertex_normals()
+
+    # ---- NEW: save mesh ----
+    mesh_path = os.path.join(OUTPUT_DIR, "streetview_mesh.ply")
+    o3d.io.write_triangle_mesh(mesh_path, mesh)
+    print(f"[done] wrote mesh to {mesh_path} (verts={len(mesh.vertices)}, faces={len(mesh.triangles)})")
+
+
+    out_ply = os.path.join(OUTPUT_DIR, "streetview_pointcloud_colored.ply")
     o3d.io.write_point_cloud(out_ply, pcd)
     print(f"[done] Wrote {out_ply}  (points={np.asarray(pcd.points).shape[0]})")
 
-    # Save a small manifest for reproducibility
+        # ================================
+    # EXPORT NEURAL RENDERING DATASET
+    # ================================
+    DATASET_DIR = os.path.join(OUTPUT_DIR, "nerf_dataset")
+    os.makedirs(DATASET_DIR, exist_ok=True)
+    frame_id = 0
+
+    # multiple pitches to see more road/sidewalk
+    nerf_pitches = [-15, 0, 15, 25]
+
+    for pano_id in chain:
+        for heading in IMAGES_PER_PANO_HEADINGS:
+            for pitch_deg in nerf_pitches:
+                try:
+                    rgb = fetch_image_by_pano(pano_id, heading, pitch_deg=pitch_deg)
+                except Exception as e:
+                    print(f"[nerf] skip pano={pano_id} heading={heading} pitch={pitch_deg}: {e}")
+                    continue
+
+                out_path = os.path.join(DATASET_DIR, f"{frame_id:06d}.jpg")
+                Image.fromarray(rgb).save(out_path)
+                frame_id += 1
+
+    print(f"[nerf] Exported {frame_id} training frames → {DATASET_DIR}")
+
     manifest = {
         "start_point": START_POINT,
         "end_point": END_POINT,
