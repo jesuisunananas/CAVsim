@@ -1,0 +1,6 @@
+.env
+colmap/*
+nerf_processed/*
+outputs/*
+sv_pointcloud_out/*
+train/*

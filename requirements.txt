@@ -1,0 +1,10 @@
+numpy
+requests
+Pillow
+python-dotenv
+torch
+torchvision
+tqdm
+scikit-learn
+open3d
+scikit-image
