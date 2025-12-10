@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
 """
-Google Street View 3D Reconstruction Pipeline (Option B)
--------------------------------------------------------
-
 FULL PIPELINE:
 1. Fetch pano metadata (GPS + pano_id)
 2. Fetch full-resolution equirectangular pano tiles (NOT static API)
