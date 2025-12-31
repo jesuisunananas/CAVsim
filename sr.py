@@ -61,7 +61,8 @@ TILE_ZOOM = 3     # 4 gives ~13k resolution pano
 CAM_HEIGHT = 1.6  # meters
 ROAD_RES   = 0.05 # meters per pixel for output road texture
 
-FAST_SCNN_REPO = "/home/arjunr/dev/CAVsim/Fast-SCNN-pytorch"
+#FAST_SCNN_REPO = "/home/arjunr/dev/CAVsim/Fast-SCNN-pytorch"
+FAST_SCNN_REPO = "/Users/arjunrewari/Developer/CAVsim/Fast-SCNN-pytorch"
 FAST_SCNN_WEIGHTS = os.path.join(FAST_SCNN_REPO, "weights", "fast_scnn_citys.pth")
 sys.path.append(FAST_SCNN_REPO)
 from models.fast_scnn import FastSCNN as FSNet
@@ -725,13 +726,11 @@ def backproject_spherical(rgb, depth, cam_enu):
 def backproject_spherical_masked(rgb, depth, cam_enu, mask, R_cam=None):
     """
     Backproject only pixels where `mask` == True.
-
-    R_cam: optional 3x3 rotation matrix that transforms camera-frame
-           points into ENU (e.g., from pano heading). If None, no rotation.
+    Points are returned in ENU (after applying optional camera rotation).
     """
     H, W, _ = rgb.shape
 
-    dirs = spherical_rays(H, W).reshape(-1, 3)
+    dirs = spherical_rays(H, W).reshape(-1, 3)    # canonical camera-frame rays
 
     depth_flat = depth.reshape(-1)
     mask_flat  = mask.reshape(-1)
@@ -739,14 +738,13 @@ def backproject_spherical_masked(rgb, depth, cam_enu, mask, R_cam=None):
     dirs_sel   = dirs[mask_flat]
     depth_sel  = depth_flat[mask_flat]
 
-    pts_cam = dirs_sel * depth_sel[:, None]
+    pts_cam = dirs_sel * depth_sel[:, None]       # camera frame
 
-    # NEW: rotate rays into ENU
-    # if R_cam is not None:
-    #     pts_cam = (R_cam @ pts_cam.T).T
+    # --- NEW: rotate into ENU using per-pano orientation ---
+    if R_cam is not None:
+        pts_cam = (R_cam @ pts_cam.T).T
 
-    pts_world = pts_cam + cam_enu
-    pts_world = apply_road_frame(pts_world)
+    pts_world = pts_cam + cam_enu                 # ENU
 
     rgb_float = rgb.astype(np.float32) / 255.0
     colors    = rgb_float.reshape(-1, 3)[mask_flat]
@@ -856,6 +854,110 @@ def build_road_texture(points_3d,
 
     return out
 
+def build_road_texture_road_frame(points_enu,
+                                  colors,
+                                  R_road,
+                                  origin_enu,
+                                  res=ROAD_RES,
+                                  max_tex_size=4096):
+    """
+    Build a 2D road texture in a road-aligned frame.
+
+    We project to road-frame coords (u,v,w) and then *auto-detect*
+    which axis is truly along the road by looking at the variance.
+    The long axis becomes 'u_long' (along-road), the short one 'v_lat' (across-road).
+    """
+
+    # 1) Project into road frame
+    coords = project_points_to_road_frame(points_enu, R_road, origin_enu)
+    u = coords[:, 0].copy()   # nominal along-road
+    v = coords[:, 1].copy()   # nominal across-road
+
+    # 2) Decide which axis is actually along the road
+    var_u = np.var(v)
+    var_v = np.var(u)
+    print(f"[road/tex] var_u={var_u:.3f}, var_v={var_v:.3f}")
+
+    if var_v > var_u:
+        # v is actually along-road → swap roles
+        print("[road/tex] treating V as along-road, U as lateral")
+        u_long = v
+        v_lat  = u
+    else:
+        print("[road/tex] treating U as along-road, V as lateral")
+        u_long = u
+        v_lat  = v
+
+    # 3) Simple bounding box in this (u_long, v_lat) space
+    umin, umax = u_long.min(), u_long.max()
+    vmin, vmax = v_lat.min(), v_lat.max()
+
+    # Optionally shrink to a central window (comment out if you want full extent)
+    # u0 = 0.5 * (umin + umax)
+    # v0 = 0.5 * (vmin + vmax)
+    # max_extent_u = (umax - umin) * 0.55
+    # max_extent_v = (vmax - vmin) * 0.55
+    # mask = (
+    #     (np.abs(u_long - u0) <= max_extent_u) &
+    #     (np.abs(v_lat  - v0) <= max_extent_v)
+    # )
+    # u_long = u_long[mask]
+    # v_lat  = v_lat[mask]
+    # C      = colors[mask]
+    C = colors  # if you skip the inner window
+
+    if u_long.size == 0:
+        print("[road/tex] WARNING: no road points after window filter")
+        return None
+
+    umin, umax = u_long.min(), u_long.max()
+    vmin, vmax = v_lat.min(), v_lat.max()
+
+    # 4) Grid resolution
+    W = int((umax - umin) / res) + 1   # columns = along-road
+    H = int((vmax - vmin) / res) + 1   # rows    = across-road
+
+    print(f"[road/tex] initial grid {W}x{H} at res={res} m")
+
+    # Coarsen if too big
+    scale = max(W / max_tex_size, H / max_tex_size, 1.0)
+    if scale > 1.0:
+        res = res * scale
+        W = int((umax - umin) / res) + 1
+        H = int((vmax - vmin) / res) + 1
+        print(f"[road/tex] grid too large, using res={res:.3f} m → {W}x{H}")
+
+    tex   = np.zeros((H, W, 3), dtype=np.float32)
+    count = np.zeros((H, W), dtype=np.float32)
+
+    # 5) Splat: j = along-road, i = across-road
+    for uu, vv, c in zip(u_long, v_lat, C):
+        j = int((uu - umin) / res)  # along-road
+        i = int((vv - vmin) / res)  # across-road
+        if 0 <= i < H and 0 <= j < W:
+            tex[i, j] += c
+            count[i, j] += 1.0
+
+    valid = count > 0
+    tex[valid] /= count[valid, None]
+
+    # 6) Save PNG; rotate so road is vertical if you like
+    out = (tex * 255).astype(np.uint8)
+
+    # optional flip so +across is "up"
+    out = np.flipud(out)
+
+    # optional rotation: make road vertical
+    out = np.rot90(out, k=1)  # or k=3 for opposite direction
+
+    out_path = os.path.join(OUTPUT_DIR, "road_texture.png")
+    Image.fromarray(out).save(out_path)
+    print(f"[road/tex] saved road texture: {out_path} (size {W}x{H})")
+
+    return out
+
+
+
 def filter_corridor(all_pts, all_cols, radius_m=60.0):
     """
     Build a local 'driving corridor' point cloud directly in the
@@ -942,18 +1044,35 @@ def project_points_to_road_frame(points_enu, R_road, origin_enu):
 
 def apply_road_frame(points):
     """
-    Rotate ENU XY into a road-aligned frame where the road runs along +X.
+    Rotate ENU into a road-aligned frame where the road runs along +X.
     points: (..., 3) array
     """
     if ROAD_FRAME_ROT is None:
         return points
-    pts = np.asarray(points)
-    xy = pts[..., :2].reshape(-1, 2).T  # 2 x N
-    xy_rot = ROAD_FRAME_ROT @ xy        # 2 x N
-    xy_rot = xy_rot.T.reshape(pts[..., :2].shape)
-    out = pts.copy()
-    out[..., 0:2] = xy_rot
-    return out
+    pts = np.asarray(points).reshape(-1, 3)
+    pts_rot = (ROAD_FRAME_ROT @ pts.T).T
+    return pts_rot.reshape(points.shape)
+
+def rotate_points_about_z(points_enu, origin_enu, angle_rad):
+    """
+    Rotate ENU points around a pivot origin_enu by angle_rad about +Z,
+    without changing global ENU axes or R_cam.
+
+    points_enu : (N,3)
+    origin_enu : (3,) pivot (e.g. cam_enu or road_origin)
+    angle_rad  : float (radians, + = CCW)
+    """
+    c, s = math.cos(angle_rad), math.sin(angle_rad)
+    Rz = np.array([
+        [ c, -s, 0.0],
+        [ s,  c, 0.0],
+        [0.0, 0.0, 1.0],
+    ], dtype=np.float32)
+
+    rel = points_enu - origin_enu[None, :]
+    rot = (Rz @ rel.T).T
+    return rot + origin_enu[None, :]
+
 
 
 
@@ -992,8 +1111,20 @@ def main():
     rot_angle = -road_yaw
     c, s = math.cos(rot_angle), math.sin(rot_angle)
     global ROAD_FRAME_ROT
-    ROAD_FRAME_ROT = np.array([[c, -s],
-                               [s,  c]], dtype=np.float32)
+    # ROAD_FRAME_ROT = np.array([[c, -s],
+    #                            [s,  c]], dtype=np.float32)
+    ROAD_FRAME_ROT = np.array([
+        [ c, -s, 0.0],
+        [ s,  c, 0.0],
+        [0.0, 0.0, 1.0]
+    ], dtype=np.float32)
+        # Unit tangent of the road in ENU (same yaw we used above)
+    t_axis = np.array([math.cos(road_yaw), math.sin(road_yaw), 0.0],
+                      dtype=np.float32)
+    t_axis /= np.linalg.norm(t_axis)
+
+    # We'll use the first pano as the reference point on the centerline
+    cam0_enu = None
 
     # load segmentation model
     print("[seg] Loading Fast-SCNN…")
@@ -1007,12 +1138,38 @@ def main():
     for pan in panos:
         # 1. pano: load LOCAL image (u1.jpg / u2.jpg)
         #pano = fetch_full_pano(local_id)
-        R_yaw = None
-
         gsv_id   = pan["gsv_id"]
         local_id = pan["local_id"]
         plat     = pan["lat"]
         plon     = pan["lon"]
+
+        # --- Per-pano orientation from Street View metadata ---
+        meta = meta_by_pano(gsv_id)
+
+        # Try a few likely places for the heading (adjust if keys differ)
+        yaw_deg = None
+        if "pano_yaw_deg" in meta:
+            yaw_deg = meta["pano_yaw_deg"]
+        elif "tiles" in meta and isinstance(meta["tiles"], dict) and "centerHeading" in meta["tiles"]:
+            yaw_deg = meta["tiles"]["centerHeading"]
+
+        if yaw_deg is None:
+            # Fallback: just use global road_yaw in degrees
+            yaw_deg = math.degrees(road_yaw)
+
+        yaw_rad = math.radians(yaw_deg)
+        #yaw_rad = math.radians(-20)
+
+        # Rotation about Z: camera -> ENU
+        # R_cam = np.array([
+        #     [math.cos(1*yaw_rad), -math.sin(1*yaw_rad), 0.0],
+        #     [math.sin(1*yaw_rad),  math.cos(1*yaw_rad), 0.0],
+        #     [0.0,                0.0,               1.0],
+        # ], dtype=np.float32)
+        #R_cam = np.eye(3)
+
+        print(local_id, "yaw_deg:", yaw_deg)
+
         pano = fetch_full_pano(local_id)
         rgb_full = np.asarray(pano)
 
@@ -1035,9 +1192,26 @@ def main():
         #m = meta_by_pano(gsv_id)
         #plat, plon = m["location"]["lat"], m["location"]["lng"]
         cam_enu = ecef_to_enu(llh_to_ecef(plat, plon, 0),
-                              ref_lat, ref_lon, 0, ref_ecef)
-        cam_enu[2] += CAM_HEIGHT
-        print(f"[cam] {pan['local_id']} cam_enu = {cam_enu}")
+                    ref_lat, ref_lon, 0, ref_ecef)
+        cam_enu[2] += CAM_HEIGHT  # camera height
+
+        # --- Snap camera to 1D centerline along the road ---
+        if cam0_enu is None:
+            # First pano defines the reference point on the centerline
+            cam0_enu = cam_enu.copy()
+            along = 0.0
+            #road_yaw = yaw_rad
+            #R_road, t_axis, s_axis, n_axis = road_frame_axes(road_yaw)
+        else:
+            # How far along the road direction (t_axis) is this pano
+            delta = cam_enu - cam0_enu
+            along = float(np.dot(delta, t_axis))  # scalar distance in meters
+
+        # New camera position: reference + along * road direction
+        cam_enu = cam0_enu + along * t_axis
+
+        print(f"[cam] {pan['local_id']} snapped cam_enu = {cam_enu}")
+
 
         # 3. depth from GSV photometa using the *Google* pano ID
         header, idx, planes = decode_depth_map_json(gsv_id)
@@ -1066,25 +1240,33 @@ def main():
 
         # 5. backproject: ALL valid pixels
         pts_all, cols_all = backproject_spherical_masked(
-            rgb, depth, cam_enu, valid_depth, R_cam=R_yaw
+            rgb, depth, cam_enu, valid_depth, None
         )
-        all_pts.append(pts_all)
-        all_cols.append(cols_all)
+        
 
         # 5b. backproject: ONLY road pixels with valid depth
         pts_road, cols_road = backproject_spherical_masked(
-            rgb, depth, cam_enu, road_valid_mask, R_cam=R_yaw
+            rgb, depth, cam_enu, road_valid_mask, None
         )
+
+        # choose some desired yaw in ENU (e.g. the road_yaw you computed once)
+        delta_yaw = math.radians(190)       # radians
+        #delta_yaw   = desired_yaw - yaw_rad  # how much to twist this pano
+
+        pts_all  = rotate_points_about_z(pts_all,  cam_enu, delta_yaw)
+        pts_road = rotate_points_about_z(pts_road, cam_enu, delta_yaw)
+        all_pts.append(pts_all)
+        all_cols.append(cols_all)
         road_pts.append(pts_road)
         road_cols.append(cols_road)
         # --- DEBUG: save per-pano clouds ---
-        pcd_all = o3d.geometry.PointCloud()
-        pcd_all.points = o3d.utility.Vector3dVector(pts_all)
-        pcd_all.colors = o3d.utility.Vector3dVector(cols_all)
-        o3d.io.write_point_cloud(
-            os.path.join(OUTPUT_DIR, f"corridor_{local_id}.ply"),
-            pcd_all
-        )
+        # pcd_all = o3d.geometry.PointCloud()
+        # pcd_all.points = o3d.utility.Vector3dVector(pts_all)
+        # pcd_all.colors = o3d.utility.Vector3dVector(cols_all)
+        # o3d.io.write_point_cloud(
+        #     os.path.join(OUTPUT_DIR, f"corridor_{local_id}.ply"),
+        #     pcd_all
+        # )
         print(f"[debug] wrote corridor_{local_id}.ply with {len(pts_all)} points")
 
 
@@ -1114,9 +1296,9 @@ def main():
     w = road_coords[:, 2]   # height-ish (before flattening)
 
         # --- Rectangular road strip selection ---
-    along_half_len = 50.0   # meters forward/back
-    half_width     = 8.0    # meters left/right
-    height_tol     = 2.0    # meters from road plane
+    along_half_len = 60.0   # meters forward/back
+    half_width     = 15.0    # meters left/right
+    height_tol     = 15.0    # meters from road plane
 
     # distance from road plane in ENU
     plane_z = a * road_pts[:, 0] + b * road_pts[:, 1] + c
@@ -1137,6 +1319,15 @@ def main():
     plane_z_strip = a * strip_pts[:, 0] + b * strip_pts[:, 1] + c
     strip_pts[:, 2] = plane_z_strip
 
+    # Road texture
+    print("[road] building high-res texture in road frame…")
+    build_road_texture_road_frame(
+        strip_pts,
+        strip_cols,
+        R_road,
+        road_origin,
+    )
+
         # Save flattened road strip
     print("[pcd] saving flattened road strip…")
     pcd_road = o3d.geometry.PointCloud()
@@ -1148,8 +1339,14 @@ def main():
 
     # -------------------------------
     # Road texture
-    print("[road] building high-res texture…")
-    build_road_texture(road_pts, road_cols)
+    print("[road] building high-res texture in road frame…")
+    build_road_texture_road_frame(
+        strip_pts,
+        strip_cols,
+        R_road,
+        road_origin,
+    )
+
 
     # --------------------------------
     # Build corridor-relative point cloud

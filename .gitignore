@@ -4,3 +4,6 @@ nerf_processed/*
 outputs/*
 sv_pointcloud_out/*
 train/*
+10k/
+output/*
+!output/local_panos
