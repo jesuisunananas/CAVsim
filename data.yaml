@@ -1,0 +1,27 @@
+# Dataset configuration for YOLOv8 training
+# Path to dataset root (absolute or relative to this file)
+path: /Users/arjunrewari/Developer/CAVsim/10k
+
+# Train/val/test image directories (relative to 'path')
+train: images/train
+val: images/val
+#test: images_filtered/test  # optional
+
+train_label_dir: labels/train
+val_label_dir: labels/val
+
+# Number of classes
+nc: 10
+
+# Class names
+names:
+  0: car
+  1: truck
+  2: bus
+  3: person
+  4: bike
+  5: motor
+  6: rider
+  7: traffic light
+  8: traffic sign
+  9: train

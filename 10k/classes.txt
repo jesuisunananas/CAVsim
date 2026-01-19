@@ -1,0 +1,10 @@
+car
+truck
+bus
+person
+bike
+motor
+rider
+traffic light
+traffic sign
+train

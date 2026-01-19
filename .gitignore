@@ -4,6 +4,12 @@ nerf_processed/*
 outputs/*
 sv_pointcloud_out/*
 train/*
-10k/
+10k/images
+10k/labels
 output/*
 !output/local_panos
+Fast-SCNN-pytorch/*
+images/*
+labels/*
+runs/*
+.DS_STORE
