@@ -1,6 +1,6 @@
 # Dataset configuration for YOLOv8 training
 # Path to dataset root (absolute or relative to this file)
-path: /Users/arjunrewari/Developer/CAVsim/10k
+path: /home/arjunr/dev/CAVsim/10k
 
 # Train/val/test image directories (relative to 'path')
 train: images/train

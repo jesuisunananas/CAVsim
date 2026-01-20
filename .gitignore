@@ -13,3 +13,5 @@ images/*
 labels/*
 runs/*
 .DS_STORE
+colmap
+nerf_result.mp4

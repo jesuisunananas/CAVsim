@@ -1,24 +1,33 @@
 from ultralytics import YOLO
 import torch
 
-device = 'mps' if torch.backends.mps.is_available() else 'cpu'
-print(f"Using device: {device}")
+#device = 'mps' if torch.backends.mps.is_available() else 'cpu'
+#print(f"Using device: {device}")
+
+# Auto-detect GPU (CUDA for NVIDIA)
+if torch.cuda.is_available():
+    device = 0  # Use first GPU (or 'cuda' or specific GPU id)
+    print(f"Using GPU: {torch.cuda.get_device_name(0)}")
+    print(f"GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1024**3:.1f} GB")
+else:
+    device = 'cpu'
+    print("⚠️  No GPU detected, using CPU")
 
 model = YOLO("yolov8n.pt")
 
 results = model.train(
     data='data.yaml',
-    epochs=50,
+    epochs=150,
     
     # SPEED OPTIMIZATIONS
-    imgsz=320,                   # Reduce from 640 -> 416 (2x faster, slight accuracy drop)
-    batch=64,                    # Increase batch size (use more memory, faster training)
+    imgsz=640,
+    batch=64,
     device=device,
-    workers=2,                   # Reduce workers (8 might be too many for Mac)
-    cache=True,                  # Cache images in RAM (HUGE speedup if you have enough RAM)
+    workers=8,
+    cache='ram',
     
     project='10k/runs/train',
-    name='bdd10k_yolov8n_fast',
+    name='bdd10k_yolov8n_gpu',
     exist_ok=True,
     
     # REDUCE AUGMENTATIONS (major speedup)
@@ -32,13 +41,13 @@ results = model.train(
     perspective=0.0,
     flipud=0.0,
     fliplr=0.5,
-    mosaic=0.0,                  # Reduce from 1.0 -> 0.5 (mosaic is slow)
-    mixup=0.0,
-    copy_paste=0.0,              # Disable copy-paste augmentation
+    mosaic=1.0,                  # Reduce from 1.0 -> 0.5 (mosaic is slow)
+    mixup=0.15,
+    copy_paste=0.1,              # Disable copy-paste augmentation
     
     # OPTIMIZER SETTINGS
-    optimizer='Adam',            # Adam is often faster than SGD
-    lr0=0.001,                   # Lower learning rate for Adam
+    optimizer='SGD',            # Adam is often faster than SGD
+    lr0=0.01,                   # Lower learning rate for Adam
     lrf=0.01,
     momentum=0.937,
     weight_decay=0.0005,
@@ -50,7 +59,7 @@ results = model.train(
     val=True,
     save=True,
     save_period=20,              # Save less frequently (20 instead of 10)
-    patience=20,                 # Reduce patience for early stopping
+    patience=50,                 # Reduce patience for early stopping
     plots=False,                 # Disable plots during training (save at end)
     
     # OTHER SPEEDUPS
@@ -60,10 +69,10 @@ results = model.train(
     verbose=True,
     single_cls=False,
     rect=False,                  # Don't use rectangular training (slightly faster)
-    cos_lr=False,                # Disable cosine LR (simpler, faster)
+    cos_lr=True,                # Disable cosine LR (simpler, faster)
     close_mosaic=10,             # Disable mosaic in last 10 epochs
 
-    conf=0.25,
+    #conf=0.25,
     #iou=0.45,
 )
 
