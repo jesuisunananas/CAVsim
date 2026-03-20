@@ -13,3 +13,8 @@ images/*
 labels/*
 runs/*
 .DS_STORE
+__pycache__/
+*.jpg
+*.json
+*.mp4
+camera_views
