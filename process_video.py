@@ -498,10 +498,13 @@ class VideoObjectDetector:
             x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
             conf = float(box.conf[0])
             cls = int(box.cls[0])
+            class_name = self.class_names.get(cls, 'unknown')
+            if class_name != 'car':
+                continue
             detections.append({
                 'frame': frame_num,
                 'class_id': cls,
-                'class_name': self.class_names.get(cls, 'unknown'),
+                'class_name': class_name, #self.class_names.get(cls, 'unknown'),
                 'confidence': conf,
                 'bbox': {'x1': float(x1), 'y1': float(y1), 'x2': float(x2), 'y2': float(y2)},
                 'center': {'x': float((x1 + x2) / 2), 'y': float((y1 + y2) / 2)},
@@ -584,16 +587,16 @@ class VideoObjectDetector:
         # In OpenCV, Y points down. So the ground is at Y = camera_height.
         # If dy <= 0, the ray is pointing at or above the horizon (won't hit the ground).
         if dy <= 1e-6:
-            #return None
-            theta = np.arctan2(dx, dz)
-            return {
-                "X": float(999.0 * np.sin(theta)),
-                "Y": 0.0,
-                "Z": float(999.0 * np.cos(theta)),
-                "theta_rad": float(theta),
-                "theta_deg": float(np.degrees(theta)),
-                "distance": 999.0
-            }
+            return None
+            # theta = np.arctan2(dx, dz)
+            # return {
+            #     "X": float(999.0 * np.sin(theta)),
+            #     "Y": 0.0,
+            #     "Z": float(999.0 * np.cos(theta)),
+            #     "theta_rad": float(theta),
+            #     "theta_deg": float(np.degrees(theta)),
+            #     "distance": 999.0
+            # }
 
         # Scaling factor to reach the ground
         t = self.camera_height / dy
@@ -759,11 +762,27 @@ if __name__ == "__main__":
         [     0,      0,      1]
     ], dtype=np.float64)
 
+    # K = np.array([
+    #     [1005.0,      0, 1920.0],
+    #     [     0, 1076.0, 1080.0],
+    #     [     0,      0,      1]
+    # ], dtype=np.float64)
+
     base_lat = 37.91560117034595
     base_lon = -122.33478756387032
 
-    cam1 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -39.20, -46.06, 188.94, "cam-001-ch1", base_lat, base_lon, "Richmond", "CA", "USA")
+    #DONE
+    cam4 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -43.48, -22.63, 260.0, "cam-001-ch4", base_lat, base_lon, "Richmond", "CA", "USA")
+    cam1 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -39.20, -46.06, 200.0, "cam-001-ch1", base_lat, base_lon, "Richmond", "CA", "USA")
+    cam3 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -30.42, 14.58, 315.0, "cam-001-ch3", base_lat, base_lon, "Richmond", "CA", "USA")
+    cam2 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -40.52, 71.25, 300.0,"cam-001-ch2", base_lat, base_lon, "Richmond", "CA", "USA")
     
+    
+    #cam1 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -39.20, -46.06, 200.0, "cam-001-ch1", base_lat, base_lon, "Richmond", "CA", "USA")
+    #cam1 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -39.20, -46.06, 200.0, "cam-001-ch1", base_lat, base_lon, "Richmond", "CA", "USA")
+    #cam2 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -40.52, 71.25, 300.0,"cam-001-ch2", base_lat, base_lon, "Richmond", "CA", "USA")
+    #cam3 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -32.63, 9.53, 315.0, "cam-001-ch3", base_lat, base_lon, "Richmond", "CA", "USA")
+    #cam4 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -43.48, -22.63, 260.0, "cam-001-ch4", base_lat, base_lon, "Richmond", "CA", "USA")
     #video_path = 'camera_views/ch4/Centerline_NE-SW_16m_ch4.png'
 
     #cam1.process_video(video_path=video_path, output_json='multi_cam_detections.json', show_live=True, upload=False)
@@ -772,15 +791,19 @@ if __name__ == "__main__":
     # cam4 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -43.67, -39.49, "cam-001-ch4", base_lat, base_lon, "Richmond", "CA", "USA")
     #cam4.process_video(video_path=video_path, output_json='multi_cam_detections.json', show_live=True, upload=False)
     #pipeline = MultiCameraPipeline(detectors=[cam1, cam2, cam3, cam4])
-    pipeline = MultiCameraPipeline(detectors=[cam1])
+    pipeline = MultiCameraPipeline(detectors=[cam1,cam2,cam3,cam4])
 
     video_paths = [
+        #'camera_views/ch1/event3/sensor_0_20260302_123255.ts'
+        #'camera_views/ch1/NE-SE_5m_ch1.png'
         #'camera_views/ch1/center/EastRoad_center_0_ch1.png',
         #'camera_views/ch4/NE-SE_5m_ch4.png'
         'camera_views/ch1/event1/sensor_0_20260302_122940.ts',
-        # 'camera_views/ch2/event1/sensor_1_20260302_122940.ts',
-        # 'camera_views/ch3/event1/sensor_2_20260302_122940.ts',
-        # 'camera_views/ch4/event1/sensor_3_20260302_122940.ts'
+        'camera_views/ch2/event1/sensor_1_20260302_122940.ts',
+        'camera_views/ch3/event1/sensor_2_20260302_122940.ts',
+        'camera_views/ch4/event1/sensor_3_20260302_122940.ts'
+        #'camera_views/ch4/event3/sensor_3_20260302_123255.ts'
+        #'camera_views/ch3/event3/sensor_2_20260302_123255.ts'
     ]
 
     pipeline.process_streams(
@@ -789,7 +812,7 @@ if __name__ == "__main__":
         upload=False,
         output_json='multi_cam_detections.json',
         output_video=None,#'output.mp4',
-        output_image=None,#'annotated_output.jpg',
+        output_image=None, #'annotated_output.jpg',
         output_validate=False
     )
 
