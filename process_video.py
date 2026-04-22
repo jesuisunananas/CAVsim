@@ -6,7 +6,7 @@ import json
 import uuid
 import time
 import requests
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from math import radians, cos, sin, asin, sqrt
 
 def xy_to_gps(X, Z, origin_lat, origin_lon, heading_deg):
@@ -86,6 +86,8 @@ class MultiCameraPipeline:
     def __init__(self, detectors):
         self.detectors = detectors
         self.all_clean_detections = []
+        self.global_tracks = {} # Store global tracks: global_id -> { 'type': str, 'lat': float, 'lon': float, 'last_seen': float }
+        self.next_global_id = 0
 
     @staticmethod
     def haversine_distance_meters(lat1, lon1, lat2, lon2):
@@ -100,7 +102,7 @@ class MultiCameraPipeline:
         c = 2 * asin(sqrt(a))
         return R * c
     
-    def deduplicate(self, raw_buffer, merge_radius_meters=1.5):
+    def deduplicate(self, raw_buffer, current_time_epoch, merge_radius_meters=1.5):
         """
         Takes a list of V2X JSON records and removes duplicates that are 
         physically too close together (overlapping camera seams).
@@ -111,7 +113,6 @@ class MultiCameraPipeline:
             is_duplicate = False
             
             for existing_det in clean_buffer:
-                # Only merge if they are the same type of object
                 if new_det['object_type'] != existing_det['object_type']:
                     continue
                     
@@ -122,24 +123,59 @@ class MultiCameraPipeline:
                     existing_det['gps_location']['longitude']
                 )
 
-                print(f"🔍 DEBUG: Distance between {new_det['device_id']} and {existing_det['device_id']} is {dist:.2f} meters")
-                
-                # If they are within 1.5 meters, it's the same object seen by two lenses
                 if dist < merge_radius_meters:
                     is_duplicate = True
-                    
-                    # Optional: Keep the one with the higher confidence score
                     if new_det['confidence_score'] > existing_det['confidence_score']:
-                        # Update the existing record with the better data
                         existing_det['confidence_score'] = new_det['confidence_score']
                         existing_det['gps_location'] = new_det['gps_location']
-                        existing_det['device_id'] = new_det['device_id'] # Track which camera saw it best
-                    break # Stop checking against the clean buffer
+                        existing_det['device_id'] = new_det['device_id']
+                    break
                     
             if not is_duplicate:
                 clean_buffer.append(new_det)
 
-        return clean_buffer
+        # 2. Temporal Tracking (Cross frames)
+        tracked_buffer = []
+        for det in clean_buffer:
+            best_match_id = None
+            min_dist = float('inf')
+            
+            for gid, track in self.global_tracks.items():
+                if track['type'] != det['object_type']:
+                    continue
+                # Forget tracks that haven't been seen in > 3 seconds
+                if current_time_epoch - track['last_seen'] > 3.0:
+                    continue
+                    
+                dist = self.haversine_distance_meters(
+                    det['gps_location']['latitude'], det['gps_location']['longitude'],
+                    track['lat'], track['lon']
+                )
+                
+                # Match to track if within larger tracking radius (e.g. 15m)
+                if dist < 15.0 and dist < min_dist:
+                    best_match_id = gid
+                    min_dist = dist
+                    
+            if best_match_id is not None:
+                self.global_tracks[best_match_id]['lat'] = det['gps_location']['latitude']
+                self.global_tracks[best_match_id]['lon'] = det['gps_location']['longitude']
+                self.global_tracks[best_match_id]['last_seen'] = current_time_epoch
+                det['object_id'] = f"global_{det['object_type']}_{best_match_id}"
+            else:
+                self.next_global_id += 1
+                new_gid = self.next_global_id
+                self.global_tracks[new_gid] = {
+                    'type': det['object_type'],
+                    'lat': det['gps_location']['latitude'],
+                    'lon': det['gps_location']['longitude'],
+                    'last_seen': current_time_epoch
+                }
+                det['object_id'] = f"global_{det['object_type']}_{new_gid}"
+                
+            tracked_buffer.append(det)
+
+        return tracked_buffer
     
     def process_streams(self, video_paths, show_live=True, upload=False, output_json=None, output_video=None, output_image=None, output_validate=False):
         """
@@ -152,11 +188,15 @@ class MultiCameraPipeline:
         caps = [cv2.VideoCapture(str(path)) for path in video_paths]
         frame_count = 0
         
+        global_start_time = datetime.now(timezone.utc)
+        global_start_epoch = time.time()
+        fps = 30
+        if len(caps) > 0:
+            fps = int(caps[0].get(cv2.CAP_PROP_FPS)) or 30
+
         # --- NEW: Initialize the Video Writer ---
         writer = None
         if output_video and len(caps) > 0:
-            # Get original FPS (default to 30 if the video file is weird)
-            fps = int(caps[0].get(cv2.CAP_PROP_FPS)) or 30
             # We skip 9/10 frames, so adjust the output framerate so it doesn't play at 10x speed
             out_fps = max(1, fps // 10) 
             
@@ -186,13 +226,18 @@ class MultiCameraPipeline:
                 raw_buffer = []
                 annotated_frames = []
 
+                current_offset = frame_count / fps
+                current_time = global_start_time + timedelta(seconds=current_offset)
+                current_epoch = int(global_start_epoch + current_offset)
+                current_utc_str = current_time.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+
                 # Process each camera's frame with its specific detector
                 for i, frame in enumerate(frames):
                     detector = self.detectors[i]
-                    results = detector.model(frame, conf=detector.conf, verbose=False)
+                    results = detector.model.track(frame, persist=True, conf=detector.conf, verbose=False)
                     
                     det_2d = detector.extract_detections(results[0], frame_count)
-                    det_3d = detector.compute_3d_detections(det_2d)
+                    det_3d = detector.compute_3d_detections(det_2d, current_utc_str, current_epoch)
                     
                     raw_buffer.extend(det_3d)
                     
@@ -204,7 +249,7 @@ class MultiCameraPipeline:
                         annotated_frames.append(annotated)
 
                 # Deduplicate objects crossing the seams
-                clean_batch = self.deduplicate(raw_buffer, merge_radius_meters=8)
+                clean_batch = self.deduplicate(raw_buffer, current_epoch, merge_radius_meters=8)
                 self.all_clean_detections.extend(clean_batch)
 
                 # Batch Upload
@@ -287,6 +332,12 @@ class MultiCameraPipeline:
         caps = [cv2.VideoCapture(str(path)) for path in video_paths]
         frame_count = 0
         
+        global_start_time = datetime.now(timezone.utc)
+        global_start_epoch = time.time()
+        fps = 30
+        if len(caps) > 0:
+            fps = int(caps[0].get(cv2.CAP_PROP_FPS)) or 30
+        
         print(f"🚀 Starting Multi-Stream Pipeline for {len(caps)} cameras...")
 
         try:
@@ -308,13 +359,18 @@ class MultiCameraPipeline:
                 raw_buffer = []
                 annotated_frames = []
 
+                current_offset = frame_count / fps
+                current_time = global_start_time + timedelta(seconds=current_offset)
+                current_epoch = int(global_start_epoch + current_offset)
+                current_utc_str = current_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+
                 # Process each camera's frame with its specific detector
                 for i, frame in enumerate(frames):
                     detector = self.detectors[i]
                     results = detector.model(frame, conf=detector.conf, verbose=False)
                     
                     det_2d = detector.extract_detections(results[0], frame_count)
-                    det_3d = detector.compute_3d_detections(det_2d)
+                    det_3d = detector.compute_3d_detections(det_2d, current_utc_str, current_epoch)
                     
                     raw_buffer.extend(det_3d)
                     
@@ -326,7 +382,7 @@ class MultiCameraPipeline:
                         annotated_frames.append(annotated)
 
                 # Deduplicate objects crossing the seams
-                clean_batch = self.deduplicate(raw_buffer, merge_radius_meters=3.0)
+                clean_batch = self.deduplicate(raw_buffer, current_epoch, merge_radius_meters=3.0)
                 self.all_clean_detections.extend(clean_batch)
 
                 # Batch Upload
@@ -430,7 +486,7 @@ class VideoObjectDetector:
         """
         
         cap = cv2.VideoCapture(str(video_path))
-        fps = int(cap.get(cv2.CAP_PROP_FPS))
+        fps = int(cap.get(cv2.CAP_PROP_FPS)) or 30
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -446,7 +502,9 @@ class VideoObjectDetector:
                 (width, height)
             )
 
-        
+        global_start_time = datetime.now(timezone.utc)
+        global_start_epoch = time.time()
+
         frame = 0
         try:
             while cap.isOpened():
@@ -456,9 +514,15 @@ class VideoObjectDetector:
                 frame += 1
                 if frame != 1 and frame % 10 != 0:
                     continue
+                
+                current_offset = frame / fps
+                current_time = global_start_time + timedelta(seconds=current_offset)
+                current_epoch = int(global_start_epoch + current_offset)
+                current_utc_str = current_time.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+
                 results = self.model(f, conf=self.conf, verbose=False)
                 detections_2d = self.extract_detections(results[0], frame)
-                detections_3d = self.compute_3d_detections(detections_2d)
+                detections_3d = self.compute_3d_detections(detections_2d, current_utc_str, current_epoch)
                 self.all_detections_3d.extend(detections_3d)
 
                 # if upload:
@@ -491,26 +555,30 @@ class VideoObjectDetector:
             print(f"Output saved to: {output_path}")
 
     def extract_detections(self, result, frame_num):
-        """Extract detection data for CARLA integration"""
         detections = []
         
-        for box in result.boxes:
-            x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
-            conf = float(box.conf[0])
-            cls = int(box.cls[0])
-            class_name = self.class_names.get(cls, 'unknown')
-            if class_name != 'car':
-                continue
-            detections.append({
-                'frame': frame_num,
-                'class_id': cls,
-                'class_name': class_name, #self.class_names.get(cls, 'unknown'),
-                'confidence': conf,
-                'bbox': {'x1': float(x1), 'y1': float(y1), 'x2': float(x2), 'y2': float(y2)},
-                'center': {'x': float((x1 + x2) / 2), 'y': float((y1 + y2) / 2)},
-                'size': {'width': float(x2 - x1), 'height': float(y2 - y1)}
-            })
-        
+        # Check if any tracks were actually found
+        if result.boxes.id is not None:
+            # Get IDs as an array of integers
+            track_ids = result.boxes.id.int().cpu().tolist()
+            
+            for box, track_id in zip(result.boxes, track_ids):
+                x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
+                conf = float(box.conf[0])
+                cls = int(box.cls[0])
+                class_name = self.class_names.get(cls, 'unknown')
+                
+                if class_name != 'car':
+                    continue
+
+                detections.append({
+                    'frame': frame_num,
+                    'track_id': track_id,
+                    'class_name': class_name,
+                    'confidence': conf,
+                    'bbox': {'x1': float(x1), 'y1': float(y1), 'x2': float(x2), 'y2': float(y2)},
+                    'center': {'x': float((x1 + x2) / 2), 'y': float((y1 + y2) / 2)}
+                })
         return detections
 
     def draw_detections(self, frame, detections):
@@ -608,20 +676,41 @@ class VideoObjectDetector:
         theta = np.arctan2(X, Z)
         distance = np.sqrt(X**2 + Z**2)
 
+        pixel_plus = np.array([[u, v + 1]], dtype=np.float32)
+        undistorted_plus = cv2.undistortPoints(pixel_plus, self.K, self.dist_coeffs, P=self.K)
+        u_u_p, v_u_p = undistorted_plus[0][0]
+        
+        ray_cam_plus = np.array([(u_u_p - self.cx) / self.fx, (v_u_p - self.cy) / self.fy, 1.0])
+        ray_world_plus = self.R @ ray_cam_plus
+        dx_p, dy_p, dz_p = ray_world_plus
+        
+        if dy_p > 1e-6:
+            t_p = self.camera_height / dy_p
+            Z_plus = t_p * dz_p
+            # The absolute difference in meters for a 1-pixel error
+            uncertainty_meters = abs(Z - Z_plus)
+        else:
+            uncertainty_meters = 999.0 # Effectively infinite error at the horizon
+
         return {
             "X": float(X),
             "Y": 0.0,
             "Z": float(Z),
             "theta_rad": float(theta),
             "theta_deg": float(np.degrees(theta)),
-            "distance": float(distance)
+            "distance": float(distance),
+            "uncertainty_meters": float(uncertainty_meters)
         }
 
-    def compute_3d_detections(self, detections_2d):
+    def compute_3d_detections(self, detections_2d, current_utc_str=None, current_epoch=None):
         """Convert 2D detections to V2X-schema dicts with 3D world coords."""
         records = []
-        now_utc = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-        epoch_now = int(time.time())
+        if current_utc_str is None or current_epoch is None:
+            now_utc = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+            epoch_now = int(time.time())
+        else:
+            now_utc = current_utc_str
+            epoch_now = current_epoch
 
         for det in detections_2d:
             # Ground-contact pixel: bottom-centre of bbox
@@ -640,9 +729,9 @@ class VideoObjectDetector:
             record = {
                 # --- V2X schema fields ---
                 "event_id": event_id,
-                "object_id": f"{det['class_name']}_{det['frame']}_{event_id[:8]}",
+                "object_id": f"{det['class_name']}_{self.device_id}_{det['track_id']}",
                 "object_type": det['class_name'],
-                "timestamp_utc": now_utc,
+                "timestamp_utc": now_utc, # TODO: Take a look here
                 "confidence_score": round(det['confidence'], 4),
                 "gps_location": {
                     "latitude": round(lat, 8),
@@ -791,7 +880,7 @@ if __name__ == "__main__":
     # cam4 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -43.67, -39.49, "cam-001-ch4", base_lat, base_lon, "Richmond", "CA", "USA")
     #cam4.process_video(video_path=video_path, output_json='multi_cam_detections.json', show_live=True, upload=False)
     #pipeline = MultiCameraPipeline(detectors=[cam1, cam2, cam3, cam4])
-    pipeline = MultiCameraPipeline(detectors=[cam1,cam2,cam3,cam4])
+    pipeline = MultiCameraPipeline(detectors=[cam1,cam2])
 
     video_paths = [
         #'camera_views/ch1/event3/sensor_0_20260302_123255.ts'
@@ -800,8 +889,8 @@ if __name__ == "__main__":
         #'camera_views/ch4/NE-SE_5m_ch4.png'
         'camera_views/ch1/event1/sensor_0_20260302_122940.ts',
         'camera_views/ch2/event1/sensor_1_20260302_122940.ts',
-        'camera_views/ch3/event1/sensor_2_20260302_122940.ts',
-        'camera_views/ch4/event1/sensor_3_20260302_122940.ts'
+        # 'camera_views/ch3/event2/sensor_2_20260302_123039.ts',
+        # 'camera_views/ch4/event2/sensor_3_20260302_123039.ts'
         #'camera_views/ch4/event3/sensor_3_20260302_123255.ts'
         #'camera_views/ch3/event3/sensor_2_20260302_123255.ts'
     ]

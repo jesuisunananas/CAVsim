@@ -1,5 +1,7 @@
 import numpy as np
 from scipy.optimize import minimize
+import csv
+import json
 
 def find_global_best_angles():
     H = 7.0  # Camera height in meters
@@ -85,6 +87,60 @@ def find_global_best_angles():
     
     best_pitch, best_yaw = result.x
     average_error = result.fun
+    
+    pitch = np.radians(best_pitch)
+    yaw = np.radians(best_yaw)
+
+    Rx = np.array([
+        [1, 0, 0],
+        [0, np.cos(pitch), -np.sin(pitch)],
+        [0, np.sin(pitch), np.cos(pitch)]
+    ])
+    Ry = np.array([
+        [np.cos(yaw), 0, np.sin(yaw)],
+        [0, 1, 0],
+        [-np.sin(yaw), 0, np.cos(yaw)]
+    ])
+    R = Ry @ Rx
+
+    # List to hold all our row data
+    export_data = []
+
+    for i, pt in enumerate(calibration_points):
+        ray_cam = np.array([(pt['u'] - cx) / fx, (pt['v'] - cy) / fy, 1.0])
+        ray_world = R @ ray_cam
+        dx, dy, dz = ray_world
+
+        if dy > 1e-6:
+            t = H / dy
+            pred_X = t * dx
+            pred_Z = t * dz
+            
+            error_X = abs(pred_X - pt['true_X'])
+            error_Z = abs(pred_Z - pt['true_Z'])
+            total_point_error = np.sqrt(error_X**2 + error_Z**2)
+            
+            # Store the data in a dictionary
+            export_data.append({
+                "Point_ID": i + 1,
+                "u_pixel": round(pt['u'], 2),
+                "v_pixel": round(pt['v'], 2),
+                "True_X_m": round(pt['true_X'], 3),
+                "True_Z_m": round(pt['true_Z'], 3),
+                "Pred_X_m": round(pred_X, 3),
+                "Pred_Z_m": round(pred_Z, 3),
+                "Error_X_m": round(error_X, 3),
+                "Error_Z_m": round(error_Z, 3),
+                "Total_Error_m": round(total_point_error, 3)
+            })
+
+    # --- SAVE TO CSV ---
+    csv_filename = "calibration_errors.csv"
+    with open(csv_filename, mode='w', newline='') as file:
+        writer = csv.DictWriter(file, fieldnames=export_data[0].keys())
+        writer.writeheader()
+        writer.writerows(export_data)
+    print(f"\n📁 Saved CSV to: {csv_filename}")
 
     print("\n✅ MULTI-POINT CALIBRATION COMPLETE")
     print("-" * 40)
