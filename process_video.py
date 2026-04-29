@@ -568,7 +568,7 @@ class VideoObjectDetector:
                 cls = int(box.cls[0])
                 class_name = self.class_names.get(cls, 'unknown')
                 
-                if class_name != 'car':
+                if class_name != 'person':
                     continue
 
                 detections.append({
