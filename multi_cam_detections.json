@@ -1,9 +1,9 @@
 [
   {
-    "event_id": "d8873662-cd56-4023-863c-9d4fed95d0b7",
+    "event_id": "12eeb2a3-c9ca-4dac-92c6-c7aec2d84f77",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:01.561Z",
+    "timestamp_utc": "2026-05-13T20:02:49.704Z",
     "confidence_score": 0.6659,
     "gps_location": {
       "latitude": 37.91521676,
@@ -44,15 +44,15 @@
     },
     "notes": "theta=-12.2deg dist=43.2m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:01.561Z#d8873662-cd56-4023-863c-9d4fed95d0b7",
-    "expires_at": 1778753041,
-    "ingested_at_epoch": 1778666641
+    "ts_event": "2026-05-13T20:02:49.704Z#12eeb2a3-c9ca-4dac-92c6-c7aec2d84f77",
+    "expires_at": 1778788969,
+    "ingested_at_epoch": 1778702569
   },
   {
-    "event_id": "f35135cf-5e26-4b0b-be42-68e9dc437128",
+    "event_id": "6ba98dc7-b314-45e4-9421-175b605a1369",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:01.561Z",
+    "timestamp_utc": "2026-05-13T20:02:49.704Z",
     "confidence_score": 0.3554,
     "gps_location": {
       "latitude": 37.91521071,
@@ -93,15 +93,15 @@
     },
     "notes": "theta=-8.9deg dist=44.3m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:01.561Z#f35135cf-5e26-4b0b-be42-68e9dc437128",
-    "expires_at": 1778753041,
-    "ingested_at_epoch": 1778666641
+    "ts_event": "2026-05-13T20:02:49.704Z#6ba98dc7-b314-45e4-9421-175b605a1369",
+    "expires_at": 1778788969,
+    "ingested_at_epoch": 1778702569
   },
   {
-    "event_id": "20d17a0a-134b-42b5-b34f-17e00703d831",
+    "event_id": "0b541425-1651-4c10-9351-8b69661c622e",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:01.851Z",
+    "timestamp_utc": "2026-05-13T20:02:49.994Z",
     "confidence_score": 0.6154,
     "gps_location": {
       "latitude": 37.91521795,
@@ -142,15 +142,15 @@
     },
     "notes": "theta=-12.2deg dist=43.1m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:01.851Z#20d17a0a-134b-42b5-b34f-17e00703d831",
-    "expires_at": 1778753041,
-    "ingested_at_epoch": 1778666641
+    "ts_event": "2026-05-13T20:02:49.994Z#0b541425-1651-4c10-9351-8b69661c622e",
+    "expires_at": 1778788969,
+    "ingested_at_epoch": 1778702569
   },
   {
-    "event_id": "43f2e381-f91d-47c8-b565-c5349bba9ee6",
+    "event_id": "80a7749f-c542-4d09-bf73-f88defe9df2f",
     "object_id": "global_person_2",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:01.851Z",
+    "timestamp_utc": "2026-05-13T20:02:49.994Z",
     "confidence_score": 0.3759,
     "gps_location": {
       "latitude": 37.91521206,
@@ -191,15 +191,15 @@
     },
     "notes": "theta=-8.9deg dist=44.1m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:01.851Z#43f2e381-f91d-47c8-b565-c5349bba9ee6",
-    "expires_at": 1778753041,
-    "ingested_at_epoch": 1778666641
+    "ts_event": "2026-05-13T20:02:49.994Z#80a7749f-c542-4d09-bf73-f88defe9df2f",
+    "expires_at": 1778788969,
+    "ingested_at_epoch": 1778702569
   },
   {
-    "event_id": "f9c7fb57-26b7-46f9-915d-cdf18241e891",
+    "event_id": "b48cbb92-34ca-408f-9143-ab9dcf5d8820",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:02.174Z",
+    "timestamp_utc": "2026-05-13T20:02:50.317Z",
     "confidence_score": 0.5855,
     "gps_location": {
       "latitude": 37.91521872,
@@ -240,15 +240,15 @@
     },
     "notes": "theta=-12.1deg dist=43.0m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:02.174Z#f9c7fb57-26b7-46f9-915d-cdf18241e891",
-    "expires_at": 1778753042,
-    "ingested_at_epoch": 1778666642
+    "ts_event": "2026-05-13T20:02:50.317Z#b48cbb92-34ca-408f-9143-ab9dcf5d8820",
+    "expires_at": 1778788970,
+    "ingested_at_epoch": 1778702570
   },
   {
-    "event_id": "55cd49d1-1d47-4b75-a3a4-d9b4e9e00eda",
+    "event_id": "3ae35194-55d2-49e8-815c-6eb6c47b7d75",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:02.496Z",
+    "timestamp_utc": "2026-05-13T20:02:50.639Z",
     "confidence_score": 0.5651,
     "gps_location": {
       "latitude": 37.91521881,
@@ -289,15 +289,15 @@
     },
     "notes": "theta=-12.2deg dist=43.0m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:02.496Z#55cd49d1-1d47-4b75-a3a4-d9b4e9e00eda",
-    "expires_at": 1778753042,
-    "ingested_at_epoch": 1778666642
+    "ts_event": "2026-05-13T20:02:50.639Z#3ae35194-55d2-49e8-815c-6eb6c47b7d75",
+    "expires_at": 1778788970,
+    "ingested_at_epoch": 1778702570
   },
   {
-    "event_id": "044bde6c-7db8-402e-9e28-1656af18f485",
+    "event_id": "668f0b52-08e4-4757-9ca3-ec4a1e85449a",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:02.819Z",
+    "timestamp_utc": "2026-05-13T20:02:50.962Z",
     "confidence_score": 0.5896,
     "gps_location": {
       "latitude": 37.91521818,
@@ -338,15 +338,15 @@
     },
     "notes": "theta=-12.2deg dist=43.0m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:02.819Z#044bde6c-7db8-402e-9e28-1656af18f485",
-    "expires_at": 1778753042,
-    "ingested_at_epoch": 1778666642
+    "ts_event": "2026-05-13T20:02:50.962Z#668f0b52-08e4-4757-9ca3-ec4a1e85449a",
+    "expires_at": 1778788970,
+    "ingested_at_epoch": 1778702570
   },
   {
-    "event_id": "a0e33b1a-6511-45de-a110-64e5feb41689",
+    "event_id": "890c5f87-f5a0-485d-b533-67c013db28ab",
     "object_id": "global_person_2",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:02.819Z",
+    "timestamp_utc": "2026-05-13T20:02:50.962Z",
     "confidence_score": 0.3415,
     "gps_location": {
       "latitude": 37.91521889,
@@ -387,15 +387,15 @@
     },
     "notes": "theta=-9.0deg dist=43.4m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:02.819Z#a0e33b1a-6511-45de-a110-64e5feb41689",
-    "expires_at": 1778753042,
-    "ingested_at_epoch": 1778666642
+    "ts_event": "2026-05-13T20:02:50.962Z#890c5f87-f5a0-485d-b533-67c013db28ab",
+    "expires_at": 1778788970,
+    "ingested_at_epoch": 1778702570
   },
   {
-    "event_id": "fb7d89dd-844f-4d7d-9ea8-9f2b09913cfc",
+    "event_id": "eec7bc41-4e98-43e5-9679-c397b8998012",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:03.141Z",
+    "timestamp_utc": "2026-05-13T20:02:51.285Z",
     "confidence_score": 0.6335,
     "gps_location": {
       "latitude": 37.91521949,
@@ -436,15 +436,15 @@
     },
     "notes": "theta=-12.1deg dist=42.9m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:03.141Z#fb7d89dd-844f-4d7d-9ea8-9f2b09913cfc",
-    "expires_at": 1778753043,
-    "ingested_at_epoch": 1778666643
+    "ts_event": "2026-05-13T20:02:51.285Z#eec7bc41-4e98-43e5-9679-c397b8998012",
+    "expires_at": 1778788971,
+    "ingested_at_epoch": 1778702571
   },
   {
-    "event_id": "04094388-005e-49c4-b8f2-bde0dec28889",
+    "event_id": "6df72771-ddb1-4e9b-8b2c-229b6b84352b",
     "object_id": "global_person_2",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:03.141Z",
+    "timestamp_utc": "2026-05-13T20:02:51.285Z",
     "confidence_score": 0.5565,
     "gps_location": {
       "latitude": 37.91523468,
@@ -485,15 +485,15 @@
     },
     "notes": "theta=-9.0deg dist=41.6m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:03.141Z#04094388-005e-49c4-b8f2-bde0dec28889",
-    "expires_at": 1778753043,
-    "ingested_at_epoch": 1778666643
+    "ts_event": "2026-05-13T20:02:51.285Z#6df72771-ddb1-4e9b-8b2c-229b6b84352b",
+    "expires_at": 1778788971,
+    "ingested_at_epoch": 1778702571
   },
   {
-    "event_id": "7bff97f9-142b-4aaf-9f4c-0cddcbf8f669",
+    "event_id": "9bed08ea-2903-4b49-8807-1a953fe846fb",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:03.464Z",
+    "timestamp_utc": "2026-05-13T20:02:51.607Z",
     "confidence_score": 0.6704,
     "gps_location": {
       "latitude": 37.91521663,
@@ -534,15 +534,15 @@
     },
     "notes": "theta=-12.1deg dist=43.2m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:03.464Z#7bff97f9-142b-4aaf-9f4c-0cddcbf8f669",
-    "expires_at": 1778753043,
-    "ingested_at_epoch": 1778666643
+    "ts_event": "2026-05-13T20:02:51.607Z#9bed08ea-2903-4b49-8807-1a953fe846fb",
+    "expires_at": 1778788971,
+    "ingested_at_epoch": 1778702571
   },
   {
-    "event_id": "c10313a9-0ff7-4196-8517-ad9a199067ec",
+    "event_id": "98fdbc0b-814f-45f9-aac6-f6257de59c69",
     "object_id": "global_person_2",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:03.464Z",
+    "timestamp_utc": "2026-05-13T20:02:51.607Z",
     "confidence_score": 0.5537,
     "gps_location": {
       "latitude": 37.9152273,
@@ -583,15 +583,15 @@
     },
     "notes": "theta=-9.3deg dist=42.4m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:03.464Z#c10313a9-0ff7-4196-8517-ad9a199067ec",
-    "expires_at": 1778753043,
-    "ingested_at_epoch": 1778666643
+    "ts_event": "2026-05-13T20:02:51.607Z#98fdbc0b-814f-45f9-aac6-f6257de59c69",
+    "expires_at": 1778788971,
+    "ingested_at_epoch": 1778702571
   },
   {
-    "event_id": "28e71abc-217a-4593-8a26-6ab836a8ad1c",
+    "event_id": "66f3eecc-551a-4003-a9c9-178e8bc3ac7b",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:03.786Z",
+    "timestamp_utc": "2026-05-13T20:02:51.930Z",
     "confidence_score": 0.6644,
     "gps_location": {
       "latitude": 37.91522036,
@@ -632,15 +632,15 @@
     },
     "notes": "theta=-12.0deg dist=42.8m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:03.786Z#28e71abc-217a-4593-8a26-6ab836a8ad1c",
-    "expires_at": 1778753043,
-    "ingested_at_epoch": 1778666643
+    "ts_event": "2026-05-13T20:02:51.930Z#66f3eecc-551a-4003-a9c9-178e8bc3ac7b",
+    "expires_at": 1778788971,
+    "ingested_at_epoch": 1778702571
   },
   {
-    "event_id": "17328563-0db3-4210-bc10-5c5644abfd88",
+    "event_id": "e528153b-9136-4474-b30e-37f586f21150",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:04.109Z",
+    "timestamp_utc": "2026-05-13T20:02:52.252Z",
     "confidence_score": 0.5864,
     "gps_location": {
       "latitude": 37.91522256,
@@ -681,15 +681,15 @@
     },
     "notes": "theta=-12.0deg dist=42.6m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:04.109Z#17328563-0db3-4210-bc10-5c5644abfd88",
-    "expires_at": 1778753044,
-    "ingested_at_epoch": 1778666644
+    "ts_event": "2026-05-13T20:02:52.252Z#e528153b-9136-4474-b30e-37f586f21150",
+    "expires_at": 1778788972,
+    "ingested_at_epoch": 1778702572
   },
   {
-    "event_id": "084268fa-d422-44e7-a139-87a3754ebce8",
+    "event_id": "d1e9b483-19ca-4910-993d-ff74fab95088",
     "object_id": "global_person_2",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:04.109Z",
+    "timestamp_utc": "2026-05-13T20:02:52.252Z",
     "confidence_score": 0.496,
     "gps_location": {
       "latitude": 37.91526567,
@@ -730,15 +730,15 @@
     },
     "notes": "theta=-9.5deg dist=38.0m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:04.109Z#084268fa-d422-44e7-a139-87a3754ebce8",
-    "expires_at": 1778753044,
-    "ingested_at_epoch": 1778666644
+    "ts_event": "2026-05-13T20:02:52.252Z#d1e9b483-19ca-4910-993d-ff74fab95088",
+    "expires_at": 1778788972,
+    "ingested_at_epoch": 1778702572
   },
   {
-    "event_id": "79869cb0-de6f-4362-ad2e-3c17a37676b4",
+    "event_id": "3a02e459-a130-4425-9097-4204feb584d5",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:04.432Z",
+    "timestamp_utc": "2026-05-13T20:02:52.575Z",
     "confidence_score": 0.594,
     "gps_location": {
       "latitude": 37.91522454,
@@ -779,15 +779,15 @@
     },
     "notes": "theta=-12.2deg dist=42.3m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:04.432Z#79869cb0-de6f-4362-ad2e-3c17a37676b4",
-    "expires_at": 1778753044,
-    "ingested_at_epoch": 1778666644
+    "ts_event": "2026-05-13T20:02:52.575Z#3a02e459-a130-4425-9097-4204feb584d5",
+    "expires_at": 1778788972,
+    "ingested_at_epoch": 1778702572
   },
   {
-    "event_id": "4f7ffd6b-5be3-46d4-ae86-385e068513e1",
+    "event_id": "5e87083a-09c5-4412-ac00-862ea74c5c9b",
     "object_id": "global_person_2",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:04.432Z",
+    "timestamp_utc": "2026-05-13T20:02:52.575Z",
     "confidence_score": 0.5215,
     "gps_location": {
       "latitude": 37.91527402,
@@ -828,15 +828,15 @@
     },
     "notes": "theta=-9.6deg dist=37.0m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:04.432Z#4f7ffd6b-5be3-46d4-ae86-385e068513e1",
-    "expires_at": 1778753044,
-    "ingested_at_epoch": 1778666644
+    "ts_event": "2026-05-13T20:02:52.575Z#5e87083a-09c5-4412-ac00-862ea74c5c9b",
+    "expires_at": 1778788972,
+    "ingested_at_epoch": 1778702572
   },
   {
-    "event_id": "89b36de9-5502-4a7f-8ece-45944aed5dc6",
+    "event_id": "919eb8a0-e4aa-471d-b978-60c58df8233d",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:04.754Z",
+    "timestamp_utc": "2026-05-13T20:02:52.897Z",
     "confidence_score": 0.7392,
     "gps_location": {
       "latitude": 37.91522749,
@@ -877,15 +877,15 @@
     },
     "notes": "theta=-12.4deg dist=42.0m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:04.754Z#89b36de9-5502-4a7f-8ece-45944aed5dc6",
-    "expires_at": 1778753044,
-    "ingested_at_epoch": 1778666644
+    "ts_event": "2026-05-13T20:02:52.897Z#919eb8a0-e4aa-471d-b978-60c58df8233d",
+    "expires_at": 1778788972,
+    "ingested_at_epoch": 1778702572
   },
   {
-    "event_id": "fc97434b-c6c0-46ad-af84-f65aabfca5b5",
+    "event_id": "a24b8415-8188-49fc-935e-b1bfd8661149",
     "object_id": "global_person_2",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:04.754Z",
+    "timestamp_utc": "2026-05-13T20:02:52.897Z",
     "confidence_score": 0.5217,
     "gps_location": {
       "latitude": 37.91528271,
@@ -926,15 +926,15 @@
     },
     "notes": "theta=-9.4deg dist=36.1m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:04.754Z#fc97434b-c6c0-46ad-af84-f65aabfca5b5",
-    "expires_at": 1778753044,
-    "ingested_at_epoch": 1778666644
+    "ts_event": "2026-05-13T20:02:52.897Z#a24b8415-8188-49fc-935e-b1bfd8661149",
+    "expires_at": 1778788972,
+    "ingested_at_epoch": 1778702572
   },
   {
-    "event_id": "d04a2a37-8a05-47d4-9163-fbef101b61c3",
+    "event_id": "8fab35c7-c01e-4c98-b9f3-35bda6301119",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:05.077Z",
+    "timestamp_utc": "2026-05-13T20:02:53.220Z",
     "confidence_score": 0.699,
     "gps_location": {
       "latitude": 37.91523224,
@@ -975,15 +975,15 @@
     },
     "notes": "theta=-12.7deg dist=41.4m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:05.077Z#d04a2a37-8a05-47d4-9163-fbef101b61c3",
-    "expires_at": 1778753045,
-    "ingested_at_epoch": 1778666645
+    "ts_event": "2026-05-13T20:02:53.220Z#8fab35c7-c01e-4c98-b9f3-35bda6301119",
+    "expires_at": 1778788973,
+    "ingested_at_epoch": 1778702573
   },
   {
-    "event_id": "956e5ac3-96fa-46c4-b118-4123bef65b0e",
+    "event_id": "89cccd86-92ee-4910-b756-f1268be29fbf",
     "object_id": "global_person_2",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:05.077Z",
+    "timestamp_utc": "2026-05-13T20:02:53.220Z",
     "confidence_score": 0.5849,
     "gps_location": {
       "latitude": 37.91528564,
@@ -1024,15 +1024,15 @@
     },
     "notes": "theta=-9.1deg dist=35.8m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:05.077Z#956e5ac3-96fa-46c4-b118-4123bef65b0e",
-    "expires_at": 1778753045,
-    "ingested_at_epoch": 1778666645
+    "ts_event": "2026-05-13T20:02:53.220Z#89cccd86-92ee-4910-b756-f1268be29fbf",
+    "expires_at": 1778788973,
+    "ingested_at_epoch": 1778702573
   },
   {
-    "event_id": "ed143cec-5094-4a7f-a5c4-0b3fbab87d4b",
+    "event_id": "2daae56d-1ed1-4491-9e6d-52e3f11c7bc0",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:05.399Z",
+    "timestamp_utc": "2026-05-13T20:02:53.543Z",
     "confidence_score": 0.7227,
     "gps_location": {
       "latitude": 37.9152351,
@@ -1073,15 +1073,15 @@
     },
     "notes": "theta=-12.7deg dist=41.1m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:05.399Z#ed143cec-5094-4a7f-a5c4-0b3fbab87d4b",
-    "expires_at": 1778753045,
-    "ingested_at_epoch": 1778666645
+    "ts_event": "2026-05-13T20:02:53.543Z#2daae56d-1ed1-4491-9e6d-52e3f11c7bc0",
+    "expires_at": 1778788973,
+    "ingested_at_epoch": 1778702573
   },
   {
-    "event_id": "adef3dab-dc94-41e8-a03d-5bad02c44575",
+    "event_id": "1ee0db66-a040-4147-8482-45153c27fdc5",
     "object_id": "global_person_2",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:05.399Z",
+    "timestamp_utc": "2026-05-13T20:02:53.543Z",
     "confidence_score": 0.5809,
     "gps_location": {
       "latitude": 37.91528967,
@@ -1122,15 +1122,15 @@
     },
     "notes": "theta=-8.9deg dist=35.3m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:05.399Z#adef3dab-dc94-41e8-a03d-5bad02c44575",
-    "expires_at": 1778753045,
-    "ingested_at_epoch": 1778666645
+    "ts_event": "2026-05-13T20:02:53.543Z#1ee0db66-a040-4147-8482-45153c27fdc5",
+    "expires_at": 1778788973,
+    "ingested_at_epoch": 1778702573
   },
   {
-    "event_id": "218923ee-c43c-4d7b-9c16-0a7d3637e821",
+    "event_id": "fc41c9fd-e1a1-453d-b77d-7f72b7896e47",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:05.722Z",
+    "timestamp_utc": "2026-05-13T20:02:53.865Z",
     "confidence_score": 0.7202,
     "gps_location": {
       "latitude": 37.9152394,
@@ -1171,15 +1171,15 @@
     },
     "notes": "theta=-12.9deg dist=40.6m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:05.722Z#218923ee-c43c-4d7b-9c16-0a7d3637e821",
-    "expires_at": 1778753045,
-    "ingested_at_epoch": 1778666645
+    "ts_event": "2026-05-13T20:02:53.865Z#fc41c9fd-e1a1-453d-b77d-7f72b7896e47",
+    "expires_at": 1778788973,
+    "ingested_at_epoch": 1778702573
   },
   {
-    "event_id": "d096cb9e-2aa7-4fd6-8627-f3ec1f9c666e",
+    "event_id": "cbf40eaf-1c89-401f-b01c-84e222d02d77",
     "object_id": "global_person_2",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:05.722Z",
+    "timestamp_utc": "2026-05-13T20:02:53.865Z",
     "confidence_score": 0.5431,
     "gps_location": {
       "latitude": 37.91528489,
@@ -1220,15 +1220,15 @@
     },
     "notes": "theta=-9.2deg dist=35.8m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:05.722Z#d096cb9e-2aa7-4fd6-8627-f3ec1f9c666e",
-    "expires_at": 1778753045,
-    "ingested_at_epoch": 1778666645
+    "ts_event": "2026-05-13T20:02:53.865Z#cbf40eaf-1c89-401f-b01c-84e222d02d77",
+    "expires_at": 1778788973,
+    "ingested_at_epoch": 1778702573
   },
   {
-    "event_id": "0136ac08-2a37-4024-870a-18436fcf1994",
+    "event_id": "b2d40a4c-ea9a-4b3b-954b-728609b77f41",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:06.045Z",
+    "timestamp_utc": "2026-05-13T20:02:54.188Z",
     "confidence_score": 0.6982,
     "gps_location": {
       "latitude": 37.91525021,
@@ -1269,15 +1269,15 @@
     },
     "notes": "theta=-12.9deg dist=39.4m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:06.045Z#0136ac08-2a37-4024-870a-18436fcf1994",
-    "expires_at": 1778753046,
-    "ingested_at_epoch": 1778666646
+    "ts_event": "2026-05-13T20:02:54.188Z#b2d40a4c-ea9a-4b3b-954b-728609b77f41",
+    "expires_at": 1778788974,
+    "ingested_at_epoch": 1778702574
   },
   {
-    "event_id": "9833b778-1fdb-4cf4-9aa0-376d26d35fca",
+    "event_id": "b820adca-e2f6-49cd-b1d3-93c23e6fc552",
     "object_id": "global_person_2",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:06.045Z",
+    "timestamp_utc": "2026-05-13T20:02:54.188Z",
     "confidence_score": 0.4485,
     "gps_location": {
       "latitude": 37.91527586,
@@ -1318,15 +1318,15 @@
     },
     "notes": "theta=-9.6deg dist=36.8m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:06.045Z#9833b778-1fdb-4cf4-9aa0-376d26d35fca",
-    "expires_at": 1778753046,
-    "ingested_at_epoch": 1778666646
+    "ts_event": "2026-05-13T20:02:54.188Z#b820adca-e2f6-49cd-b1d3-93c23e6fc552",
+    "expires_at": 1778788974,
+    "ingested_at_epoch": 1778702574
   },
   {
-    "event_id": "948dc638-1c79-43af-bf5c-6c1dfe919ee5",
+    "event_id": "5202498b-0958-4e8c-bc16-b97b5fb7e5c5",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:06.367Z",
+    "timestamp_utc": "2026-05-13T20:02:54.510Z",
     "confidence_score": 0.6665,
     "gps_location": {
       "latitude": 37.91525734,
@@ -1367,15 +1367,15 @@
     },
     "notes": "theta=-12.9deg dist=38.6m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:06.367Z#948dc638-1c79-43af-bf5c-6c1dfe919ee5",
-    "expires_at": 1778753046,
-    "ingested_at_epoch": 1778666646
+    "ts_event": "2026-05-13T20:02:54.510Z#5202498b-0958-4e8c-bc16-b97b5fb7e5c5",
+    "expires_at": 1778788974,
+    "ingested_at_epoch": 1778702574
   },
   {
-    "event_id": "943d01f7-4ea1-4ff7-8a18-46501fafa509",
+    "event_id": "2aa8805e-e96d-4c46-81d2-275851909860",
     "object_id": "global_person_2",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:06.367Z",
+    "timestamp_utc": "2026-05-13T20:02:54.510Z",
     "confidence_score": 0.4898,
     "gps_location": {
       "latitude": 37.91527322,
@@ -1416,15 +1416,15 @@
     },
     "notes": "theta=-9.8deg dist=37.1m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:06.367Z#943d01f7-4ea1-4ff7-8a18-46501fafa509",
-    "expires_at": 1778753046,
-    "ingested_at_epoch": 1778666646
+    "ts_event": "2026-05-13T20:02:54.510Z#2aa8805e-e96d-4c46-81d2-275851909860",
+    "expires_at": 1778788974,
+    "ingested_at_epoch": 1778702574
   },
   {
-    "event_id": "c5d910c0-4811-4e6d-bd1b-ffcb8ee0b142",
+    "event_id": "60321c66-d379-403e-a2e9-840b534c1521",
     "object_id": "global_person_2",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:06.690Z",
+    "timestamp_utc": "2026-05-13T20:02:54.833Z",
     "confidence_score": 0.4638,
     "gps_location": {
       "latitude": 37.91526211,
@@ -1465,15 +1465,15 @@
     },
     "notes": "theta=-10.2deg dist=38.3m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:06.690Z#c5d910c0-4811-4e6d-bd1b-ffcb8ee0b142",
-    "expires_at": 1778753046,
-    "ingested_at_epoch": 1778666646
+    "ts_event": "2026-05-13T20:02:54.833Z#60321c66-d379-403e-a2e9-840b534c1521",
+    "expires_at": 1778788974,
+    "ingested_at_epoch": 1778702574
   },
   {
-    "event_id": "caeea1c9-65fe-4844-bcf9-abf583707732",
+    "event_id": "badb7e07-5083-41c7-ac7e-d2eba79e44fe",
     "object_id": "global_person_2",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:07.012Z",
+    "timestamp_utc": "2026-05-13T20:02:55.156Z",
     "confidence_score": 0.4613,
     "gps_location": {
       "latitude": 37.9152698,
@@ -1514,15 +1514,15 @@
     },
     "notes": "theta=-10.5deg dist=37.4m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:07.012Z#caeea1c9-65fe-4844-bcf9-abf583707732",
-    "expires_at": 1778753047,
-    "ingested_at_epoch": 1778666647
+    "ts_event": "2026-05-13T20:02:55.156Z#badb7e07-5083-41c7-ac7e-d2eba79e44fe",
+    "expires_at": 1778788975,
+    "ingested_at_epoch": 1778702575
   },
   {
-    "event_id": "822e92a8-4336-4350-abab-7d962f8361fa",
+    "event_id": "fd77f0e3-2727-4710-a615-615616685040",
     "object_id": "global_person_2",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:07.335Z",
+    "timestamp_utc": "2026-05-13T20:02:55.478Z",
     "confidence_score": 0.5137,
     "gps_location": {
       "latitude": 37.9152866,
@@ -1563,15 +1563,15 @@
     },
     "notes": "theta=-10.2deg dist=35.5m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:07.335Z#822e92a8-4336-4350-abab-7d962f8361fa",
-    "expires_at": 1778753047,
-    "ingested_at_epoch": 1778666647
+    "ts_event": "2026-05-13T20:02:55.478Z#fd77f0e3-2727-4710-a615-615616685040",
+    "expires_at": 1778788975,
+    "ingested_at_epoch": 1778702575
   },
   {
-    "event_id": "c8478965-93b8-45cc-bee3-2f5c6d41d5da",
+    "event_id": "6e5343ca-7ce8-4927-a941-be135d18b0fb",
     "object_id": "global_person_3",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:10.238Z",
+    "timestamp_utc": "2026-05-13T20:02:58.381Z",
     "confidence_score": 0.3765,
     "gps_location": {
       "latitude": 37.91537503,
@@ -1612,15 +1612,15 @@
     },
     "notes": "theta=-2.6deg dist=26.4m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:10.238Z#c8478965-93b8-45cc-bee3-2f5c6d41d5da",
-    "expires_at": 1778753050,
-    "ingested_at_epoch": 1778666650
+    "ts_event": "2026-05-13T20:02:58.381Z#6e5343ca-7ce8-4927-a941-be135d18b0fb",
+    "expires_at": 1778788978,
+    "ingested_at_epoch": 1778702578
   },
   {
-    "event_id": "eac6e5da-966a-4832-bc88-dcaeb7765ce0",
+    "event_id": "4a193b55-6cd8-4547-9218-50dc6d26b119",
     "object_id": "global_person_4",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:11.528Z",
+    "timestamp_utc": "2026-05-13T20:02:59.672Z",
     "confidence_score": 0.628,
     "gps_location": {
       "latitude": 37.91525301,
@@ -1661,15 +1661,15 @@
     },
     "notes": "theta=-9.0deg dist=39.5m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:11.528Z#eac6e5da-966a-4832-bc88-dcaeb7765ce0",
-    "expires_at": 1778753051,
-    "ingested_at_epoch": 1778666651
+    "ts_event": "2026-05-13T20:02:59.672Z#4a193b55-6cd8-4547-9218-50dc6d26b119",
+    "expires_at": 1778788979,
+    "ingested_at_epoch": 1778702579
   },
   {
-    "event_id": "58fa7e27-1cce-4a06-a794-d671cc1b9369",
+    "event_id": "a18c1f95-11f7-4e0e-ab18-4ea22a1f8b0b",
     "object_id": "global_person_4",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:11.851Z",
+    "timestamp_utc": "2026-05-13T20:02:59.994Z",
     "confidence_score": 0.3083,
     "gps_location": {
       "latitude": 37.91525346,
@@ -1710,15 +1710,15 @@
     },
     "notes": "theta=-9.1deg dist=39.4m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:11.851Z#58fa7e27-1cce-4a06-a794-d671cc1b9369",
-    "expires_at": 1778753051,
-    "ingested_at_epoch": 1778666651
+    "ts_event": "2026-05-13T20:02:59.994Z#a18c1f95-11f7-4e0e-ab18-4ea22a1f8b0b",
+    "expires_at": 1778788979,
+    "ingested_at_epoch": 1778702579
   },
   {
-    "event_id": "5bf791b0-9028-4d7b-89f0-5a2e8b4f1576",
+    "event_id": "21c88744-fd0d-42d8-954f-45645639bdd6",
     "object_id": "global_person_4",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:12.174Z",
+    "timestamp_utc": "2026-05-13T20:03:00.317Z",
     "confidence_score": 0.4605,
     "gps_location": {
       "latitude": 37.91525257,
@@ -1759,15 +1759,15 @@
     },
     "notes": "theta=-9.2deg dist=39.5m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:12.174Z#5bf791b0-9028-4d7b-89f0-5a2e8b4f1576",
-    "expires_at": 1778753052,
-    "ingested_at_epoch": 1778666652
+    "ts_event": "2026-05-13T20:03:00.317Z#21c88744-fd0d-42d8-954f-45645639bdd6",
+    "expires_at": 1778788980,
+    "ingested_at_epoch": 1778702580
   },
   {
-    "event_id": "ed3cb7fc-ee46-4f00-a8dd-fb801ce6e556",
+    "event_id": "710f840c-2e4b-4f4e-bf8d-1d153df0bcdf",
     "object_id": "global_person_5",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:27.657Z",
+    "timestamp_utc": "2026-05-13T20:03:15.801Z",
     "confidence_score": 0.8488,
     "gps_location": {
       "latitude": 37.91554603,
@@ -1808,15 +1808,15 @@
     },
     "notes": "theta=13.8deg dist=7.4m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:27.657Z#ed3cb7fc-ee46-4f00-a8dd-fb801ce6e556",
-    "expires_at": 1778753067,
-    "ingested_at_epoch": 1778666667
+    "ts_event": "2026-05-13T20:03:15.801Z#710f840c-2e4b-4f4e-bf8d-1d153df0bcdf",
+    "expires_at": 1778788995,
+    "ingested_at_epoch": 1778702595
   },
   {
-    "event_id": "a252446d-6b7f-4345-b0a4-7d15ec9887f0",
+    "event_id": "c46bd7ba-d763-4149-b156-53dd8c558e7a",
     "object_id": "global_person_5",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:27.980Z",
+    "timestamp_utc": "2026-05-13T20:03:16.123Z",
     "confidence_score": 0.8009,
     "gps_location": {
       "latitude": 37.91554926,
@@ -1857,15 +1857,15 @@
     },
     "notes": "theta=13.9deg dist=7.0m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:27.980Z#a252446d-6b7f-4345-b0a4-7d15ec9887f0",
-    "expires_at": 1778753067,
-    "ingested_at_epoch": 1778666667
+    "ts_event": "2026-05-13T20:03:16.123Z#c46bd7ba-d763-4149-b156-53dd8c558e7a",
+    "expires_at": 1778788996,
+    "ingested_at_epoch": 1778702596
   },
   {
-    "event_id": "bed2f3b2-8ae9-427b-8e72-3e5fac4719df",
+    "event_id": "2dbc31ab-1d1b-4330-903f-057ebc7a7a82",
     "object_id": "global_person_5",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:28.303Z",
+    "timestamp_utc": "2026-05-13T20:03:16.446Z",
     "confidence_score": 0.903,
     "gps_location": {
       "latitude": 37.91555728,
@@ -1906,15 +1906,15 @@
     },
     "notes": "theta=14.8deg dist=5.9m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:28.303Z#bed2f3b2-8ae9-427b-8e72-3e5fac4719df",
-    "expires_at": 1778753068,
-    "ingested_at_epoch": 1778666668
+    "ts_event": "2026-05-13T20:03:16.446Z#2dbc31ab-1d1b-4330-903f-057ebc7a7a82",
+    "expires_at": 1778788996,
+    "ingested_at_epoch": 1778702596
   },
   {
-    "event_id": "a24478e7-3a11-4bcd-aad7-789b14ea4bca",
+    "event_id": "52be148f-1e63-4f09-b85a-ab9e943f9c77",
     "object_id": "global_person_5",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:28.625Z",
+    "timestamp_utc": "2026-05-13T20:03:16.768Z",
     "confidence_score": 0.8864,
     "gps_location": {
       "latitude": 37.91556406,
@@ -1955,15 +1955,15 @@
     },
     "notes": "theta=16.2deg dist=5.1m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:28.625Z#a24478e7-3a11-4bcd-aad7-789b14ea4bca",
-    "expires_at": 1778753068,
-    "ingested_at_epoch": 1778666668
+    "ts_event": "2026-05-13T20:03:16.768Z#52be148f-1e63-4f09-b85a-ab9e943f9c77",
+    "expires_at": 1778788996,
+    "ingested_at_epoch": 1778702596
   },
   {
-    "event_id": "c7ede048-ea96-4f47-a4e3-6550e23f0b47",
+    "event_id": "612ffddd-bfa2-4981-a11c-ee98e5efcb81",
     "object_id": "global_person_5",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:29.270Z",
+    "timestamp_utc": "2026-05-13T20:03:17.414Z",
     "confidence_score": 0.5912,
     "gps_location": {
       "latitude": 37.91557346,
@@ -2004,15 +2004,15 @@
     },
     "notes": "theta=13.9deg dist=3.7m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:29.270Z#c7ede048-ea96-4f47-a4e3-6550e23f0b47",
-    "expires_at": 1778753069,
-    "ingested_at_epoch": 1778666669
+    "ts_event": "2026-05-13T20:03:17.414Z#612ffddd-bfa2-4981-a11c-ee98e5efcb81",
+    "expires_at": 1778788997,
+    "ingested_at_epoch": 1778702597
   },
   {
-    "event_id": "b1421eca-f588-4242-8d02-5acae299c5a5",
+    "event_id": "59bd3291-4999-4ea8-814d-d8a0408f29a9",
     "object_id": "global_person_5",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:29.915Z",
+    "timestamp_utc": "2026-05-13T20:03:18.059Z",
     "confidence_score": 0.4913,
     "gps_location": {
       "latitude": 37.91557719,
@@ -2053,15 +2053,15 @@
     },
     "notes": "theta=4.6deg dist=2.9m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:29.915Z#b1421eca-f588-4242-8d02-5acae299c5a5",
-    "expires_at": 1778753069,
-    "ingested_at_epoch": 1778666669
+    "ts_event": "2026-05-13T20:03:18.059Z#59bd3291-4999-4ea8-814d-d8a0408f29a9",
+    "expires_at": 1778788998,
+    "ingested_at_epoch": 1778702598
   },
   {
-    "event_id": "4376f7af-7c85-4f09-9f81-b952f1a9332d",
+    "event_id": "5ed6fb64-74d2-4467-87dd-8f2728bd8b2f",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:39.915Z",
+    "timestamp_utc": "2026-05-13T20:03:28.059Z",
     "confidence_score": 0.8604,
     "gps_location": {
       "latitude": 37.91556816,
@@ -2102,15 +2102,15 @@
     },
     "notes": "theta=-4.0deg dist=3.8m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:39.915Z#4376f7af-7c85-4f09-9f81-b952f1a9332d",
-    "expires_at": 1778753079,
-    "ingested_at_epoch": 1778666679
+    "ts_event": "2026-05-13T20:03:28.059Z#5ed6fb64-74d2-4467-87dd-8f2728bd8b2f",
+    "expires_at": 1778789008,
+    "ingested_at_epoch": 1778702608
   },
   {
-    "event_id": "400a8f9b-1471-4709-8928-a37d86a9efb9",
+    "event_id": "62094286-3d91-4996-a19b-b69df6a33ec8",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:40.238Z",
+    "timestamp_utc": "2026-05-13T20:03:28.381Z",
     "confidence_score": 0.8705,
     "gps_location": {
       "latitude": 37.91556276,
@@ -2151,15 +2151,15 @@
     },
     "notes": "theta=-3.2deg dist=4.5m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:40.238Z#400a8f9b-1471-4709-8928-a37d86a9efb9",
-    "expires_at": 1778753080,
-    "ingested_at_epoch": 1778666680
+    "ts_event": "2026-05-13T20:03:28.381Z#62094286-3d91-4996-a19b-b69df6a33ec8",
+    "expires_at": 1778789008,
+    "ingested_at_epoch": 1778702608
   },
   {
-    "event_id": "82b64705-90c2-4e7b-821f-e62bd25eec5c",
+    "event_id": "5c33e1b1-a015-48ad-867e-4238d473136b",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:40.561Z",
+    "timestamp_utc": "2026-05-13T20:03:28.704Z",
     "confidence_score": 0.887,
     "gps_location": {
       "latitude": 37.91555352,
@@ -2200,15 +2200,15 @@
     },
     "notes": "theta=-4.1deg dist=5.5m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:40.561Z#82b64705-90c2-4e7b-821f-e62bd25eec5c",
-    "expires_at": 1778753080,
-    "ingested_at_epoch": 1778666680
+    "ts_event": "2026-05-13T20:03:28.704Z#5c33e1b1-a015-48ad-867e-4238d473136b",
+    "expires_at": 1778789008,
+    "ingested_at_epoch": 1778702608
   },
   {
-    "event_id": "45f1ae5a-d197-458b-87d5-f7ec133f7fec",
+    "event_id": "34361082-8156-48a6-8c79-6ce3126e3e34",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:40.883Z",
+    "timestamp_utc": "2026-05-13T20:03:29.026Z",
     "confidence_score": 0.8535,
     "gps_location": {
       "latitude": 37.9155472,
@@ -2249,15 +2249,15 @@
     },
     "notes": "theta=-4.6deg dist=6.2m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:40.883Z#45f1ae5a-d197-458b-87d5-f7ec133f7fec",
-    "expires_at": 1778753080,
-    "ingested_at_epoch": 1778666680
+    "ts_event": "2026-05-13T20:03:29.026Z#34361082-8156-48a6-8c79-6ce3126e3e34",
+    "expires_at": 1778789009,
+    "ingested_at_epoch": 1778702609
   },
   {
-    "event_id": "943a7e17-005e-4602-b195-7d16e2bb0dc6",
+    "event_id": "71a19232-89d9-46bc-833c-7ca2516b13fa",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:41.206Z",
+    "timestamp_utc": "2026-05-13T20:03:29.349Z",
     "confidence_score": 0.874,
     "gps_location": {
       "latitude": 37.91553652,
@@ -2298,15 +2298,15 @@
     },
     "notes": "theta=-5.6deg dist=7.4m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:41.206Z#943a7e17-005e-4602-b195-7d16e2bb0dc6",
-    "expires_at": 1778753081,
-    "ingested_at_epoch": 1778666681
+    "ts_event": "2026-05-13T20:03:29.349Z#71a19232-89d9-46bc-833c-7ca2516b13fa",
+    "expires_at": 1778789009,
+    "ingested_at_epoch": 1778702609
   },
   {
-    "event_id": "977e9394-d105-457f-a7a7-cb380c00ab15",
+    "event_id": "0307cbe5-31c6-4f65-91a7-9814b138f820",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:41.528Z",
+    "timestamp_utc": "2026-05-13T20:03:29.672Z",
     "confidence_score": 0.8718,
     "gps_location": {
       "latitude": 37.91552965,
@@ -2347,15 +2347,15 @@
     },
     "notes": "theta=-6.5deg dist=8.2m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:41.528Z#977e9394-d105-457f-a7a7-cb380c00ab15",
-    "expires_at": 1778753081,
-    "ingested_at_epoch": 1778666681
+    "ts_event": "2026-05-13T20:03:29.672Z#0307cbe5-31c6-4f65-91a7-9814b138f820",
+    "expires_at": 1778789009,
+    "ingested_at_epoch": 1778702609
   },
   {
-    "event_id": "62e8103e-7658-4453-8b7b-32701b7df87a",
+    "event_id": "81a4137e-c8ae-42a8-962c-f40cf5dfbadc",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:41.851Z",
+    "timestamp_utc": "2026-05-13T20:03:29.994Z",
     "confidence_score": 0.867,
     "gps_location": {
       "latitude": 37.91551973,
@@ -2396,15 +2396,15 @@
     },
     "notes": "theta=-7.8deg dist=9.3m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:41.851Z#62e8103e-7658-4453-8b7b-32701b7df87a",
-    "expires_at": 1778753081,
-    "ingested_at_epoch": 1778666681
+    "ts_event": "2026-05-13T20:03:29.994Z#81a4137e-c8ae-42a8-962c-f40cf5dfbadc",
+    "expires_at": 1778789009,
+    "ingested_at_epoch": 1778702609
   },
   {
-    "event_id": "59824b77-5582-442f-b17b-0799503f4f24",
+    "event_id": "ff7b2a3a-8d35-4c76-86f2-3a984f57ba99",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:42.174Z",
+    "timestamp_utc": "2026-05-13T20:03:30.317Z",
     "confidence_score": 0.866,
     "gps_location": {
       "latitude": 37.91550702,
@@ -2445,15 +2445,15 @@
     },
     "notes": "theta=-9.3deg dist=10.7m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:42.174Z#59824b77-5582-442f-b17b-0799503f4f24",
-    "expires_at": 1778753082,
-    "ingested_at_epoch": 1778666682
+    "ts_event": "2026-05-13T20:03:30.317Z#ff7b2a3a-8d35-4c76-86f2-3a984f57ba99",
+    "expires_at": 1778789010,
+    "ingested_at_epoch": 1778702610
   },
   {
-    "event_id": "44b9bb17-a806-4edf-bdfb-cfc0701e87bc",
+    "event_id": "1018ef81-44a0-4628-bc0e-260c9d32aecc",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:42.496Z",
+    "timestamp_utc": "2026-05-13T20:03:30.639Z",
     "confidence_score": 0.8619,
     "gps_location": {
       "latitude": 37.91550076,
@@ -2494,15 +2494,15 @@
     },
     "notes": "theta=-10.0deg dist=11.4m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:42.496Z#44b9bb17-a806-4edf-bdfb-cfc0701e87bc",
-    "expires_at": 1778753082,
-    "ingested_at_epoch": 1778666682
+    "ts_event": "2026-05-13T20:03:30.639Z#1018ef81-44a0-4628-bc0e-260c9d32aecc",
+    "expires_at": 1778789010,
+    "ingested_at_epoch": 1778702610
   },
   {
-    "event_id": "49439f5c-dce6-49f9-b925-9de57ef30c4f",
+    "event_id": "ded8c59a-74eb-46e4-a278-1ecb5bcd9ddb",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:42.819Z",
+    "timestamp_utc": "2026-05-13T20:03:30.962Z",
     "confidence_score": 0.8502,
     "gps_location": {
       "latitude": 37.91548647,
@@ -2543,15 +2543,15 @@
     },
     "notes": "theta=-11.3deg dist=12.9m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:42.819Z#49439f5c-dce6-49f9-b925-9de57ef30c4f",
-    "expires_at": 1778753082,
-    "ingested_at_epoch": 1778666682
+    "ts_event": "2026-05-13T20:03:30.962Z#ded8c59a-74eb-46e4-a278-1ecb5bcd9ddb",
+    "expires_at": 1778789010,
+    "ingested_at_epoch": 1778702610
   },
   {
-    "event_id": "7c3da14d-6e05-4b45-beb6-94f85374b653",
+    "event_id": "595cf160-b595-4f49-b4ea-ac573d49845b",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:43.141Z",
+    "timestamp_utc": "2026-05-13T20:03:31.285Z",
     "confidence_score": 0.7975,
     "gps_location": {
       "latitude": 37.91547884,
@@ -2592,15 +2592,15 @@
     },
     "notes": "theta=-11.8deg dist=13.8m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:43.141Z#7c3da14d-6e05-4b45-beb6-94f85374b653",
-    "expires_at": 1778753083,
-    "ingested_at_epoch": 1778666683
+    "ts_event": "2026-05-13T20:03:31.285Z#595cf160-b595-4f49-b4ea-ac573d49845b",
+    "expires_at": 1778789011,
+    "ingested_at_epoch": 1778702611
   },
   {
-    "event_id": "f51515ab-72b3-41ba-a5db-bacf63e6d9e8",
+    "event_id": "44f95265-0368-41b4-9682-f73c8ccb62fd",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:43.464Z",
+    "timestamp_utc": "2026-05-13T20:03:31.607Z",
     "confidence_score": 0.8452,
     "gps_location": {
       "latitude": 37.91546817,
@@ -2641,15 +2641,15 @@
     },
     "notes": "theta=-12.1deg dist=14.9m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:43.464Z#f51515ab-72b3-41ba-a5db-bacf63e6d9e8",
-    "expires_at": 1778753083,
-    "ingested_at_epoch": 1778666683
+    "ts_event": "2026-05-13T20:03:31.607Z#44f95265-0368-41b4-9682-f73c8ccb62fd",
+    "expires_at": 1778789011,
+    "ingested_at_epoch": 1778702611
   },
   {
-    "event_id": "db2185ca-30fb-4265-a39a-ae5ee8f44757",
+    "event_id": "89609bbf-052e-44e2-8d14-bf6b6f01483b",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:43.786Z",
+    "timestamp_utc": "2026-05-13T20:03:31.930Z",
     "confidence_score": 0.825,
     "gps_location": {
       "latitude": 37.91545479,
@@ -2690,15 +2690,15 @@
     },
     "notes": "theta=-12.7deg dist=16.4m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:43.786Z#db2185ca-30fb-4265-a39a-ae5ee8f44757",
-    "expires_at": 1778753083,
-    "ingested_at_epoch": 1778666683
+    "ts_event": "2026-05-13T20:03:31.930Z#89609bbf-052e-44e2-8d14-bf6b6f01483b",
+    "expires_at": 1778789011,
+    "ingested_at_epoch": 1778702611
   },
   {
-    "event_id": "4a99055c-b8ed-4f44-b8ee-2dafb66f2ef7",
+    "event_id": "20e5ff82-ccb0-4cc8-8c3b-9c9ad1d4bf53",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:44.109Z",
+    "timestamp_utc": "2026-05-13T20:03:32.252Z",
     "confidence_score": 0.7937,
     "gps_location": {
       "latitude": 37.91544753,
@@ -2739,15 +2739,15 @@
     },
     "notes": "theta=-13.0deg dist=17.2m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:44.109Z#4a99055c-b8ed-4f44-b8ee-2dafb66f2ef7",
-    "expires_at": 1778753084,
-    "ingested_at_epoch": 1778666684
+    "ts_event": "2026-05-13T20:03:32.252Z#20e5ff82-ccb0-4cc8-8c3b-9c9ad1d4bf53",
+    "expires_at": 1778789012,
+    "ingested_at_epoch": 1778702612
   },
   {
-    "event_id": "6b3c7a79-d112-46ac-b7ff-3588eca5fed7",
+    "event_id": "8d11e724-2337-4673-a661-3e0dd155828f",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:44.432Z",
+    "timestamp_utc": "2026-05-13T20:03:32.575Z",
     "confidence_score": 0.8021,
     "gps_location": {
       "latitude": 37.91543329,
@@ -2788,15 +2788,15 @@
     },
     "notes": "theta=-13.5deg dist=18.8m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:44.432Z#6b3c7a79-d112-46ac-b7ff-3588eca5fed7",
-    "expires_at": 1778753084,
-    "ingested_at_epoch": 1778666684
+    "ts_event": "2026-05-13T20:03:32.575Z#8d11e724-2337-4673-a661-3e0dd155828f",
+    "expires_at": 1778789012,
+    "ingested_at_epoch": 1778702612
   },
   {
-    "event_id": "c7d9fbaf-0551-4f01-81b8-cdbf9d3b9f36",
+    "event_id": "a15af07f-4d94-42d1-b754-88622da9e94e",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:44.754Z",
+    "timestamp_utc": "2026-05-13T20:03:32.897Z",
     "confidence_score": 0.8116,
     "gps_location": {
       "latitude": 37.91542654,
@@ -2837,15 +2837,15 @@
     },
     "notes": "theta=-13.9deg dist=19.6m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:44.754Z#c7d9fbaf-0551-4f01-81b8-cdbf9d3b9f36",
-    "expires_at": 1778753084,
-    "ingested_at_epoch": 1778666684
+    "ts_event": "2026-05-13T20:03:32.897Z#a15af07f-4d94-42d1-b754-88622da9e94e",
+    "expires_at": 1778789012,
+    "ingested_at_epoch": 1778702612
   },
   {
-    "event_id": "b172a0cd-80b9-4c7b-9e92-ac934951ec48",
+    "event_id": "e62402c6-e6a3-497b-b12a-1d57b4fc9dd8",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:45.077Z",
+    "timestamp_utc": "2026-05-13T20:03:33.220Z",
     "confidence_score": 0.8158,
     "gps_location": {
       "latitude": 37.91541177,
@@ -2886,15 +2886,15 @@
     },
     "notes": "theta=-14.5deg dist=21.2m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:45.077Z#b172a0cd-80b9-4c7b-9e92-ac934951ec48",
-    "expires_at": 1778753085,
-    "ingested_at_epoch": 1778666685
+    "ts_event": "2026-05-13T20:03:33.220Z#e62402c6-e6a3-497b-b12a-1d57b4fc9dd8",
+    "expires_at": 1778789013,
+    "ingested_at_epoch": 1778702613
   },
   {
-    "event_id": "35a3034c-13f8-47e5-af13-46b027166116",
+    "event_id": "dcf1140f-359a-460b-b9f0-1087198f5a58",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:45.399Z",
+    "timestamp_utc": "2026-05-13T20:03:33.543Z",
     "confidence_score": 0.7879,
     "gps_location": {
       "latitude": 37.91540223,
@@ -2935,15 +2935,15 @@
     },
     "notes": "theta=-14.9deg dist=22.2m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:45.399Z#35a3034c-13f8-47e5-af13-46b027166116",
-    "expires_at": 1778753085,
-    "ingested_at_epoch": 1778666685
+    "ts_event": "2026-05-13T20:03:33.543Z#dcf1140f-359a-460b-b9f0-1087198f5a58",
+    "expires_at": 1778789013,
+    "ingested_at_epoch": 1778702613
   },
   {
-    "event_id": "4f59437d-1b6e-4582-a56d-4dc36fd6c0d7",
+    "event_id": "5012a43c-ace7-4abf-93c9-2b2c19ce790b",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:45.722Z",
+    "timestamp_utc": "2026-05-13T20:03:33.865Z",
     "confidence_score": 0.779,
     "gps_location": {
       "latitude": 37.91539118,
@@ -2984,15 +2984,15 @@
     },
     "notes": "theta=-15.3deg dist=23.5m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:45.722Z#4f59437d-1b6e-4582-a56d-4dc36fd6c0d7",
-    "expires_at": 1778753085,
-    "ingested_at_epoch": 1778666685
+    "ts_event": "2026-05-13T20:03:33.865Z#5012a43c-ace7-4abf-93c9-2b2c19ce790b",
+    "expires_at": 1778789013,
+    "ingested_at_epoch": 1778702613
   },
   {
-    "event_id": "70ff76d6-c6fb-4fee-a79c-7bb350ac7ca7",
+    "event_id": "86bb6be9-98f9-4dbb-ae1d-e86086cc44f6",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:46.045Z",
+    "timestamp_utc": "2026-05-13T20:03:34.188Z",
     "confidence_score": 0.8235,
     "gps_location": {
       "latitude": 37.91537925,
@@ -3033,15 +3033,15 @@
     },
     "notes": "theta=-15.9deg dist=24.8m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:46.045Z#70ff76d6-c6fb-4fee-a79c-7bb350ac7ca7",
-    "expires_at": 1778753086,
-    "ingested_at_epoch": 1778666686
+    "ts_event": "2026-05-13T20:03:34.188Z#86bb6be9-98f9-4dbb-ae1d-e86086cc44f6",
+    "expires_at": 1778789014,
+    "ingested_at_epoch": 1778702614
   },
   {
-    "event_id": "bec926f1-cc71-4224-822c-7f163f3b5cc2",
+    "event_id": "a75229fb-95b0-49bd-bc78-c90a730166ff",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:46.367Z",
+    "timestamp_utc": "2026-05-13T20:03:34.510Z",
     "confidence_score": 0.7695,
     "gps_location": {
       "latitude": 37.91537119,
@@ -3082,15 +3082,15 @@
     },
     "notes": "theta=-16.1deg dist=25.7m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:46.367Z#bec926f1-cc71-4224-822c-7f163f3b5cc2",
-    "expires_at": 1778753086,
-    "ingested_at_epoch": 1778666686
+    "ts_event": "2026-05-13T20:03:34.510Z#a75229fb-95b0-49bd-bc78-c90a730166ff",
+    "expires_at": 1778789014,
+    "ingested_at_epoch": 1778702614
   },
   {
-    "event_id": "4837cfb2-59e5-480a-b195-f66ba08b7262",
+    "event_id": "9c8289f5-5734-4ab5-b772-c95cf50cda6f",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:46.690Z",
+    "timestamp_utc": "2026-05-13T20:03:34.833Z",
     "confidence_score": 0.764,
     "gps_location": {
       "latitude": 37.91535693,
@@ -3131,15 +3131,15 @@
     },
     "notes": "theta=-16.1deg dist=27.3m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:46.690Z#4837cfb2-59e5-480a-b195-f66ba08b7262",
-    "expires_at": 1778753086,
-    "ingested_at_epoch": 1778666686
+    "ts_event": "2026-05-13T20:03:34.833Z#9c8289f5-5734-4ab5-b772-c95cf50cda6f",
+    "expires_at": 1778789014,
+    "ingested_at_epoch": 1778702614
   },
   {
-    "event_id": "b2adc46a-61ec-498c-b51b-14df6da72b9b",
+    "event_id": "d90fd2e8-e107-4d22-8107-850f4c67c237",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:47.012Z",
+    "timestamp_utc": "2026-05-13T20:03:35.156Z",
     "confidence_score": 0.7427,
     "gps_location": {
       "latitude": 37.91535065,
@@ -3180,15 +3180,15 @@
     },
     "notes": "theta=-16.0deg dist=28.0m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:47.012Z#b2adc46a-61ec-498c-b51b-14df6da72b9b",
-    "expires_at": 1778753087,
-    "ingested_at_epoch": 1778666687
+    "ts_event": "2026-05-13T20:03:35.156Z#d90fd2e8-e107-4d22-8107-850f4c67c237",
+    "expires_at": 1778789015,
+    "ingested_at_epoch": 1778702615
   },
   {
-    "event_id": "19a1d744-c788-49aa-b58e-b9c565138ac3",
+    "event_id": "00dd9158-8677-49d2-9974-211b8ab97c3b",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:47.335Z",
+    "timestamp_utc": "2026-05-13T20:03:35.478Z",
     "confidence_score": 0.7757,
     "gps_location": {
       "latitude": 37.91533554,
@@ -3229,15 +3229,15 @@
     },
     "notes": "theta=-16.3deg dist=29.6m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:47.335Z#19a1d744-c788-49aa-b58e-b9c565138ac3",
-    "expires_at": 1778753087,
-    "ingested_at_epoch": 1778666687
+    "ts_event": "2026-05-13T20:03:35.478Z#00dd9158-8677-49d2-9974-211b8ab97c3b",
+    "expires_at": 1778789015,
+    "ingested_at_epoch": 1778702615
   },
   {
-    "event_id": "cad49453-e217-41f2-8136-ed1b71173773",
+    "event_id": "c89b634b-f13d-4cf7-bb91-9e8e98551119",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:47.657Z",
+    "timestamp_utc": "2026-05-13T20:03:35.801Z",
     "confidence_score": 0.686,
     "gps_location": {
       "latitude": 37.91532637,
@@ -3278,15 +3278,15 @@
     },
     "notes": "theta=-16.3deg dist=30.7m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:47.657Z#cad49453-e217-41f2-8136-ed1b71173773",
-    "expires_at": 1778753087,
-    "ingested_at_epoch": 1778666687
+    "ts_event": "2026-05-13T20:03:35.801Z#c89b634b-f13d-4cf7-bb91-9e8e98551119",
+    "expires_at": 1778789015,
+    "ingested_at_epoch": 1778702615
   },
   {
-    "event_id": "1cadee01-33c0-43e1-b11a-a881a80fcfcb",
+    "event_id": "258ce067-e90f-4883-b5c8-748973d9a2e3",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:47.980Z",
+    "timestamp_utc": "2026-05-13T20:03:36.123Z",
     "confidence_score": 0.719,
     "gps_location": {
       "latitude": 37.91531496,
@@ -3327,15 +3327,15 @@
     },
     "notes": "theta=-16.2deg dist=31.9m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:47.980Z#1cadee01-33c0-43e1-b11a-a881a80fcfcb",
-    "expires_at": 1778753087,
-    "ingested_at_epoch": 1778666687
+    "ts_event": "2026-05-13T20:03:36.123Z#258ce067-e90f-4883-b5c8-748973d9a2e3",
+    "expires_at": 1778789016,
+    "ingested_at_epoch": 1778702616
   },
   {
-    "event_id": "33d5a809-21f8-4982-a421-0e3e59535e5f",
+    "event_id": "6c6ff13e-84b2-48bb-84f6-1f0316fd8767",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:48.303Z",
+    "timestamp_utc": "2026-05-13T20:03:36.446Z",
     "confidence_score": 0.6851,
     "gps_location": {
       "latitude": 37.91530808,
@@ -3376,15 +3376,15 @@
     },
     "notes": "theta=-16.0deg dist=32.7m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:48.303Z#33d5a809-21f8-4982-a421-0e3e59535e5f",
-    "expires_at": 1778753088,
-    "ingested_at_epoch": 1778666688
+    "ts_event": "2026-05-13T20:03:36.446Z#6c6ff13e-84b2-48bb-84f6-1f0316fd8767",
+    "expires_at": 1778789016,
+    "ingested_at_epoch": 1778702616
   },
   {
-    "event_id": "42068b02-7e92-43dd-b258-3a81355506a4",
+    "event_id": "30955d68-52e7-4eb2-b442-5577e78ca9ed",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:48.625Z",
+    "timestamp_utc": "2026-05-13T20:03:36.768Z",
     "confidence_score": 0.7262,
     "gps_location": {
       "latitude": 37.91529387,
@@ -3425,15 +3425,15 @@
     },
     "notes": "theta=-16.1deg dist=34.3m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:48.625Z#42068b02-7e92-43dd-b258-3a81355506a4",
-    "expires_at": 1778753088,
-    "ingested_at_epoch": 1778666688
+    "ts_event": "2026-05-13T20:03:36.768Z#30955d68-52e7-4eb2-b442-5577e78ca9ed",
+    "expires_at": 1778789016,
+    "ingested_at_epoch": 1778702616
   },
   {
-    "event_id": "855248b1-aae4-49a9-bb81-6631528d0c48",
+    "event_id": "a68b4f9c-0667-4967-85b5-69addd6a4cbd",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:48.948Z",
+    "timestamp_utc": "2026-05-13T20:03:37.091Z",
     "confidence_score": 0.601,
     "gps_location": {
       "latitude": 37.91528332,
@@ -3474,15 +3474,15 @@
     },
     "notes": "theta=-15.9deg dist=35.5m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:48.948Z#855248b1-aae4-49a9-bb81-6631528d0c48",
-    "expires_at": 1778753088,
-    "ingested_at_epoch": 1778666688
+    "ts_event": "2026-05-13T20:03:37.091Z#a68b4f9c-0667-4967-85b5-69addd6a4cbd",
+    "expires_at": 1778789017,
+    "ingested_at_epoch": 1778702617
   },
   {
-    "event_id": "e626e570-288b-48db-8b84-0a97cb9cd7d8",
+    "event_id": "17895add-74b8-4af1-a093-0428549ddeaf",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:49.270Z",
+    "timestamp_utc": "2026-05-13T20:03:37.414Z",
     "confidence_score": 0.7097,
     "gps_location": {
       "latitude": 37.91527392,
@@ -3523,15 +3523,15 @@
     },
     "notes": "theta=-15.6deg dist=36.5m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:49.270Z#e626e570-288b-48db-8b84-0a97cb9cd7d8",
-    "expires_at": 1778753089,
-    "ingested_at_epoch": 1778666689
+    "ts_event": "2026-05-13T20:03:37.414Z#17895add-74b8-4af1-a093-0428549ddeaf",
+    "expires_at": 1778789017,
+    "ingested_at_epoch": 1778702617
   },
   {
-    "event_id": "39444877-47d9-40c9-8bdb-01f1851df77b",
+    "event_id": "2c498c05-8ce6-4afa-9da2-60a3fd050f9d",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:49.593Z",
+    "timestamp_utc": "2026-05-13T20:03:37.736Z",
     "confidence_score": 0.74,
     "gps_location": {
       "latitude": 37.91526771,
@@ -3572,15 +3572,15 @@
     },
     "notes": "theta=-15.3deg dist=37.2m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:49.593Z#39444877-47d9-40c9-8bdb-01f1851df77b",
-    "expires_at": 1778753089,
-    "ingested_at_epoch": 1778666689
+    "ts_event": "2026-05-13T20:03:37.736Z#2c498c05-8ce6-4afa-9da2-60a3fd050f9d",
+    "expires_at": 1778789017,
+    "ingested_at_epoch": 1778702617
   },
   {
-    "event_id": "c493c3e5-b9ac-4707-8e55-9ea2f1381c0a",
+    "event_id": "441fc9d5-8b5a-4461-bb7d-1457f1ac97d6",
     "object_id": "global_person_6",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T10:04:49.915Z",
+    "timestamp_utc": "2026-05-13T20:03:38.059Z",
     "confidence_score": 0.6477,
     "gps_location": {
       "latitude": 37.91525777,
@@ -3621,8 +3621,8 @@
     },
     "notes": "theta=-15.1deg dist=38.4m",
     "device_id": "cam-001-ch1",
-    "ts_event": "2026-05-13T10:04:49.915Z#c493c3e5-b9ac-4707-8e55-9ea2f1381c0a",
-    "expires_at": 1778753089,
-    "ingested_at_epoch": 1778666689
+    "ts_event": "2026-05-13T20:03:38.059Z#441fc9d5-8b5a-4461-bb7d-1457f1ac97d6",
+    "expires_at": 1778789018,
+    "ingested_at_epoch": 1778702618
   }
 ]

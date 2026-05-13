@@ -203,6 +203,15 @@ class MultiCameraPipeline:
         if len(caps) > 0:
             fps = int(caps[0].get(cv2.CAP_PROP_FPS)) or 30
 
+        num_cams = len(caps)
+        if num_cams == 1:
+            out_size = (640, 480)
+        elif num_cams == 4:
+            out_size = (1280, 960) # 2x2 grid
+        else:
+            # Default horizontal concatenation for 2 or 3 cameras
+            out_size = (640 * num_cams, 480)
+
         # --- NEW: Initialize the Video Writer ---
         writer = None
         if output_video and len(caps) > 0:
@@ -211,8 +220,7 @@ class MultiCameraPipeline:
             
             # Use mp4v codec for standard .mp4 output
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-            # 2x2 grid of 640x480 frames = 1280x960 resolution
-            writer = cv2.VideoWriter(output_video, fourcc, out_fps, (1280, 960))
+            writer = cv2.VideoWriter(output_video, fourcc, out_fps, out_size)
         
         print(f"🚀 Starting Multi-Stream Pipeline for {len(caps)} cameras...")
 
@@ -912,7 +920,7 @@ if __name__ == "__main__":
         show_live=True, 
         upload=False,
         output_json='multi_cam_detections.json',
-        output_video=None,#'output.mp4',
+        output_video=None,
         output_image=None, #'annotated_output.jpg',
         output_validate=False
     )
