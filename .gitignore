@@ -16,5 +16,6 @@ runs/*
 __pycache__/
 *.jpg
 *.json
+!multi_cam_detections.json
 *.mp4
 camera_views

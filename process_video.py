@@ -115,6 +115,11 @@ class MultiCameraPipeline:
             for existing_det in clean_buffer:
                 if new_det['object_type'] != existing_det['object_type']:
                     continue
+                
+                # ✅ FIX: Prevent merging distinct objects seen by the SAME camera.
+                # If YOLO separated them into two boxes on the same feed, keep them separate.
+                if new_det['device_id'] == existing_det['device_id']:
+                    continue
                     
                 dist = self.haversine_distance_meters(
                     new_det['gps_location']['latitude'], 
@@ -129,6 +134,8 @@ class MultiCameraPipeline:
                         existing_det['confidence_score'] = new_det['confidence_score']
                         existing_det['gps_location'] = new_det['gps_location']
                         existing_det['device_id'] = new_det['device_id']
+                        # Good practice: also update the underlying camera metadata when overwriting
+                        existing_det['camera_data'] = new_det['camera_data'] 
                     break
                     
             if not is_duplicate:
@@ -136,12 +143,13 @@ class MultiCameraPipeline:
 
         # 2. Temporal Tracking (Cross frames)
         tracked_buffer = []
+        claimed_gids = set() # Prevent multiple detections in the same frame from claiming the same track
         for det in clean_buffer:
             best_match_id = None
             min_dist = float('inf')
             
             for gid, track in self.global_tracks.items():
-                if track['type'] != det['object_type']:
+                if track['type'] != det['object_type'] or gid in claimed_gids:
                     continue
                 # Forget tracks that haven't been seen in > 3 seconds
                 if current_time_epoch - track['last_seen'] > 3.0:
@@ -152,12 +160,13 @@ class MultiCameraPipeline:
                     track['lat'], track['lon']
                 )
                 
-                # Match to track if within larger tracking radius (e.g. 15m)
-                if dist < 15.0 and dist < min_dist:
+                # Match to track if within larger tracking radius (e.g. 5m)
+                if dist < 5.0 and dist < min_dist:
                     best_match_id = gid
                     min_dist = dist
                     
             if best_match_id is not None:
+                claimed_gids.add(best_match_id)
                 self.global_tracks[best_match_id]['lat'] = det['gps_location']['latitude']
                 self.global_tracks[best_match_id]['lon'] = det['gps_location']['longitude']
                 self.global_tracks[best_match_id]['last_seen'] = current_time_epoch
@@ -172,7 +181,7 @@ class MultiCameraPipeline:
                     'last_seen': current_time_epoch
                 }
                 det['object_id'] = f"global_{det['object_type']}_{new_gid}"
-                
+
             tracked_buffer.append(det)
 
         return tracked_buffer
@@ -249,7 +258,8 @@ class MultiCameraPipeline:
                         annotated_frames.append(annotated)
 
                 # Deduplicate objects crossing the seams
-                clean_batch = self.deduplicate(raw_buffer, current_epoch, merge_radius_meters=8)
+                # Using a smaller radius (1.5m) so we don't accidentally merge multiple people in the same frame
+                clean_batch = self.deduplicate(raw_buffer, current_epoch, merge_radius_meters=1.5)
                 self.all_clean_detections.extend(clean_batch)
 
                 # Batch Upload
@@ -880,19 +890,21 @@ if __name__ == "__main__":
     # cam4 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -43.67, -39.49, "cam-001-ch4", base_lat, base_lon, "Richmond", "CA", "USA")
     #cam4.process_video(video_path=video_path, output_json='multi_cam_detections.json', show_live=True, upload=False)
     #pipeline = MultiCameraPipeline(detectors=[cam1, cam2, cam3, cam4])
-    pipeline = MultiCameraPipeline(detectors=[cam1,cam2])
+    pipeline = MultiCameraPipeline(detectors=[cam1])
 
     video_paths = [
         #'camera_views/ch1/event3/sensor_0_20260302_123255.ts'
         #'camera_views/ch1/NE-SE_5m_ch1.png'
         #'camera_views/ch1/center/EastRoad_center_0_ch1.png',
         #'camera_views/ch4/NE-SE_5m_ch4.png'
-        'camera_views/ch1/event1/sensor_0_20260302_122940.ts',
-        'camera_views/ch2/event1/sensor_1_20260302_122940.ts',
+        #'camera_views/ch1/event1/sensor_0_20260302_122940.ts',
+        #'camera_views/ch2/event1/sensor_1_20260302_122940.ts',
         # 'camera_views/ch3/event2/sensor_2_20260302_123039.ts',
         # 'camera_views/ch4/event2/sensor_3_20260302_123039.ts'
-        #'camera_views/ch4/event3/sensor_3_20260302_123255.ts'
-        #'camera_views/ch3/event3/sensor_2_20260302_123255.ts'
+        # 'camera_views/ch4/event3/sensor_3_20260302_123255.ts',
+        # 'camera_views/ch3/event3/sensor_2_20260302_123255.ts'
+        'camera_views/ch1/event2/sensor_0_20260302_123039.ts',
+        # 'camera_views/ch4/event2/sensor_3_20260302_123039.ts'
     ]
 
     pipeline.process_streams(

@@ -1,0 +1,3628 @@
+[
+  {
+    "event_id": "d8873662-cd56-4023-863c-9d4fed95d0b7",
+    "object_id": "global_person_1",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:01.561Z",
+    "confidence_score": 0.6659,
+    "gps_location": {
+      "latitude": 37.91521676,
+      "longitude": -122.33485453
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1,
+        "bbox": {
+          "x1": 2235.531982421875,
+          "y1": 80.77639770507812,
+          "x2": 2306.245361328125,
+          "y2": 250.69723510742188
+        },
+        "pixel_centroid": {
+          "x": 2270.888671875,
+          "y": 165.73681640625
+        },
+        "world_position": {
+          "X": -9.10935372294605,
+          "Y": 0.0,
+          "Z": 42.22293544124988,
+          "theta_rad": -0.21248737706413243,
+          "theta_deg": -12.174629905579717,
+          "distance": 43.19440475947905,
+          "uncertainty_meters": 0.12392958681152777
+        }
+      }
+    },
+    "notes": "theta=-12.2deg dist=43.2m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:01.561Z#d8873662-cd56-4023-863c-9d4fed95d0b7",
+    "expires_at": 1778753041,
+    "ingested_at_epoch": 1778666641
+  },
+  {
+    "event_id": "f35135cf-5e26-4b0b-be42-68e9dc437128",
+    "object_id": "global_person_1",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:01.561Z",
+    "confidence_score": 0.3554,
+    "gps_location": {
+      "latitude": 37.91521071,
+      "longitude": -122.33488481
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1,
+        "bbox": {
+          "x1": 2371.25634765625,
+          "y1": 118.53350830078125,
+          "x2": 2421.73486328125,
+          "y2": 255.80450439453125
+        },
+        "pixel_centroid": {
+          "x": 2396.49560546875,
+          "y": 187.16900634765625
+        },
+        "world_position": {
+          "X": -6.8405672797102195,
+          "Y": 0.0,
+          "Z": 43.765259150016405,
+          "theta_rad": -0.15504682740862996,
+          "theta_deg": -8.883528837407791,
+          "distance": 44.296628191955385,
+          "uncertainty_meters": 0.12633679602124204
+        }
+      }
+    },
+    "notes": "theta=-8.9deg dist=44.3m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:01.561Z#f35135cf-5e26-4b0b-be42-68e9dc437128",
+    "expires_at": 1778753041,
+    "ingested_at_epoch": 1778666641
+  },
+  {
+    "event_id": "20d17a0a-134b-42b5-b34f-17e00703d831",
+    "object_id": "global_person_1",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:01.851Z",
+    "confidence_score": 0.6154,
+    "gps_location": {
+      "latitude": 37.91521795,
+      "longitude": -122.33485426
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 10,
+        "bbox": {
+          "x1": 2233.00537109375,
+          "y1": 79.45391845703125,
+          "x2": 2307.3955078125,
+          "y2": 251.66354370117188
+        },
+        "pixel_centroid": {
+          "x": 2270.200439453125,
+          "y": 165.55873107910156
+        },
+        "world_position": {
+          "X": -9.086647690684877,
+          "Y": 0.0,
+          "Z": 42.09115733013751,
+          "theta_rad": -0.21261732327315966,
+          "theta_deg": -12.182075274920702,
+          "distance": 43.06080226429853,
+          "uncertainty_meters": 0.12325638058483435
+        }
+      }
+    },
+    "notes": "theta=-12.2deg dist=43.1m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:01.851Z#20d17a0a-134b-42b5-b34f-17e00703d831",
+    "expires_at": 1778753041,
+    "ingested_at_epoch": 1778666641
+  },
+  {
+    "event_id": "43f2e381-f91d-47c8-b565-c5349bba9ee6",
+    "object_id": "global_person_2",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:01.851Z",
+    "confidence_score": 0.3759,
+    "gps_location": {
+      "latitude": 37.91521206,
+      "longitude": -122.33488452
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 10,
+        "bbox": {
+          "x1": 2370.753173828125,
+          "y1": 115.55510711669922,
+          "x2": 2421.540771484375,
+          "y2": 256.9442443847656
+        },
+        "pixel_centroid": {
+          "x": 2396.14697265625,
+          "y": 186.2496795654297
+        },
+        "world_position": {
+          "X": -6.813321381075607,
+          "Y": 0.0,
+          "Z": 43.61532096053021,
+          "theta_rad": -0.15496154670369217,
+          "theta_deg": -8.878642612940956,
+          "distance": 44.14428129137327,
+          "uncertainty_meters": 0.12556108120237042
+        }
+      }
+    },
+    "notes": "theta=-8.9deg dist=44.1m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:01.851Z#43f2e381-f91d-47c8-b565-c5349bba9ee6",
+    "expires_at": 1778753041,
+    "ingested_at_epoch": 1778666641
+  },
+  {
+    "event_id": "f9c7fb57-26b7-46f9-915d-cdf18241e891",
+    "object_id": "global_person_1",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:02.174Z",
+    "confidence_score": 0.5855,
+    "gps_location": {
+      "latitude": 37.91521872,
+      "longitude": -122.33485444
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 20,
+        "bbox": {
+          "x1": 2232.92138671875,
+          "y1": 77.31289672851562,
+          "x2": 2309.576171875,
+          "y2": 252.42630004882812
+        },
+        "pixel_centroid": {
+          "x": 2271.248779296875,
+          "y": 164.86959838867188
+        },
+        "world_position": {
+          "X": -9.042090495885585,
+          "Y": 0.0,
+          "Z": 42.015344343901845,
+          "theta_rad": -0.2119761505355544,
+          "theta_deg": -12.145338783117072,
+          "distance": 42.97730285711784,
+          "uncertainty_meters": 0.12280277664947192
+        }
+      }
+    },
+    "notes": "theta=-12.1deg dist=43.0m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:02.174Z#f9c7fb57-26b7-46f9-915d-cdf18241e891",
+    "expires_at": 1778753042,
+    "ingested_at_epoch": 1778666642
+  },
+  {
+    "event_id": "55cd49d1-1d47-4b75-a3a4-d9b4e9e00eda",
+    "object_id": "global_person_1",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:02.496Z",
+    "confidence_score": 0.5651,
+    "gps_location": {
+      "latitude": 37.91521881,
+      "longitude": -122.33485426
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 30,
+        "bbox": {
+          "x1": 2231.801513671875,
+          "y1": 76.74067687988281,
+          "x2": 2309.208984375,
+          "y2": 252.44467163085938
+        },
+        "pixel_centroid": {
+          "x": 2270.50537109375,
+          "y": 164.59268188476562
+        },
+        "world_position": {
+          "X": -9.053921912400762,
+          "Y": 0.0,
+          "Z": 42.000133326969575,
+          "theta_rad": -0.2123198465839463,
+          "theta_deg": -12.16503111612525,
+          "distance": 42.964924083245755,
+          "uncertainty_meters": 0.12275612488624432
+        }
+      }
+    },
+    "notes": "theta=-12.2deg dist=43.0m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:02.496Z#55cd49d1-1d47-4b75-a3a4-d9b4e9e00eda",
+    "expires_at": 1778753042,
+    "ingested_at_epoch": 1778666642
+  },
+  {
+    "event_id": "044bde6c-7db8-402e-9e28-1656af18f485",
+    "object_id": "global_person_1",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:02.819Z",
+    "confidence_score": 0.5896,
+    "gps_location": {
+      "latitude": 37.91521818,
+      "longitude": -122.33485445
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 40,
+        "bbox": {
+          "x1": 2232.938232421875,
+          "y1": 77.33763885498047,
+          "x2": 2309.258056640625,
+          "y2": 251.93936157226562
+        },
+        "pixel_centroid": {
+          "x": 2271.09814453125,
+          "y": 164.6385040283203
+        },
+        "world_position": {
+          "X": -9.061797368932105,
+          "Y": 0.0,
+          "Z": 42.07275280030378,
+          "theta_rad": -0.21214315535728692,
+          "theta_deg": -12.15490745456068,
+          "distance": 43.037573116418336,
+          "uncertainty_meters": 0.12311623736585631
+        }
+      }
+    },
+    "notes": "theta=-12.2deg dist=43.0m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:02.819Z#044bde6c-7db8-402e-9e28-1656af18f485",
+    "expires_at": 1778753042,
+    "ingested_at_epoch": 1778666642
+  },
+  {
+    "event_id": "a0e33b1a-6511-45de-a110-64e5feb41689",
+    "object_id": "global_person_2",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:02.819Z",
+    "confidence_score": 0.3415,
+    "gps_location": {
+      "latitude": 37.91521889,
+      "longitude": -122.33488197
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 40,
+        "bbox": {
+          "x1": 2354.90380859375,
+          "y1": 106.2300796508789,
+          "x2": 2424.36669921875,
+          "y2": 262.42852783203125
+        },
+        "pixel_centroid": {
+          "x": 2389.63525390625,
+          "y": 184.3292999267578
+        },
+        "world_position": {
+          "X": -6.763513494034833,
+          "Y": 0.0,
+          "Z": 42.82429219395429,
+          "theta_rad": -0.15664250258281248,
+          "theta_deg": -8.974954290362252,
+          "distance": 43.35510485164539,
+          "uncertainty_meters": 0.12171184207623043
+        }
+      }
+    },
+    "notes": "theta=-9.0deg dist=43.4m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:02.819Z#a0e33b1a-6511-45de-a110-64e5feb41689",
+    "expires_at": 1778753042,
+    "ingested_at_epoch": 1778666642
+  },
+  {
+    "event_id": "fb7d89dd-844f-4d7d-9ea8-9f2b09913cfc",
+    "object_id": "global_person_1",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:03.141Z",
+    "confidence_score": 0.6335,
+    "gps_location": {
+      "latitude": 37.91521949,
+      "longitude": -122.33485447
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 50,
+        "bbox": {
+          "x1": 2233.56689453125,
+          "y1": 78.28902435302734,
+          "x2": 2309.78076171875,
+          "y2": 253.13577270507812
+        },
+        "pixel_centroid": {
+          "x": 2271.673828125,
+          "y": 165.71240234375
+        },
+        "world_position": {
+          "X": -9.010024990046738,
+          "Y": 0.0,
+          "Z": 41.93554147781003,
+          "theta_rad": -0.2116367469434922,
+          "theta_deg": -12.125892389740327,
+          "distance": 42.892542351303824,
+          "uncertainty_meters": 0.12235776046638591
+        }
+      }
+    },
+    "notes": "theta=-12.1deg dist=42.9m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:03.141Z#fb7d89dd-844f-4d7d-9ea8-9f2b09913cfc",
+    "expires_at": 1778753043,
+    "ingested_at_epoch": 1778666643
+  },
+  {
+    "event_id": "04094388-005e-49c4-b8f2-bde0dec28889",
+    "object_id": "global_person_2",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:03.141Z",
+    "confidence_score": 0.5565,
+    "gps_location": {
+      "latitude": 37.91523468,
+      "longitude": -122.33487775
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 50,
+        "bbox": {
+          "x1": 2345.213134765625,
+          "y1": 115.09474182128906,
+          "x2": 2417.593505859375,
+          "y2": 276.38330078125
+        },
+        "pixel_centroid": {
+          "x": 2381.4033203125,
+          "y": 195.739013671875
+        },
+        "world_position": {
+          "X": -6.511464438255721,
+          "Y": 0.0,
+          "Z": 41.04645646744886,
+          "theta_rad": -0.15732547277201586,
+          "theta_deg": -9.014085599736857,
+          "distance": 41.559725187552,
+          "uncertainty_meters": 0.11298517146238396
+        }
+      }
+    },
+    "notes": "theta=-9.0deg dist=41.6m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:03.141Z#04094388-005e-49c4-b8f2-bde0dec28889",
+    "expires_at": 1778753043,
+    "ingested_at_epoch": 1778666643
+  },
+  {
+    "event_id": "7bff97f9-142b-4aaf-9f4c-0cddcbf8f669",
+    "object_id": "global_person_1",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:03.464Z",
+    "confidence_score": 0.6704,
+    "gps_location": {
+      "latitude": 37.91521663,
+      "longitude": -122.33485527
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 60,
+        "bbox": {
+          "x1": 2240.830322265625,
+          "y1": 79.7064437866211,
+          "x2": 2306.978271484375,
+          "y2": 250.8275604248047
+        },
+        "pixel_centroid": {
+          "x": 2273.904296875,
+          "y": 165.26699829101562
+        },
+        "world_position": {
+          "X": -9.05388051068002,
+          "Y": 0.0,
+          "Z": 42.259502421874885,
+          "theta_rad": -0.21105425706864916,
+          "theta_deg": -12.092518178302718,
+          "distance": 43.21849485169655,
+          "uncertainty_meters": 0.12398435065001934
+        }
+      }
+    },
+    "notes": "theta=-12.1deg dist=43.2m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:03.464Z#7bff97f9-142b-4aaf-9f4c-0cddcbf8f669",
+    "expires_at": 1778753043,
+    "ingested_at_epoch": 1778666643
+  },
+  {
+    "event_id": "c10313a9-0ff7-4196-8517-ad9a199067ec",
+    "object_id": "global_person_2",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:03.464Z",
+    "confidence_score": 0.5537,
+    "gps_location": {
+      "latitude": 37.9152273,
+      "longitude": -122.33487717
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 60,
+        "bbox": {
+          "x1": 2336.696533203125,
+          "y1": 111.78286743164062,
+          "x2": 2411.063232421875,
+          "y2": 268.7605895996094
+        },
+        "pixel_centroid": {
+          "x": 2373.8798828125,
+          "y": 190.271728515625
+        },
+        "world_position": {
+          "X": -6.840224934978379,
+          "Y": 0.0,
+          "Z": 41.8012045917238,
+          "theta_rad": -0.16219948163756193,
+          "theta_deg": -9.293345737041992,
+          "distance": 42.35716447639349,
+          "uncertainty_meters": 0.11712101867771452
+        }
+      }
+    },
+    "notes": "theta=-9.3deg dist=42.4m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:03.464Z#c10313a9-0ff7-4196-8517-ad9a199067ec",
+    "expires_at": 1778753043,
+    "ingested_at_epoch": 1778666643
+  },
+  {
+    "event_id": "28e71abc-217a-4593-8a26-6ab836a8ad1c",
+    "object_id": "global_person_1",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:03.786Z",
+    "confidence_score": 0.6644,
+    "gps_location": {
+      "latitude": 37.91522036,
+      "longitude": -122.33485548
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 70,
+        "bbox": {
+          "x1": 2235.429443359375,
+          "y1": 79.74873352050781,
+          "x2": 2317.071533203125,
+          "y2": 254.27525329589844
+        },
+        "pixel_centroid": {
+          "x": 2276.25048828125,
+          "y": 167.01199340820312
+        },
+        "world_position": {
+          "X": -8.893734500840457,
+          "Y": 0.0,
+          "Z": 41.875498356453704,
+          "theta_rad": -0.20927551396174668,
+          "theta_deg": -11.990603705439218,
+          "distance": 42.80953020032802,
+          "uncertainty_meters": 0.12182760763268874
+        }
+      }
+    },
+    "notes": "theta=-12.0deg dist=42.8m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:03.786Z#28e71abc-217a-4593-8a26-6ab836a8ad1c",
+    "expires_at": 1778753043,
+    "ingested_at_epoch": 1778666643
+  },
+  {
+    "event_id": "17328563-0db3-4210-bc10-5c5644abfd88",
+    "object_id": "global_person_1",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:04.109Z",
+    "confidence_score": 0.5864,
+    "gps_location": {
+      "latitude": 37.91522256,
+      "longitude": -122.33485472
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 80,
+        "bbox": {
+          "x1": 2231.360107421875,
+          "y1": 79.83541870117188,
+          "x2": 2316.384765625,
+          "y2": 256.0179138183594
+        },
+        "pixel_centroid": {
+          "x": 2273.87255859375,
+          "y": 167.92666625976562
+        },
+        "world_position": {
+          "X": -8.873155934431331,
+          "Y": 0.0,
+          "Z": 41.62258521842743,
+          "theta_rad": -0.21003714633713796,
+          "theta_deg": -12.034242026089663,
+          "distance": 42.55787232113452,
+          "uncertainty_meters": 0.12059683423476031
+        }
+      }
+    },
+    "notes": "theta=-12.0deg dist=42.6m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:04.109Z#17328563-0db3-4210-bc10-5c5644abfd88",
+    "expires_at": 1778753044,
+    "ingested_at_epoch": 1778666644
+  },
+  {
+    "event_id": "084268fa-d422-44e7-a139-87a3754ebce8",
+    "object_id": "global_person_2",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:04.109Z",
+    "confidence_score": 0.496,
+    "gps_location": {
+      "latitude": 37.91526567,
+      "longitude": -122.3348663
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 80,
+        "bbox": {
+          "x1": 2311.37744140625,
+          "y1": 101.17082214355469,
+          "x2": 2384.69140625,
+          "y2": 305.53619384765625
+        },
+        "pixel_centroid": {
+          "x": 2348.034423828125,
+          "y": 203.353515625
+        },
+        "world_position": {
+          "X": -6.275788083915965,
+          "Y": 0.0,
+          "Z": 37.46115078456761,
+          "theta_rad": -0.16598652115377935,
+          "theta_deg": -9.510327118170517,
+          "distance": 37.98319805095843,
+          "uncertainty_meters": 0.0968938197840643
+        }
+      }
+    },
+    "notes": "theta=-9.5deg dist=38.0m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:04.109Z#084268fa-d422-44e7-a139-87a3754ebce8",
+    "expires_at": 1778753044,
+    "ingested_at_epoch": 1778666644
+  },
+  {
+    "event_id": "79869cb0-de6f-4362-ad2e-3c17a37676b4",
+    "object_id": "global_person_1",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:04.432Z",
+    "confidence_score": 0.594,
+    "gps_location": {
+      "latitude": 37.91522454,
+      "longitude": -122.33485306
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 90,
+        "bbox": {
+          "x1": 2231.4521484375,
+          "y1": 80.95320892333984,
+          "x2": 2303.720458984375,
+          "y2": 257.2528381347656
+        },
+        "pixel_centroid": {
+          "x": 2267.58642578125,
+          "y": 169.10302734375
+        },
+        "world_position": {
+          "X": -8.934936974931773,
+          "Y": 0.0,
+          "Z": 41.36564713734029,
+          "theta_rad": -0.21273079198282382,
+          "theta_deg": -12.188576553091254,
+          "distance": 42.3196155681612,
+          "uncertainty_meters": 0.11952657646011744
+        }
+      }
+    },
+    "notes": "theta=-12.2deg dist=42.3m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:04.432Z#79869cb0-de6f-4362-ad2e-3c17a37676b4",
+    "expires_at": 1778753044,
+    "ingested_at_epoch": 1778666644
+  },
+  {
+    "event_id": "4f7ffd6b-5be3-46d4-ae86-385e068513e1",
+    "object_id": "global_person_2",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:04.432Z",
+    "confidence_score": 0.5215,
+    "gps_location": {
+      "latitude": 37.91527402,
+      "longitude": -122.33486378
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 90,
+        "bbox": {
+          "x1": 2304.662353515625,
+          "y1": 100.9415512084961,
+          "x2": 2377.274169921875,
+          "y2": 314.4108581542969
+        },
+        "pixel_centroid": {
+          "x": 2340.96826171875,
+          "y": 207.67620849609375
+        },
+        "world_position": {
+          "X": -6.165797251063966,
+          "Y": 0.0,
+          "Z": 36.511239827061175,
+          "theta_rad": -0.1672955316914202,
+          "theta_deg": -9.585327897315487,
+          "distance": 37.028201272143995,
+          "uncertainty_meters": 0.09274649843383997
+        }
+      }
+    },
+    "notes": "theta=-9.6deg dist=37.0m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:04.432Z#4f7ffd6b-5be3-46d4-ae86-385e068513e1",
+    "expires_at": 1778753044,
+    "ingested_at_epoch": 1778666644
+  },
+  {
+    "event_id": "89b36de9-5502-4a7f-8ece-45944aed5dc6",
+    "object_id": "global_person_1",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:04.754Z",
+    "confidence_score": 0.7392,
+    "gps_location": {
+      "latitude": 37.91522749,
+      "longitude": -122.3348505
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 100,
+        "bbox": {
+          "x1": 2226.254150390625,
+          "y1": 84.18914031982422,
+          "x2": 2289.322021484375,
+          "y2": 259.08612060546875
+        },
+        "pixel_centroid": {
+          "x": 2257.7880859375,
+          "y": 171.63763427734375
+        },
+        "world_position": {
+          "X": -9.033604117172462,
+          "Y": 0.0,
+          "Z": 40.979312362578476,
+          "theta_rad": -0.21697285067074487,
+          "theta_deg": -12.431628612355935,
+          "distance": 41.96319869904548,
+          "uncertainty_meters": 0.11793767409854894
+        }
+      }
+    },
+    "notes": "theta=-12.4deg dist=42.0m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:04.754Z#89b36de9-5502-4a7f-8ece-45944aed5dc6",
+    "expires_at": 1778753044,
+    "ingested_at_epoch": 1778666644
+  },
+  {
+    "event_id": "fc97434b-c6c0-46ad-af84-f65aabfca5b5",
+    "object_id": "global_person_2",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:04.754Z",
+    "confidence_score": 0.5217,
+    "gps_location": {
+      "latitude": 37.91528271,
+      "longitude": -122.33486341
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 100,
+        "bbox": {
+          "x1": 2306.780517578125,
+          "y1": 126.60603332519531,
+          "x2": 2382.6484375,
+          "y2": 325.1542053222656
+        },
+        "pixel_centroid": {
+          "x": 2344.71435546875,
+          "y": 225.880126953125
+        },
+        "world_position": {
+          "X": -5.865686550251211,
+          "Y": 0.0,
+          "Z": 35.59120996004975,
+          "theta_rad": -0.16333889256971976,
+          "theta_deg": -9.358629174585703,
+          "distance": 36.07132524771086,
+          "uncertainty_meters": 0.08846035542730846
+        }
+      }
+    },
+    "notes": "theta=-9.4deg dist=36.1m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:04.754Z#fc97434b-c6c0-46ad-af84-f65aabfca5b5",
+    "expires_at": 1778753044,
+    "ingested_at_epoch": 1778666644
+  },
+  {
+    "event_id": "d04a2a37-8a05-47d4-9163-fbef101b61c3",
+    "object_id": "global_person_1",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:05.077Z",
+    "confidence_score": 0.699,
+    "gps_location": {
+      "latitude": 37.91523224,
+      "longitude": -122.33484775
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 110,
+        "bbox": {
+          "x1": 2214.04296875,
+          "y1": 85.13663482666016,
+          "x2": 2281.320068359375,
+          "y2": 262.5616760253906
+        },
+        "pixel_centroid": {
+          "x": 2247.681640625,
+          "y": 173.84915161132812
+        },
+        "world_position": {
+          "X": -9.079656335520644,
+          "Y": 0.0,
+          "Z": 40.400664399429544,
+          "theta_rad": -0.22106721644488403,
+          "theta_deg": -12.666218490996922,
+          "distance": 41.40837889952339,
+          "uncertainty_meters": 0.11536689176893589
+        }
+      }
+    },
+    "notes": "theta=-12.7deg dist=41.4m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:05.077Z#d04a2a37-8a05-47d4-9163-fbef101b61c3",
+    "expires_at": 1778753045,
+    "ingested_at_epoch": 1778666645
+  },
+  {
+    "event_id": "956e5ac3-96fa-46c4-b118-4123bef65b0e",
+    "object_id": "global_person_2",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:05.077Z",
+    "confidence_score": 0.5849,
+    "gps_location": {
+      "latitude": 37.91528564,
+      "longitude": -122.33486435
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 110,
+        "bbox": {
+          "x1": 2310.2568359375,
+          "y1": 147.01934814453125,
+          "x2": 2392.69580078125,
+          "y2": 329.43365478515625
+        },
+        "pixel_centroid": {
+          "x": 2351.476318359375,
+          "y": 238.22650146484375
+        },
+        "world_position": {
+          "X": -5.676793405139793,
+          "Y": 0.0,
+          "Z": 35.313054479217584,
+          "theta_rad": -0.15939252598107523,
+          "theta_deg": -9.132519024644932,
+          "distance": 35.766433985188236,
+          "uncertainty_meters": 0.08700552161333519
+        }
+      }
+    },
+    "notes": "theta=-9.1deg dist=35.8m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:05.077Z#956e5ac3-96fa-46c4-b118-4123bef65b0e",
+    "expires_at": 1778753045,
+    "ingested_at_epoch": 1778666645
+  },
+  {
+    "event_id": "ed143cec-5094-4a7f-a5c4-0b3fbab87d4b",
+    "object_id": "global_person_1",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:05.399Z",
+    "confidence_score": 0.7227,
+    "gps_location": {
+      "latitude": 37.9152351,
+      "longitude": -122.33484675
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 120,
+        "bbox": {
+          "x1": 2209.843505859375,
+          "y1": 88.0856704711914,
+          "x2": 2278.814697265625,
+          "y2": 264.9370422363281
+        },
+        "pixel_centroid": {
+          "x": 2244.3291015625,
+          "y": 176.5113525390625
+        },
+        "world_position": {
+          "X": -9.052917289253692,
+          "Y": 0.0,
+          "Z": 40.07109684310076,
+          "theta_rad": -0.22219124692791445,
+          "theta_deg": -12.730620693718617,
+          "distance": 41.08099455533213,
+          "uncertainty_meters": 0.11380681061040576
+        }
+      }
+    },
+    "notes": "theta=-12.7deg dist=41.1m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:05.399Z#ed143cec-5094-4a7f-a5c4-0b3fbab87d4b",
+    "expires_at": 1778753045,
+    "ingested_at_epoch": 1778666645
+  },
+  {
+    "event_id": "adef3dab-dc94-41e8-a03d-5bad02c44575",
+    "object_id": "global_person_2",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:05.399Z",
+    "confidence_score": 0.5809,
+    "gps_location": {
+      "latitude": 37.91528967,
+      "longitude": -122.33486507
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 120,
+        "bbox": {
+          "x1": 2316.33740234375,
+          "y1": 153.3348388671875,
+          "x2": 2399.7783203125,
+          "y2": 335.1675109863281
+        },
+        "pixel_centroid": {
+          "x": 2358.057861328125,
+          "y": 244.2511749267578
+        },
+        "world_position": {
+          "X": -5.463317791556081,
+          "Y": 0.0,
+          "Z": 34.91320432363329,
+          "theta_rad": -0.15522403664977413,
+          "theta_deg": -8.893682179016068,
+          "distance": 35.338076877998034,
+          "uncertainty_meters": 0.08503953205209314
+        }
+      }
+    },
+    "notes": "theta=-8.9deg dist=35.3m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:05.399Z#adef3dab-dc94-41e8-a03d-5bad02c44575",
+    "expires_at": 1778753045,
+    "ingested_at_epoch": 1778666645
+  },
+  {
+    "event_id": "218923ee-c43c-4d7b-9c16-0a7d3637e821",
+    "object_id": "global_person_1",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:05.722Z",
+    "confidence_score": 0.7202,
+    "gps_location": {
+      "latitude": 37.9152394,
+      "longitude": -122.33484478
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 130,
+        "bbox": {
+          "x1": 2199.714599609375,
+          "y1": 96.65097045898438,
+          "x2": 2274.55908203125,
+          "y2": 268.37713623046875
+        },
+        "pixel_centroid": {
+          "x": 2237.13671875,
+          "y": 182.51405334472656
+        },
+        "world_position": {
+          "X": -9.052395621966598,
+          "Y": 0.0,
+          "Z": 39.561890898173566,
+          "theta_rad": -0.2249436322014587,
+          "theta_deg": -12.888320753486662,
+          "distance": 40.58434523231327,
+          "uncertainty_meters": 0.11149934552809526
+        }
+      }
+    },
+    "notes": "theta=-12.9deg dist=40.6m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:05.722Z#218923ee-c43c-4d7b-9c16-0a7d3637e821",
+    "expires_at": 1778753045,
+    "ingested_at_epoch": 1778666645
+  },
+  {
+    "event_id": "d096cb9e-2aa7-4fd6-8627-f3ec1f9c666e",
+    "object_id": "global_person_2",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:05.722Z",
+    "confidence_score": 0.5431,
+    "gps_location": {
+      "latitude": 37.91528489,
+      "longitude": -122.33486432
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 130,
+        "bbox": {
+          "x1": 2316.132080078125,
+          "y1": 146.87168884277344,
+          "x2": 2385.53466796875,
+          "y2": 328.4451904296875
+        },
+        "pixel_centroid": {
+          "x": 2350.83349609375,
+          "y": 237.658447265625
+        },
+        "world_position": {
+          "X": -5.707286343245968,
+          "Y": 0.0,
+          "Z": 35.39013341655975,
+          "theta_rad": -0.15989109955395459,
+          "theta_deg": -9.161085186147677,
+          "distance": 35.84738010853375,
+          "uncertainty_meters": 0.08736758942826839
+        }
+      }
+    },
+    "notes": "theta=-9.2deg dist=35.8m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:05.722Z#d096cb9e-2aa7-4fd6-8627-f3ec1f9c666e",
+    "expires_at": 1778753045,
+    "ingested_at_epoch": 1778666645
+  },
+  {
+    "event_id": "0136ac08-2a37-4024-870a-18436fcf1994",
+    "object_id": "global_person_1",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:06.045Z",
+    "confidence_score": 0.6982,
+    "gps_location": {
+      "latitude": 37.91525021,
+      "longitude": -122.33484286
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 140,
+        "bbox": {
+          "x1": 2195.789306640625,
+          "y1": 100.79138946533203,
+          "x2": 2268.168701171875,
+          "y2": 278.5145263671875
+        },
+        "pixel_centroid": {
+          "x": 2231.97900390625,
+          "y": 189.6529541015625
+        },
+        "world_position": {
+          "X": -8.799286636856605,
+          "Y": 0.0,
+          "Z": 38.37345561958314,
+          "theta_rad": -0.2254097262177763,
+          "theta_deg": -12.915025973477963,
+          "distance": 39.36939854132496,
+          "uncertainty_meters": 0.1057094877807998
+        }
+      }
+    },
+    "notes": "theta=-12.9deg dist=39.4m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:06.045Z#0136ac08-2a37-4024-870a-18436fcf1994",
+    "expires_at": 1778753046,
+    "ingested_at_epoch": 1778666646
+  },
+  {
+    "event_id": "9833b778-1fdb-4cf4-9aa0-376d26d35fca",
+    "object_id": "global_person_2",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:06.045Z",
+    "confidence_score": 0.4485,
+    "gps_location": {
+      "latitude": 37.91527586,
+      "longitude": -122.3348636
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 140,
+        "bbox": {
+          "x1": 2306.707763671875,
+          "y1": 128.14907836914062,
+          "x2": 2375.727783203125,
+          "y2": 316.5918273925781
+        },
+        "pixel_centroid": {
+          "x": 2341.2177734375,
+          "y": 222.37045288085938
+        },
+        "world_position": {
+          "X": -6.111000165174016,
+          "Y": 0.0,
+          "Z": 36.31321746687115,
+          "theta_rad": -0.16672367072748656,
+          "theta_deg": -9.552562677613807,
+          "distance": 36.82382497534759,
+          "uncertainty_meters": 0.09183374287619728
+        }
+      }
+    },
+    "notes": "theta=-9.6deg dist=36.8m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:06.045Z#9833b778-1fdb-4cf4-9aa0-376d26d35fca",
+    "expires_at": 1778753046,
+    "ingested_at_epoch": 1778666646
+  },
+  {
+    "event_id": "948dc638-1c79-43af-bf5c-6c1dfe919ee5",
+    "object_id": "global_person_1",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:06.367Z",
+    "confidence_score": 0.6665,
+    "gps_location": {
+      "latitude": 37.91525734,
+      "longitude": -122.33484221
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 150,
+        "bbox": {
+          "x1": 2195.127197265625,
+          "y1": 109.17504119873047,
+          "x2": 2267.357666015625,
+          "y2": 285.75653076171875
+        },
+        "pixel_centroid": {
+          "x": 2231.242431640625,
+          "y": 197.46578979492188
+        },
+        "world_position": {
+          "X": -8.580764181137663,
+          "Y": 0.0,
+          "Z": 37.60787673888869,
+          "theta_rad": -0.22432394976824976,
+          "theta_deg": -12.852815565425393,
+          "distance": 38.57436852029778,
+          "uncertainty_meters": 0.10195420610332206
+        }
+      }
+    },
+    "notes": "theta=-12.9deg dist=38.6m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:06.367Z#948dc638-1c79-43af-bf5c-6c1dfe919ee5",
+    "expires_at": 1778753046,
+    "ingested_at_epoch": 1778666646
+  },
+  {
+    "event_id": "943d01f7-4ea1-4ff7-8a18-46501fafa509",
+    "object_id": "global_person_2",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:06.367Z",
+    "confidence_score": 0.4898,
+    "gps_location": {
+      "latitude": 37.91527322,
+      "longitude": -122.33486235
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 150,
+        "bbox": {
+          "x1": 2294.159423828125,
+          "y1": 132.98475646972656,
+          "x2": 2372.59765625,
+          "y2": 312.7528991699219
+        },
+        "pixel_centroid": {
+          "x": 2333.37841796875,
+          "y": 222.86883544921875
+        },
+        "world_position": {
+          "X": -6.314766385239628,
+          "Y": 0.0,
+          "Z": 36.552131453275905,
+          "theta_rad": -0.17107193987920946,
+          "theta_deg": -9.80170014819446,
+          "distance": 37.09359228057744,
+          "uncertainty_meters": 0.09319428155799869
+        }
+      }
+    },
+    "notes": "theta=-9.8deg dist=37.1m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:06.367Z#943d01f7-4ea1-4ff7-8a18-46501fafa509",
+    "expires_at": 1778753046,
+    "ingested_at_epoch": 1778666646
+  },
+  {
+    "event_id": "c5d910c0-4811-4e6d-bd1b-ffcb8ee0b142",
+    "object_id": "global_person_2",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:06.690Z",
+    "confidence_score": 0.4638,
+    "gps_location": {
+      "latitude": 37.91526211,
+      "longitude": -122.33486217
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 160,
+        "bbox": {
+          "x1": 2290.006103515625,
+          "y1": 119.05169677734375,
+          "x2": 2361.911865234375,
+          "y2": 299.5523681640625
+        },
+        "pixel_centroid": {
+          "x": 2325.958984375,
+          "y": 209.30203247070312
+        },
+        "world_position": {
+          "X": -6.7526248756407545,
+          "Y": 0.0,
+          "Z": 37.709130548570755,
+          "theta_rad": -0.17719328580235466,
+          "theta_deg": -10.152427434530294,
+          "distance": 38.30896069381516,
+          "uncertainty_meters": 0.09885759637827363
+        }
+      }
+    },
+    "notes": "theta=-10.2deg dist=38.3m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:06.690Z#c5d910c0-4811-4e6d-bd1b-ffcb8ee0b142",
+    "expires_at": 1778753046,
+    "ingested_at_epoch": 1778666646
+  },
+  {
+    "event_id": "caeea1c9-65fe-4844-bcf9-abf583707732",
+    "object_id": "global_person_2",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:07.012Z",
+    "confidence_score": 0.4613,
+    "gps_location": {
+      "latitude": 37.9152698,
+      "longitude": -122.33485759
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 170,
+        "bbox": {
+          "x1": 2259.492919921875,
+          "y1": 89.88589477539062,
+          "x2": 2356.89306640625,
+          "y2": 306.44146728515625
+        },
+        "pixel_centroid": {
+          "x": 2308.19287109375,
+          "y": 198.16368103027344
+        },
+        "world_position": {
+          "X": -6.83806393538654,
+          "Y": 0.0,
+          "Z": 36.76711186562568,
+          "theta_rad": -0.1838822311927868,
+          "theta_deg": -10.535675774795541,
+          "distance": 37.39758860306192,
+          "uncertainty_meters": 0.09506904470210031
+        }
+      }
+    },
+    "notes": "theta=-10.5deg dist=37.4m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:07.012Z#caeea1c9-65fe-4844-bcf9-abf583707732",
+    "expires_at": 1778753047,
+    "ingested_at_epoch": 1778666647
+  },
+  {
+    "event_id": "822e92a8-4336-4350-abab-7d962f8361fa",
+    "object_id": "global_person_2",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:07.335Z",
+    "confidence_score": 0.5137,
+    "gps_location": {
+      "latitude": 37.9152866,
+      "longitude": -122.33485621
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 180,
+        "bbox": {
+          "x1": 2259.77197265625,
+          "y1": 90.17208099365234,
+          "x2": 2361.323974609375,
+          "y2": 326.58551025390625
+        },
+        "pixel_centroid": {
+          "x": 2310.5478515625,
+          "y": 208.37879943847656
+        },
+        "world_position": {
+          "X": -6.312279906887599,
+          "Y": 0.0,
+          "Z": 34.96817847336988,
+          "theta_rad": -0.17859170806938165,
+          "theta_deg": -10.232551128408057,
+          "distance": 35.53334185477558,
+          "uncertainty_meters": 0.08678911197681316
+        }
+      }
+    },
+    "notes": "theta=-10.2deg dist=35.5m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:07.335Z#822e92a8-4336-4350-abab-7d962f8361fa",
+    "expires_at": 1778753047,
+    "ingested_at_epoch": 1778666647
+  },
+  {
+    "event_id": "c8478965-93b8-45cc-bee3-2f5c6d41d5da",
+    "object_id": "global_person_3",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:10.238Z",
+    "confidence_score": 0.3765,
+    "gps_location": {
+      "latitude": 37.91537503,
+      "longitude": -122.33487743
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 270,
+        "bbox": {
+          "x1": 2498.304443359375,
+          "y1": 249.59658813476562,
+          "x2": 2559.29345703125,
+          "y2": 500.5593566894531
+        },
+        "pixel_centroid": {
+          "x": 2528.798828125,
+          "y": 375.0779724121094
+        },
+        "world_position": {
+          "X": -1.1936897347392736,
+          "Y": 0.0,
+          "Z": 26.355253204692737,
+          "theta_rad": -0.04526135594454335,
+          "theta_deg": -2.5932846706616934,
+          "distance": 26.382271825343032,
+          "uncertainty_meters": 0.04869939641043075
+        }
+      }
+    },
+    "notes": "theta=-2.6deg dist=26.4m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:10.238Z#c8478965-93b8-45cc-bee3-2f5c6d41d5da",
+    "expires_at": 1778753050,
+    "ingested_at_epoch": 1778666650
+  },
+  {
+    "event_id": "eac6e5da-966a-4832-bc88-dcaeb7765ce0",
+    "object_id": "global_person_4",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:11.528Z",
+    "confidence_score": 0.628,
+    "gps_location": {
+      "latitude": 37.91525301,
+      "longitude": -122.33487298
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 310,
+        "bbox": {
+          "x1": 2334.702880859375,
+          "y1": 129.8966827392578,
+          "x2": 2408.774658203125,
+          "y2": 293.98931884765625
+        },
+        "pixel_centroid": {
+          "x": 2371.73876953125,
+          "y": 211.9429931640625
+        },
+        "world_position": {
+          "X": -6.206758639107655,
+          "Y": 0.0,
+          "Z": 38.985355516444336,
+          "theta_rad": -0.15788238961388038,
+          "theta_deg": -9.045994584315448,
+          "distance": 39.476344784537666,
+          "uncertainty_meters": 0.10324787006789649
+        }
+      }
+    },
+    "notes": "theta=-9.0deg dist=39.5m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:11.528Z#eac6e5da-966a-4832-bc88-dcaeb7765ce0",
+    "expires_at": 1778753051,
+    "ingested_at_epoch": 1778666651
+  },
+  {
+    "event_id": "58fa7e27-1cce-4a06-a794-d671cc1b9369",
+    "object_id": "global_person_4",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:11.851Z",
+    "confidence_score": 0.3083,
+    "gps_location": {
+      "latitude": 37.91525346,
+      "longitude": -122.3348723
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 320,
+        "bbox": {
+          "x1": 2329.380126953125,
+          "y1": 132.8887176513672,
+          "x2": 2408.263671875,
+          "y2": 294.2012634277344
+        },
+        "pixel_centroid": {
+          "x": 2368.82177734375,
+          "y": 213.54498291015625
+        },
+        "world_position": {
+          "X": -6.245530270642708,
+          "Y": 0.0,
+          "Z": 38.91773197527539,
+          "theta_rad": -0.1591235625435424,
+          "theta_deg": -9.11710855483097,
+          "distance": 39.41568863359978,
+          "uncertainty_meters": 0.10303279900227835
+        }
+      }
+    },
+    "notes": "theta=-9.1deg dist=39.4m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:11.851Z#58fa7e27-1cce-4a06-a794-d671cc1b9369",
+    "expires_at": 1778753051,
+    "ingested_at_epoch": 1778666651
+  },
+  {
+    "event_id": "5bf791b0-9028-4d7b-89f0-5a2e8b4f1576",
+    "object_id": "global_person_4",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:12.174Z",
+    "confidence_score": 0.4605,
+    "gps_location": {
+      "latitude": 37.91525257,
+      "longitude": -122.33487183
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 330,
+        "bbox": {
+          "x1": 2327.857177734375,
+          "y1": 131.5888671875,
+          "x2": 2404.0654296875,
+          "y2": 292.9986877441406
+        },
+        "pixel_centroid": {
+          "x": 2365.96142578125,
+          "y": 212.2937774658203
+        },
+        "world_position": {
+          "X": -6.318924760287828,
+          "Y": 0.0,
+          "Z": 38.997353972665486,
+          "theta_rad": -0.16063854710792425,
+          "theta_deg": -9.203910776397516,
+          "distance": 39.505979635943056,
+          "uncertainty_meters": 0.10352326204035478
+        }
+      }
+    },
+    "notes": "theta=-9.2deg dist=39.5m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:12.174Z#5bf791b0-9028-4d7b-89f0-5a2e8b4f1576",
+    "expires_at": 1778753052,
+    "ingested_at_epoch": 1778666652
+  },
+  {
+    "event_id": "ed3cb7fc-ee46-4f00-a8dd-fb801ce6e556",
+    "object_id": "global_person_5",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:27.657Z",
+    "confidence_score": 0.8488,
+    "gps_location": {
+      "latitude": 37.91554603,
+      "longitude": -122.33483433
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 810,
+        "bbox": {
+          "x1": 2321.48291015625,
+          "y1": 1102.30908203125,
+          "x2": 2557.799560546875,
+          "y2": 1519.335693359375
+        },
+        "pixel_centroid": {
+          "x": 2439.64111328125,
+          "y": 1310.8223876953125
+        },
+        "world_position": {
+          "X": 1.760246242599872,
+          "Y": 0.0,
+          "Z": 7.172276204550447,
+          "theta_rad": 0.2406668989693149,
+          "theta_deg": 13.789197579443126,
+          "distance": 7.385121040913787,
+          "uncertainty_meters": 0.006783514624408404
+        }
+      }
+    },
+    "notes": "theta=13.8deg dist=7.4m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:27.657Z#ed3cb7fc-ee46-4f00-a8dd-fb801ce6e556",
+    "expires_at": 1778753067,
+    "ingested_at_epoch": 1778666667
+  },
+  {
+    "event_id": "a252446d-6b7f-4345-b0a4-7d15ec9887f0",
+    "object_id": "global_person_5",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:27.980Z",
+    "confidence_score": 0.8009,
+    "gps_location": {
+      "latitude": 37.91554926,
+      "longitude": -122.33483175
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 820,
+        "bbox": {
+          "x1": 2272.724365234375,
+          "y1": 1190.071044921875,
+          "x2": 2528.53515625,
+          "y2": 1559.072998046875
+        },
+        "pixel_centroid": {
+          "x": 2400.6298828125,
+          "y": 1374.572021484375
+        },
+        "world_position": {
+          "X": 1.6703005785939569,
+          "Y": 0.0,
+          "Z": 6.757900717818523,
+          "theta_rad": 0.24230642847828246,
+          "theta_deg": 13.883135700694123,
+          "distance": 6.961258947542709,
+          "uncertainty_meters": 0.006376663561844076
+        }
+      }
+    },
+    "notes": "theta=13.9deg dist=7.0m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:27.980Z#a252446d-6b7f-4345-b0a4-7d15ec9887f0",
+    "expires_at": 1778753067,
+    "ingested_at_epoch": 1778666667
+  },
+  {
+    "event_id": "bed2f3b2-8ae9-427b-8e72-3e5fac4719df",
+    "object_id": "global_person_5",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:28.303Z",
+    "confidence_score": 0.903,
+    "gps_location": {
+      "latitude": 37.91555728,
+      "longitude": -122.33482616
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 830,
+        "bbox": {
+          "x1": 2163.046875,
+          "y1": 1295.51953125,
+          "x2": 2459.739990234375,
+          "y2": 1673.6339111328125
+        },
+        "pixel_centroid": {
+          "x": 2311.3935546875,
+          "y": 1484.57666015625
+        },
+        "world_position": {
+          "X": 1.5144259555328545,
+          "Y": 0.0,
+          "Z": 5.750185893535516,
+          "theta_rad": 0.2575219906478121,
+          "theta_deg": 14.754923195927091,
+          "distance": 5.946269736986915,
+          "uncertainty_meters": 0.005408615237677772
+        }
+      }
+    },
+    "notes": "theta=14.8deg dist=5.9m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:28.303Z#bed2f3b2-8ae9-427b-8e72-3e5fac4719df",
+    "expires_at": 1778753068,
+    "ingested_at_epoch": 1778666668
+  },
+  {
+    "event_id": "a24478e7-3a11-4bcd-aad7-789b14ea4bca",
+    "object_id": "global_person_5",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:28.625Z",
+    "confidence_score": 0.8864,
+    "gps_location": {
+      "latitude": 37.91556406,
+      "longitude": -122.33482203
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 840,
+        "bbox": {
+          "x1": 2091.92431640625,
+          "y1": 1396.7041015625,
+          "x2": 2385.123291015625,
+          "y2": 1788.581298828125
+        },
+        "pixel_centroid": {
+          "x": 2238.52392578125,
+          "y": 1592.6427001953125
+        },
+        "world_position": {
+          "X": 1.4315339589645077,
+          "Y": 0.0,
+          "Z": 4.917370508847891,
+          "theta_rad": 0.28328817559101666,
+          "theta_deg": 16.23121684732624,
+          "distance": 5.1215058524769415,
+          "uncertainty_meters": 0.004647305304502858
+        }
+      }
+    },
+    "notes": "theta=16.2deg dist=5.1m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:28.625Z#a24478e7-3a11-4bcd-aad7-789b14ea4bca",
+    "expires_at": 1778753068,
+    "ingested_at_epoch": 1778666668
+  },
+  {
+    "event_id": "c7ede048-ea96-4f47-a4e3-6550e23f0b47",
+    "object_id": "global_person_5",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:29.270Z",
+    "confidence_score": 0.5912,
+    "gps_location": {
+      "latitude": 37.91557346,
+      "longitude": -122.33481117
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 860,
+        "bbox": {
+          "x1": 1821.6202392578125,
+          "y1": 1565.02392578125,
+          "x2": 2192.3486328125,
+          "y2": 1920.0
+        },
+        "pixel_centroid": {
+          "x": 2006.984375,
+          "y": 1742.511962890625
+        },
+        "world_position": {
+          "X": 0.8929837871411505,
+          "Y": 0.0,
+          "Z": 3.6077690663991873,
+          "theta_rad": 0.24264025852675647,
+          "theta_deg": 13.902262753546331,
+          "distance": 3.7166406445288485,
+          "uncertainty_meters": 0.0037068681783933854
+        }
+      }
+    },
+    "notes": "theta=13.9deg dist=3.7m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:29.270Z#c7ede048-ea96-4f47-a4e3-6550e23f0b47",
+    "expires_at": 1778753069,
+    "ingested_at_epoch": 1778666669
+  },
+  {
+    "event_id": "b1421eca-f588-4242-8d02-5acae299c5a5",
+    "object_id": "global_person_5",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:29.915Z",
+    "confidence_score": 0.4913,
+    "gps_location": {
+      "latitude": 37.91557719,
+      "longitude": -122.33480149
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 880,
+        "bbox": {
+          "x1": 1665.443359375,
+          "y1": 1721.2471923828125,
+          "x2": 1920.8043212890625,
+          "y2": 1920.0
+        },
+        "pixel_centroid": {
+          "x": 1793.123779296875,
+          "y": 1820.62353515625
+        },
+        "world_position": {
+          "X": 0.23620146531517505,
+          "Y": 0.0,
+          "Z": 2.9262242107070584,
+          "theta_rad": 0.08054422753148015,
+          "theta_deg": 4.614844301695221,
+          "distance": 2.935741688831833,
+          "uncertainty_meters": 0.0033730998559238223
+        }
+      }
+    },
+    "notes": "theta=4.6deg dist=2.9m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:29.915Z#b1421eca-f588-4242-8d02-5acae299c5a5",
+    "expires_at": 1778753069,
+    "ingested_at_epoch": 1778666669
+  },
+  {
+    "event_id": "4376f7af-7c85-4f09-9f81-b952f1a9332d",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:39.915Z",
+    "confidence_score": 0.8604,
+    "gps_location": {
+      "latitude": 37.91556816,
+      "longitude": -122.33479959
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1190,
+        "bbox": {
+          "x1": 1668.442626953125,
+          "y1": 1254.5069580078125,
+          "x2": 1917.43798828125,
+          "y2": 1686.8157958984375
+        },
+        "pixel_centroid": {
+          "x": 1792.9403076171875,
+          "y": 1470.661376953125
+        },
+        "world_position": {
+          "X": -0.26422829145877613,
+          "Y": 0.0,
+          "Z": 3.8140094388153876,
+          "theta_rad": -0.06916783727894132,
+          "theta_deg": -3.9630251541309782,
+          "distance": 3.82315113347355,
+          "uncertainty_meters": 0.004298769973427152
+        }
+      }
+    },
+    "notes": "theta=-4.0deg dist=3.8m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:39.915Z#4376f7af-7c85-4f09-9f81-b952f1a9332d",
+    "expires_at": 1778753079,
+    "ingested_at_epoch": 1778666679
+  },
+  {
+    "event_id": "400a8f9b-1471-4709-8928-a37d86a9efb9",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:40.238Z",
+    "confidence_score": 0.8705,
+    "gps_location": {
+      "latitude": 37.91556276,
+      "longitude": -122.33480227
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1200,
+        "bbox": {
+          "x1": 1743.7261962890625,
+          "y1": 1156.1839599609375,
+          "x2": 1973.488525390625,
+          "y2": 1598.941650390625
+        },
+        "pixel_centroid": {
+          "x": 1858.607421875,
+          "y": 1377.562744140625
+        },
+        "world_position": {
+          "X": -0.24844915525349745,
+          "Y": 0.0,
+          "Z": 4.459617323335374,
+          "theta_rad": -0.05565333919300924,
+          "theta_deg": -3.18870145156944,
+          "distance": 4.466532620874848,
+          "uncertainty_meters": 0.00489343077657356
+        }
+      }
+    },
+    "notes": "theta=-3.2deg dist=4.5m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:40.238Z#400a8f9b-1471-4709-8928-a37d86a9efb9",
+    "expires_at": 1778753080,
+    "ingested_at_epoch": 1778666680
+  },
+  {
+    "event_id": "82b64705-90c2-4e7b-821f-e62bd25eec5c",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:40.561Z",
+    "confidence_score": 0.887,
+    "gps_location": {
+      "latitude": 37.91555352,
+      "longitude": -122.33480482
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1210,
+        "bbox": {
+          "x1": 1827.31396484375,
+          "y1": 1031.3560791015625,
+          "x2": 2020.1875,
+          "y2": 1454.095947265625
+        },
+        "pixel_centroid": {
+          "x": 1923.750732421875,
+          "y": 1242.72607421875
+        },
+        "world_position": {
+          "X": -0.39010489275958316,
+          "Y": 0.0,
+          "Z": 5.503053330832644,
+          "theta_rad": -0.07077042104504452,
+          "theta_deg": -4.054846440244872,
+          "distance": 5.516863038842203,
+          "uncertainty_meters": 0.006005204420579169
+        }
+      }
+    },
+    "notes": "theta=-4.1deg dist=5.5m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:40.561Z#82b64705-90c2-4e7b-821f-e62bd25eec5c",
+    "expires_at": 1778753080,
+    "ingested_at_epoch": 1778666680
+  },
+  {
+    "event_id": "45f1ae5a-d197-458b-87d5-f7ec133f7fec",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:40.883Z",
+    "confidence_score": 0.8535,
+    "gps_location": {
+      "latitude": 37.9155472,
+      "longitude": -122.33480641
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1220,
+        "bbox": {
+          "x1": 1863.1214599609375,
+          "y1": 936.749267578125,
+          "x2": 2056.674560546875,
+          "y2": 1367.5162353515625
+        },
+        "pixel_centroid": {
+          "x": 1959.89794921875,
+          "y": 1152.1328125
+        },
+        "world_position": {
+          "X": -0.499696987281228,
+          "Y": 0.0,
+          "Z": 6.211527729459248,
+          "theta_rad": -0.08027384193776783,
+          "theta_deg": -4.599352348334367,
+          "distance": 6.231594804938708,
+          "uncertainty_meters": 0.006829920588619309
+        }
+      }
+    },
+    "notes": "theta=-4.6deg dist=6.2m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:40.883Z#45f1ae5a-d197-458b-87d5-f7ec133f7fec",
+    "expires_at": 1778753080,
+    "ingested_at_epoch": 1778666680
+  },
+  {
+    "event_id": "943a7e17-005e-4602-b195-7d16e2bb0dc6",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:41.206Z",
+    "confidence_score": 0.874,
+    "gps_location": {
+      "latitude": 37.91553652,
+      "longitude": -122.33480867
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1230,
+        "bbox": {
+          "x1": 1914.4696044921875,
+          "y1": 834.9025268554688,
+          "x2": 2099.077392578125,
+          "y2": 1238.95458984375
+        },
+        "pixel_centroid": {
+          "x": 2006.7734375,
+          "y": 1036.9285888671875
+        },
+        "world_position": {
+          "X": -0.7195123022737544,
+          "Y": 0.0,
+          "Z": 7.397445719829074,
+          "theta_rad": -0.09695997060381442,
+          "theta_deg": -5.555397097311094,
+          "distance": 7.43235501916726,
+          "uncertainty_meters": 0.008346524846620795
+        }
+      }
+    },
+    "notes": "theta=-5.6deg dist=7.4m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:41.206Z#943a7e17-005e-4602-b195-7d16e2bb0dc6",
+    "expires_at": 1778753081,
+    "ingested_at_epoch": 1778666681
+  },
+  {
+    "event_id": "977e9394-d105-457f-a7a7-cb380c00ab15",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:41.528Z",
+    "confidence_score": 0.8718,
+    "gps_location": {
+      "latitude": 37.91552965,
+      "longitude": -122.33480937
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1240,
+        "bbox": {
+          "x1": 1933.767578125,
+          "y1": 746.1668701171875,
+          "x2": 2111.133544921875,
+          "y2": 1164.31103515625
+        },
+        "pixel_centroid": {
+          "x": 2022.4505615234375,
+          "y": 955.2389526367188
+        },
+        "world_position": {
+          "X": -0.9235888733283444,
+          "Y": 0.0,
+          "Z": 8.136462398586273,
+          "theta_rad": -0.11302853581840026,
+          "theta_deg": -6.47605806693759,
+          "distance": 8.188713987589518,
+          "uncertainty_meters": 0.009405415610372003
+        }
+      }
+    },
+    "notes": "theta=-6.5deg dist=8.2m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:41.528Z#977e9394-d105-457f-a7a7-cb380c00ab15",
+    "expires_at": 1778753081,
+    "ingested_at_epoch": 1778666681
+  },
+  {
+    "event_id": "62e8103e-7658-4453-8b7b-32701b7df87a",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:41.851Z",
+    "confidence_score": 0.867,
+    "gps_location": {
+      "latitude": 37.91551973,
+      "longitude": -122.3348099
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1250,
+        "bbox": {
+          "x1": 1956.910888671875,
+          "y1": 666.68896484375,
+          "x2": 2115.598388671875,
+          "y2": 1068.2037353515625
+        },
+        "pixel_centroid": {
+          "x": 2036.254638671875,
+          "y": 867.4463500976562
+        },
+        "world_position": {
+          "X": -1.257710007615275,
+          "Y": 0.0,
+          "Z": 9.189708560885512,
+          "theta_rad": -0.13601567746315382,
+          "theta_deg": -7.7931242662513815,
+          "distance": 9.275374811686484,
+          "uncertainty_meters": 0.011049860809738021
+        }
+      }
+    },
+    "notes": "theta=-7.8deg dist=9.3m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:41.851Z#62e8103e-7658-4453-8b7b-32701b7df87a",
+    "expires_at": 1778753081,
+    "ingested_at_epoch": 1778666681
+  },
+  {
+    "event_id": "59824b77-5582-442f-b17b-0799503f4f24",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:42.174Z",
+    "confidence_score": 0.866,
+    "gps_location": {
+      "latitude": 37.91550702,
+      "longitude": -122.33481021
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1260,
+        "bbox": {
+          "x1": 1969.1070556640625,
+          "y1": 596.0537719726562,
+          "x2": 2124.86474609375,
+          "y2": 963.1007080078125
+        },
+        "pixel_centroid": {
+          "x": 2046.98583984375,
+          "y": 779.5772705078125
+        },
+        "world_position": {
+          "X": -1.7161624705114815,
+          "Y": 0.0,
+          "Z": 10.529137380471544,
+          "theta_rad": -0.1615709607169343,
+          "theta_deg": -9.257334140954352,
+          "distance": 10.668080783441567,
+          "uncertainty_meters": 0.013354598132217177
+        }
+      }
+    },
+    "notes": "theta=-9.3deg dist=10.7m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:42.174Z#59824b77-5582-442f-b17b-0799503f4f24",
+    "expires_at": 1778753082,
+    "ingested_at_epoch": 1778666682
+  },
+  {
+    "event_id": "44b9bb17-a806-4edf-bdfb-cfc0701e87bc",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:42.496Z",
+    "confidence_score": 0.8619,
+    "gps_location": {
+      "latitude": 37.91550076,
+      "longitude": -122.33481
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1270,
+        "bbox": {
+          "x1": 1967.0289306640625,
+          "y1": 540.6383056640625,
+          "x2": 2128.29296875,
+          "y2": 916.9560546875
+        },
+        "pixel_centroid": {
+          "x": 2047.660888671875,
+          "y": 728.7971801757812
+        },
+        "world_position": {
+          "X": -1.9711487181971776,
+          "Y": 0.0,
+          "Z": 11.17760195403213,
+          "theta_rad": -0.17455339466835454,
+          "theta_deg": -10.001172814178082,
+          "distance": 11.35007544961853,
+          "uncertainty_meters": 0.014571920612221234
+        }
+      }
+    },
+    "notes": "theta=-10.0deg dist=11.4m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:42.496Z#44b9bb17-a806-4edf-bdfb-cfc0701e87bc",
+    "expires_at": 1778753082,
+    "ingested_at_epoch": 1778666682
+  },
+  {
+    "event_id": "49439f5c-dce6-49f9-b925-9de57ef30c4f",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:42.819Z",
+    "confidence_score": 0.8502,
+    "gps_location": {
+      "latitude": 37.91548647,
+      "longitude": -122.33480979
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1280,
+        "bbox": {
+          "x1": 1980.89599609375,
+          "y1": 481.9826965332031,
+          "x2": 2122.171142578125,
+          "y2": 825.5687255859375
+        },
+        "pixel_centroid": {
+          "x": 2051.53369140625,
+          "y": 653.7756958007812
+        },
+        "world_position": {
+          "X": -2.532719108944996,
+          "Y": 0.0,
+          "Z": 12.665883559999601,
+          "theta_rad": -0.19736082038679797,
+          "theta_deg": -11.30794204940302,
+          "distance": 12.916627750317932,
+          "uncertainty_meters": 0.017548021580248374
+        }
+      }
+    },
+    "notes": "theta=-11.3deg dist=12.9m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:42.819Z#49439f5c-dce6-49f9-b925-9de57ef30c4f",
+    "expires_at": 1778753082,
+    "ingested_at_epoch": 1778666682
+  },
+  {
+    "event_id": "7c3da14d-6e05-4b45-beb6-94f85374b653",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:43.141Z",
+    "confidence_score": 0.7975,
+    "gps_location": {
+      "latitude": 37.91547884,
+      "longitude": -122.33480995
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1290,
+        "bbox": {
+          "x1": 1986.4517822265625,
+          "y1": 443.158203125,
+          "x2": 2125.47705078125,
+          "y2": 783.635986328125
+        },
+        "pixel_centroid": {
+          "x": 2055.96435546875,
+          "y": 613.3970947265625
+        },
+        "world_position": {
+          "X": -2.809982493441852,
+          "Y": 0.0,
+          "Z": 13.468500451080539,
+          "theta_rad": -0.20568320221519468,
+          "theta_deg": -11.78477940366652,
+          "distance": 13.758506678204812,
+          "uncertainty_meters": 0.019246832940300607
+        }
+      }
+    },
+    "notes": "theta=-11.8deg dist=13.8m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:43.141Z#7c3da14d-6e05-4b45-beb6-94f85374b653",
+    "expires_at": 1778753083,
+    "ingested_at_epoch": 1778666683
+  },
+  {
+    "event_id": "f51515ab-72b3-41ba-a5db-bacf63e6d9e8",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:43.464Z",
+    "confidence_score": 0.8452,
+    "gps_location": {
+      "latitude": 37.91546817,
+      "longitude": -122.33481103
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1300,
+        "bbox": {
+          "x1": 2000.3521728515625,
+          "y1": 401.5170593261719,
+          "x2": 2138.43408203125,
+          "y2": 732.3776245117188
+        },
+        "pixel_centroid": {
+          "x": 2069.39306640625,
+          "y": 566.9473266601562
+        },
+        "world_position": {
+          "X": -3.127066154073639,
+          "Y": 0.0,
+          "Z": 14.617832751868695,
+          "theta_rad": -0.21074491572534973,
+          "theta_deg": -12.074794224902753,
+          "distance": 14.948564382359866,
+          "uncertainty_meters": 0.021746861861553057
+        }
+      }
+    },
+    "notes": "theta=-12.1deg dist=14.9m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:43.464Z#f51515ab-72b3-41ba-a5db-bacf63e6d9e8",
+    "expires_at": 1778753083,
+    "ingested_at_epoch": 1778666683
+  },
+  {
+    "event_id": "db2185ca-30fb-4265-a39a-ae5ee8f44757",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:43.786Z",
+    "confidence_score": 0.825,
+    "gps_location": {
+      "latitude": 37.91545479,
+      "longitude": -122.33481133
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1310,
+        "bbox": {
+          "x1": 2012.7666015625,
+          "y1": 366.3553771972656,
+          "x2": 2137.55908203125,
+          "y2": 674.1348876953125
+        },
+        "pixel_centroid": {
+          "x": 2075.162841796875,
+          "y": 520.2451171875
+        },
+        "world_position": {
+          "X": -3.6117751935356943,
+          "Y": 0.0,
+          "Z": 16.026002022518927,
+          "theta_rad": -0.22166629583470362,
+          "theta_deg": -12.700543211626858,
+          "distance": 16.42795364232626,
+          "uncertainty_meters": 0.0251066785445353
+        }
+      }
+    },
+    "notes": "theta=-12.7deg dist=16.4m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:43.786Z#db2185ca-30fb-4265-a39a-ae5ee8f44757",
+    "expires_at": 1778753083,
+    "ingested_at_epoch": 1778666683
+  },
+  {
+    "event_id": "4a99055c-b8ed-4f44-b8ee-2dafb66f2ef7",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:44.109Z",
+    "confidence_score": 0.7937,
+    "gps_location": {
+      "latitude": 37.91544753,
+      "longitude": -122.33481137
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1320,
+        "bbox": {
+          "x1": 2015.499755859375,
+          "y1": 341.1387939453125,
+          "x2": 2138.375,
+          "y2": 645.5301513671875
+        },
+        "pixel_centroid": {
+          "x": 2076.9375,
+          "y": 493.33447265625
+        },
+        "world_position": {
+          "X": -3.885463025314018,
+          "Y": 0.0,
+          "Z": 16.78696924421453,
+          "theta_rad": -0.2274518279184398,
+          "theta_deg": -13.032029782262468,
+          "distance": 17.230762006576693,
+          "uncertainty_meters": 0.027033893025233624
+        }
+      }
+    },
+    "notes": "theta=-13.0deg dist=17.2m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:44.109Z#4a99055c-b8ed-4f44-b8ee-2dafb66f2ef7",
+    "expires_at": 1778753084,
+    "ingested_at_epoch": 1778666684
+  },
+  {
+    "event_id": "6b3c7a79-d112-46ac-b7ff-3588eca5fed7",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:44.432Z",
+    "confidence_score": 0.8021,
+    "gps_location": {
+      "latitude": 37.91543329,
+      "longitude": -122.33481189
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1330,
+        "bbox": {
+          "x1": 2024.9840087890625,
+          "y1": 312.5555725097656,
+          "x2": 2142.147216796875,
+          "y2": 595.6279296875
+        },
+        "pixel_centroid": {
+          "x": 2083.565673828125,
+          "y": 454.09173583984375
+        },
+        "world_position": {
+          "X": -4.3843360630865265,
+          "Y": 0.0,
+          "Z": 18.292009479777406,
+          "theta_rad": -0.235247930597392,
+          "theta_deg": -13.478713562417065,
+          "distance": 18.810104027419612,
+          "uncertainty_meters": 0.0310111788912657
+        }
+      }
+    },
+    "notes": "theta=-13.5deg dist=18.8m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:44.432Z#6b3c7a79-d112-46ac-b7ff-3588eca5fed7",
+    "expires_at": 1778753084,
+    "ingested_at_epoch": 1778666684
+  },
+  {
+    "event_id": "c7d9fbaf-0551-4f01-81b8-cdbf9d3b9f36",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:44.754Z",
+    "confidence_score": 0.8116,
+    "gps_location": {
+      "latitude": 37.91542654,
+      "longitude": -122.33481118
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1340,
+        "bbox": {
+          "x1": 2021.1864013671875,
+          "y1": 289.5283203125,
+          "x2": 2137.39306640625,
+          "y2": 573.0114135742188
+        },
+        "pixel_centroid": {
+          "x": 2079.289794921875,
+          "y": 431.2698669433594
+        },
+        "world_position": {
+          "X": -4.699811242273171,
+          "Y": 0.0,
+          "Z": 18.977166684874533,
+          "theta_rad": -0.24277143342473217,
+          "theta_deg": -13.9097785215784,
+          "distance": 19.550475214135055,
+          "uncertainty_meters": 0.03300622836815492
+        }
+      }
+    },
+    "notes": "theta=-13.9deg dist=19.6m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:44.754Z#c7d9fbaf-0551-4f01-81b8-cdbf9d3b9f36",
+    "expires_at": 1778753084,
+    "ingested_at_epoch": 1778666684
+  },
+  {
+    "event_id": "b172a0cd-80b9-4c7b-9e92-ac934951ec48",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:45.077Z",
+    "confidence_score": 0.8158,
+    "gps_location": {
+      "latitude": 37.91541177,
+      "longitude": -122.3348106
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1350,
+        "bbox": {
+          "x1": 2025.2261962890625,
+          "y1": 256.2244567871094,
+          "x2": 2129.779052734375,
+          "y2": 529.2095947265625
+        },
+        "pixel_centroid": {
+          "x": 2077.502685546875,
+          "y": 392.717041015625
+        },
+        "world_position": {
+          "X": -5.310607176833811,
+          "Y": 0.0,
+          "Z": 20.504642449541784,
+          "theta_rad": -0.25342679845902755,
+          "theta_deg": -14.520285967214793,
+          "distance": 21.181192378385823,
+          "uncertainty_meters": 0.03757211042328379
+        }
+      }
+    },
+    "notes": "theta=-14.5deg dist=21.2m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:45.077Z#b172a0cd-80b9-4c7b-9e92-ac934951ec48",
+    "expires_at": 1778753085,
+    "ingested_at_epoch": 1778666685
+  },
+  {
+    "event_id": "35a3034c-13f8-47e5-af13-46b027166116",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:45.399Z",
+    "confidence_score": 0.7879,
+    "gps_location": {
+      "latitude": 37.91540223,
+      "longitude": -122.33480988
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1360,
+        "bbox": {
+          "x1": 2024.716064453125,
+          "y1": 239.57583618164062,
+          "x2": 2123.6689453125,
+          "y2": 503.40997314453125
+        },
+        "pixel_centroid": {
+          "x": 2074.1923828125,
+          "y": 371.492919921875
+        },
+        "world_position": {
+          "X": -5.7331390049989315,
+          "Y": 0.0,
+          "Z": 21.481110827515387,
+          "theta_rad": -0.26081285655493847,
+          "theta_deg": -14.943475923348922,
+          "distance": 22.23301610746142,
+          "uncertainty_meters": 0.04068352287474042
+        }
+      }
+    },
+    "notes": "theta=-14.9deg dist=22.2m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:45.399Z#35a3034c-13f8-47e5-af13-46b027166116",
+    "expires_at": 1778753085,
+    "ingested_at_epoch": 1778666685
+  },
+  {
+    "event_id": "4f59437d-1b6e-4582-a56d-4dc36fd6c0d7",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:45.722Z",
+    "confidence_score": 0.779,
+    "gps_location": {
+      "latitude": 37.91539118,
+      "longitude": -122.33480929
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1370,
+        "bbox": {
+          "x1": 2022.29541015625,
+          "y1": 220.7803955078125,
+          "x2": 2122.123046875,
+          "y2": 476.203857421875
+        },
+        "pixel_centroid": {
+          "x": 2072.209228515625,
+          "y": 348.49212646484375
+        },
+        "world_position": {
+          "X": -6.202430540184569,
+          "Y": 0.0,
+          "Z": 22.618630393197236,
+          "theta_rad": -0.26763883886628914,
+          "theta_deg": -15.334575900820271,
+          "distance": 23.453626275479873,
+          "uncertainty_meters": 0.044435543601437644
+        }
+      }
+    },
+    "notes": "theta=-15.3deg dist=23.5m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:45.722Z#4f59437d-1b6e-4582-a56d-4dc36fd6c0d7",
+    "expires_at": 1778753085,
+    "ingested_at_epoch": 1778666685
+  },
+  {
+    "event_id": "70ff76d6-c6fb-4fee-a79c-7bb350ac7ca7",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:46.045Z",
+    "confidence_score": 0.8235,
+    "gps_location": {
+      "latitude": 37.91537925,
+      "longitude": -122.33480785
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1380,
+        "bbox": {
+          "x1": 2016.7069091796875,
+          "y1": 205.0655059814453,
+          "x2": 2114.07080078125,
+          "y2": 448.6986999511719
+        },
+        "pixel_centroid": {
+          "x": 2065.388916015625,
+          "y": 326.8821105957031
+        },
+        "world_position": {
+          "X": -6.775429471616422,
+          "Y": 0.0,
+          "Z": 23.824121796758565,
+          "theta_rad": -0.27707828846923194,
+          "theta_deg": -15.875416523995334,
+          "distance": 24.768835739930026,
+          "uncertainty_meters": 0.04868967320559392
+        }
+      }
+    },
+    "notes": "theta=-15.9deg dist=24.8m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:46.045Z#70ff76d6-c6fb-4fee-a79c-7bb350ac7ca7",
+    "expires_at": 1778753086,
+    "ingested_at_epoch": 1778666686
+  },
+  {
+    "event_id": "bec926f1-cc71-4224-822c-7f163f3b5cc2",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:46.367Z",
+    "confidence_score": 0.7695,
+    "gps_location": {
+      "latitude": 37.91537119,
+      "longitude": -122.33480754
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1390,
+        "bbox": {
+          "x1": 2019.808837890625,
+          "y1": 194.698486328125,
+          "x2": 2110.28515625,
+          "y2": 432.0408020019531
+        },
+        "pixel_centroid": {
+          "x": 2065.046875,
+          "y": 313.36962890625
+        },
+        "world_position": {
+          "X": -7.107226615439692,
+          "Y": 0.0,
+          "Z": 24.657064232242384,
+          "theta_rad": -0.28063597896202963,
+          "theta_deg": -16.079257174046457,
+          "distance": 25.66093308350538,
+          "uncertainty_meters": 0.051657143232628044
+        }
+      }
+    },
+    "notes": "theta=-16.1deg dist=25.7m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:46.367Z#bec926f1-cc71-4224-822c-7f163f3b5cc2",
+    "expires_at": 1778753086,
+    "ingested_at_epoch": 1778666686
+  },
+  {
+    "event_id": "4837cfb2-59e5-480a-b195-f66ba08b7262",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:46.690Z",
+    "confidence_score": 0.764,
+    "gps_location": {
+      "latitude": 37.91535693,
+      "longitude": -122.33480849
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1400,
+        "bbox": {
+          "x1": 2029.447509765625,
+          "y1": 183.283447265625,
+          "x2": 2116.2802734375,
+          "y2": 405.8282470703125
+        },
+        "pixel_centroid": {
+          "x": 2072.86376953125,
+          "y": 294.55584716796875
+        },
+        "world_position": {
+          "X": -7.5724139312356105,
+          "Y": 0.0,
+          "Z": 26.177590251785666,
+          "theta_rad": -0.2815847105372694,
+          "theta_deg": -16.133615489198498,
+          "distance": 27.25082905411054,
+          "uncertainty_meters": 0.057103528260430636
+        }
+      }
+    },
+    "notes": "theta=-16.1deg dist=27.3m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:46.690Z#4837cfb2-59e5-480a-b195-f66ba08b7262",
+    "expires_at": 1778753086,
+    "ingested_at_epoch": 1778666686
+  },
+  {
+    "event_id": "b2adc46a-61ec-498c-b51b-14df6da72b9b",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:47.012Z",
+    "confidence_score": 0.7427,
+    "gps_location": {
+      "latitude": 37.91535065,
+      "longitude": -122.33480961
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1410,
+        "bbox": {
+          "x1": 2038.7379150390625,
+          "y1": 171.8585968017578,
+          "x2": 2121.238037109375,
+          "y2": 395.52801513671875
+        },
+        "pixel_centroid": {
+          "x": 2079.988037109375,
+          "y": 283.69329833984375
+        },
+        "world_position": {
+          "X": -7.718951155416784,
+          "Y": 0.0,
+          "Z": 26.868354783799425,
+          "theta_rad": -0.27975383337319715,
+          "theta_deg": -16.028713954890275,
+          "distance": 27.955155083236928,
+          "uncertainty_meters": 0.05957492799261743
+        }
+      }
+    },
+    "notes": "theta=-16.0deg dist=28.0m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:47.012Z#b2adc46a-61ec-498c-b51b-14df6da72b9b",
+    "expires_at": 1778753087,
+    "ingested_at_epoch": 1778666687
+  },
+  {
+    "event_id": "19a1d744-c788-49aa-b58e-b9c565138ac3",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:47.335Z",
+    "confidence_score": 0.7757,
+    "gps_location": {
+      "latitude": 37.91533554,
+      "longitude": -122.33480942
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1420,
+        "bbox": {
+          "x1": 2042.530517578125,
+          "y1": 154.3936767578125,
+          "x2": 2118.97802734375,
+          "y2": 370.5841064453125
+        },
+        "pixel_centroid": {
+          "x": 2080.75439453125,
+          "y": 262.4888916015625
+        },
+        "world_position": {
+          "X": -8.30948519484768,
+          "Y": 0.0,
+          "Z": 28.44295868192041,
+          "theta_rad": -0.2842354361886714,
+          "theta_deg": -16.2854908816709,
+          "distance": 29.631899074896033,
+          "uncertainty_meters": 0.06578873531609375
+        }
+      }
+    },
+    "notes": "theta=-16.3deg dist=29.6m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:47.335Z#19a1d744-c788-49aa-b58e-b9c565138ac3",
+    "expires_at": 1778753087,
+    "ingested_at_epoch": 1778666687
+  },
+  {
+    "event_id": "cad49453-e217-41f2-8136-ed1b71173773",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:47.657Z",
+    "confidence_score": 0.686,
+    "gps_location": {
+      "latitude": 37.91532637,
+      "longitude": -122.33481006
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1430,
+        "bbox": {
+          "x1": 2048.99560546875,
+          "y1": 146.0693817138672,
+          "x2": 2121.10986328125,
+          "y2": 357.0122985839844
+        },
+        "pixel_centroid": {
+          "x": 2085.052734375,
+          "y": 251.54083251953125
+        },
+        "world_position": {
+          "X": -8.605783420163764,
+          "Y": 0.0,
+          "Z": 29.421541974209433,
+          "theta_rad": -0.28456138578059753,
+          "theta_deg": -16.304166417622277,
+          "distance": 30.654308676186666,
+          "uncertainty_meters": 0.06969588576494701
+        }
+      }
+    },
+    "notes": "theta=-16.3deg dist=30.7m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:47.657Z#cad49453-e217-41f2-8136-ed1b71173773",
+    "expires_at": 1778753087,
+    "ingested_at_epoch": 1778666687
+  },
+  {
+    "event_id": "1cadee01-33c0-43e1-b11a-a881a80fcfcb",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:47.980Z",
+    "confidence_score": 0.719,
+    "gps_location": {
+      "latitude": 37.91531496,
+      "longitude": -122.33481189
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1440,
+        "bbox": {
+          "x1": 2058.6787109375,
+          "y1": 132.4698486328125,
+          "x2": 2131.724853515625,
+          "y2": 341.6837463378906
+        },
+        "pixel_centroid": {
+          "x": 2095.20166015625,
+          "y": 237.07679748535156
+        },
+        "world_position": {
+          "X": -8.889613935596477,
+          "Y": 0.0,
+          "Z": 30.670264514807602,
+          "theta_rad": -0.28211417313985326,
+          "theta_deg": -16.163951461736563,
+          "distance": 31.932590896014332,
+          "uncertainty_meters": 0.07469327933730696
+        }
+      }
+    },
+    "notes": "theta=-16.2deg dist=31.9m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:47.980Z#1cadee01-33c0-43e1-b11a-a881a80fcfcb",
+    "expires_at": 1778753087,
+    "ingested_at_epoch": 1778666687
+  },
+  {
+    "event_id": "33d5a809-21f8-4982-a421-0e3e59535e5f",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:48.303Z",
+    "confidence_score": 0.6851,
+    "gps_location": {
+      "latitude": 37.91530808,
+      "longitude": -122.33481353
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1450,
+        "bbox": {
+          "x1": 2068.541748046875,
+          "y1": 127.87274932861328,
+          "x2": 2138.810791015625,
+          "y2": 333.191650390625
+        },
+        "pixel_centroid": {
+          "x": 2103.67626953125,
+          "y": 230.53219604492188
+        },
+        "world_position": {
+          "X": -9.015743106525258,
+          "Y": 0.0,
+          "Z": 31.439193617014762,
+          "theta_rad": -0.2792732362886992,
+          "theta_deg": -16.001177770302252,
+          "distance": 32.70636817274274,
+          "uncertainty_meters": 0.07777621046354355
+        }
+      }
+    },
+    "notes": "theta=-16.0deg dist=32.7m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:48.303Z#33d5a809-21f8-4982-a421-0e3e59535e5f",
+    "expires_at": 1778753088,
+    "ingested_at_epoch": 1778666688
+  },
+  {
+    "event_id": "42068b02-7e92-43dd-b258-3a81355506a4",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:48.625Z",
+    "confidence_score": 0.7262,
+    "gps_location": {
+      "latitude": 37.91529387,
+      "longitude": -122.33481435
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1460,
+        "bbox": {
+          "x1": 2072.956298828125,
+          "y1": 119.5826187133789,
+          "x2": 2143.06396484375,
+          "y2": 315.3598937988281
+        },
+        "pixel_centroid": {
+          "x": 2108.01025390625,
+          "y": 217.47125244140625
+        },
+        "world_position": {
+          "X": -9.489939262211655,
+          "Y": 0.0,
+          "Z": 32.950543328870864,
+          "theta_rad": -0.2804167106158064,
+          "theta_deg": -16.066694023227054,
+          "distance": 34.28990015833033,
+          "uncertainty_meters": 0.08440332906389614
+        }
+      }
+    },
+    "notes": "theta=-16.1deg dist=34.3m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:48.625Z#42068b02-7e92-43dd-b258-3a81355506a4",
+    "expires_at": 1778753088,
+    "ingested_at_epoch": 1778666688
+  },
+  {
+    "event_id": "855248b1-aae4-49a9-bb81-6631528d0c48",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:48.948Z",
+    "confidence_score": 0.601,
+    "gps_location": {
+      "latitude": 37.91528332,
+      "longitude": -122.33481619
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1470,
+        "bbox": {
+          "x1": 2079.48095703125,
+          "y1": 119.16053771972656,
+          "x2": 2153.90087890625,
+          "y2": 303.5697021484375
+        },
+        "pixel_centroid": {
+          "x": 2116.69091796875,
+          "y": 211.3651123046875
+        },
+        "world_position": {
+          "X": -9.739495217930198,
+          "Y": 0.0,
+          "Z": 34.10865020258704,
+          "theta_rad": -0.2781415349663634,
+          "theta_deg": -15.936336060863034,
+          "distance": 35.471929546368436,
+          "uncertainty_meters": 0.08946334809830603
+        }
+      }
+    },
+    "notes": "theta=-15.9deg dist=35.5m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:48.948Z#855248b1-aae4-49a9-bb81-6631528d0c48",
+    "expires_at": 1778753088,
+    "ingested_at_epoch": 1778666688
+  },
+  {
+    "event_id": "e626e570-288b-48db-8b84-0a97cb9cd7d8",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:49.270Z",
+    "confidence_score": 0.7097,
+    "gps_location": {
+      "latitude": 37.91527392,
+      "longitude": -122.33481913
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1480,
+        "bbox": {
+          "x1": 2091.793212890625,
+          "y1": 108.54127502441406,
+          "x2": 2168.0107421875,
+          "y2": 294.14019775390625
+        },
+        "pixel_centroid": {
+          "x": 2129.90185546875,
+          "y": 201.34072875976562
+        },
+        "world_position": {
+          "X": -9.854637171812312,
+          "Y": 0.0,
+          "Z": 35.180440427354355,
+          "theta_rad": -0.2731171343058819,
+          "theta_deg": -15.648459108434702,
+          "distance": 36.534603630677225,
+          "uncertainty_meters": 0.09406642175517987
+        }
+      }
+    },
+    "notes": "theta=-15.6deg dist=36.5m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:49.270Z#e626e570-288b-48db-8b84-0a97cb9cd7d8",
+    "expires_at": 1778753089,
+    "ingested_at_epoch": 1778666689
+  },
+  {
+    "event_id": "39444877-47d9-40c9-8bdb-01f1851df77b",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:49.593Z",
+    "confidence_score": 0.74,
+    "gps_location": {
+      "latitude": 37.91526771,
+      "longitude": -122.33482197
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1490,
+        "bbox": {
+          "x1": 2104.7138671875,
+          "y1": 102.61103057861328,
+          "x2": 2179.89111328125,
+          "y2": 288.5106201171875
+        },
+        "pixel_centroid": {
+          "x": 2142.302490234375,
+          "y": 195.56082153320312
+        },
+        "world_position": {
+          "X": -9.856818554921814,
+          "Y": 0.0,
+          "Z": 35.91554318752752,
+          "theta_rad": -0.26784957100202494,
+          "theta_deg": -15.34664996280571,
+          "distance": 37.24356473915736,
+          "uncertainty_meters": 0.09714734042637474
+        }
+      }
+    },
+    "notes": "theta=-15.3deg dist=37.2m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:49.593Z#39444877-47d9-40c9-8bdb-01f1851df77b",
+    "expires_at": 1778753089,
+    "ingested_at_epoch": 1778666689
+  },
+  {
+    "event_id": "c493c3e5-b9ac-4707-8e55-9ea2f1381c0a",
+    "object_id": "global_person_6",
+    "object_type": "person",
+    "timestamp_utc": "2026-05-13T10:04:49.915Z",
+    "confidence_score": 0.6477,
+    "gps_location": {
+      "latitude": 37.91525777,
+      "longitude": -122.33482463
+    },
+    "geohash": "9q9p8",
+    "street_name_normalized": "",
+    "global_context": {
+      "city": "Richmond",
+      "state": "CA",
+      "country": "USA"
+    },
+    "camera_data": {
+      "image_reference_url": "",
+      "svo2_reference_url": "",
+      "bifocal_metadata": {
+        "frame": 1500,
+        "bbox": {
+          "x1": 2119.969482421875,
+          "y1": 97.15731811523438,
+          "x2": 2186.46142578125,
+          "y2": 279.0589904785156
+        },
+        "pixel_centroid": {
+          "x": 2153.21533203125,
+          "y": 188.108154296875
+        },
+        "world_position": {
+          "X": -10.015847910383533,
+          "Y": 0.0,
+          "Z": 37.03517194308663,
+          "theta_rad": -0.2641233017690786,
+          "theta_deg": -15.133150462428434,
+          "distance": 38.36562485113367,
+          "uncertainty_meters": 0.10222884371523833
+        }
+      }
+    },
+    "notes": "theta=-15.1deg dist=38.4m",
+    "device_id": "cam-001-ch1",
+    "ts_event": "2026-05-13T10:04:49.915Z#c493c3e5-b9ac-4707-8e55-9ea2f1381c0a",
+    "expires_at": 1778753089,
+    "ingested_at_epoch": 1778666689
+  }
+]
