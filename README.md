@@ -104,11 +104,12 @@ The system is composed of three layers that work sequentially: calibration, dete
 .
 ├── process_video.py          # Core pipeline: VideoObjectDetector + MultiCameraPipeline
 ├── calibration
-   ├── validate.py               # Calibration validation runner
-   └── pitch_yaw_minimize.py     # Camera angle optimizer (scipy Nelder-Mead)
+    ├── validate.py               # Calibration validation runner
+    └── pitch_yaw_minimize.py     # Camera angle optimizer (scipy Nelder-Mead)
 ├── requirements.txt          # Python dependencies
-├── calibration_flow.md       # Mathematical reference for the calibration model
-├── video_pipeline.md         # Mathematical reference for the full V2X pipeline
+├── docs
+    ├── calibration_flow.md       # Mathematical reference for the calibration model
+    └── video_pipeline.md         # Mathematical reference for the full V2X pipeline
 └── camera_views/
     └── ch1/
         └── center/           # Reference images/frames used by validate.py
