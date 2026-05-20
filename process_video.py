@@ -898,7 +898,7 @@ if __name__ == "__main__":
     # cam4 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -43.67, -39.49, "cam-001-ch4", base_lat, base_lon, "Richmond", "CA", "USA")
     #cam4.process_video(video_path=video_path, output_json='multi_cam_detections.json', show_live=True, upload=False)
     #pipeline = MultiCameraPipeline(detectors=[cam1, cam2, cam3, cam4])
-    pipeline = MultiCameraPipeline(detectors=[cam1])
+    pipeline = MultiCameraPipeline(detectors=[cam4])
 
     video_paths = [
         #'camera_views/ch1/event3/sensor_0_20260302_123255.ts'
@@ -910,9 +910,9 @@ if __name__ == "__main__":
         # 'camera_views/ch3/event2/sensor_2_20260302_123039.ts',
         # 'camera_views/ch4/event2/sensor_3_20260302_123039.ts'
         # 'camera_views/ch4/event3/sensor_3_20260302_123255.ts',
-        # 'camera_views/ch3/event3/sensor_2_20260302_123255.ts'
-        'camera_views/ch1/event2/sensor_0_20260302_123039.ts',
-        # 'camera_views/ch4/event2/sensor_3_20260302_123039.ts'
+        'camera_views/ch3/event3/sensor_2_20260302_123255.ts'
+        #'camera_views/ch1/event2/sensor_0_20260302_123039.ts',
+        #'camera_views/ch4/event2/sensor_3_20260302_123039.ts'
     ]
 
     pipeline.process_streams(
@@ -920,7 +920,7 @@ if __name__ == "__main__":
         show_live=True, 
         upload=False,
         output_json='multi_cam_detections.json',
-        output_video=None,
+        output_video=None,#'output.mp4',
         output_image=None, #'annotated_output.jpg',
         output_validate=False
     )
