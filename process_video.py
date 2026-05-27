@@ -37,8 +37,8 @@ def xy_to_gps(X, Z, origin_lat, origin_lon, heading_deg):
 
 def compute_geohash(lat, lon, precision=5):
     """
-    Encode lat/lon to a geohash string without external dependencies.
-
+    Encode lat/lon to a geohash string
+    
     Args:
         lat: Latitude
         lon: Longitude
@@ -84,6 +84,15 @@ def compute_geohash(lat, lon, precision=5):
 
 class MultiCameraPipeline:
     def __init__(self, detectors):
+        """
+        Initialize the MultiCameraPipeline.
+        
+        Args:
+            detectors: List of VideoObjectDetector instances.
+            
+        Returns:
+            None
+        """
         self.detectors = detectors
         self.all_clean_detections = []
         self.global_tracks = {} # Store global tracks: global_id -> { 'type': str, 'lat': float, 'lon': float, 'last_seen': float }
@@ -91,7 +100,18 @@ class MultiCameraPipeline:
 
     @staticmethod
     def haversine_distance_meters(lat1, lon1, lat2, lon2):
-        """Calculate the great circle distance in meters between two GPS points."""
+        """
+        Calculate the great circle distance in meters between two GPS points.
+        
+        Args:
+            lat1: Latitude of the first point.
+            lon1: Longitude of the first point.
+            lat2: Latitude of the second point.
+            lon2: Longitude of the second point.
+            
+        Returns:
+            Distance in meters between the two points.
+        """
         R = 6371000.0  # Earth radius in meters
         dLat = radians(lat2 - lat1)
         dLon = radians(lon2 - lon1)
@@ -106,6 +126,14 @@ class MultiCameraPipeline:
         """
         Takes a list of V2X JSON records and removes duplicates that are 
         physically too close together (overlapping camera seams).
+        
+        Args:
+            raw_buffer: List of raw detection records.
+            current_time_epoch: Current time in epoch seconds.
+            merge_radius_meters: Radius in meters to consider detections as duplicates.
+            
+        Returns:
+            List of deduplicated and tracked detection records.
         """
         clean_buffer = []
 
@@ -189,9 +217,21 @@ class MultiCameraPipeline:
     def process_streams(self, video_paths, show_live=True, upload=False, output_json=None, output_video=None, output_image=None, output_validate=False):
         """
         Processes multiple videos in parallel, running YOLO, 3D math, and deduplication.
+        
+        Args:
+            video_paths: List of file paths to the input videos.
+            show_live: Boolean to display the live processing grid.
+            upload: Boolean to upload detections to V2X API.
+            output_json: Path to save the detections JSON.
+            output_video: Path to save the annotated output video.
+            output_image: Path to save a final annotated image frame.
+            output_validate: Boolean to enable validation output.
+            
+        Returns:
+            None
         """
         if len(self.detectors) != len(video_paths):
-            print("❌ Error: Number of detectors must match number of video paths.")
+            print("Error: Number of detectors must match number of video paths.")
             return
 
         caps = [cv2.VideoCapture(str(path)) for path in video_paths]
@@ -222,7 +262,7 @@ class MultiCameraPipeline:
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
             writer = cv2.VideoWriter(output_video, fourcc, out_fps, out_size)
         
-        print(f"🚀 Starting Multi-Stream Pipeline for {len(caps)} cameras...")
+        print(f"Starting Multi-Stream Pipeline for {len(caps)} cameras...")
 
         try:
             while True:
@@ -236,7 +276,6 @@ class MultiCameraPipeline:
                     
                 frame_count += 1
                 
-                # Speed optimization: Skip 9 out of 10 frames
                 if frame_count != 1 and frame_count % 10 != 0:
                     continue
 
@@ -261,7 +300,7 @@ class MultiCameraPipeline:
                     # Optional visualization
                     if show_live or writer or output_image:
                         annotated = detector.draw_detections_3d(frame, det_3d)
-                        # Resize to fit on screen (otherwise 2560x1920 is too huge)
+                        # Resize to fit on screen
                         annotated = cv2.resize(annotated, (640, 480))
                         annotated_frames.append(annotated)
 
@@ -275,7 +314,6 @@ class MultiCameraPipeline:
                     self.detectors[0].upload_batch(clean_batch) 
                     print(f"Frame {frame_count}: Uploaded {len(clean_batch)} unique objects (merged from {len(raw_buffer)} raw detections).")
 
-                # --- NEW: Build the 2x2 Grid View and Save ---
                 if annotated_frames:
                     if len(annotated_frames) == 1:
                         grid = annotated_frames[0]
@@ -304,20 +342,19 @@ class MultiCameraPipeline:
             for cap in caps:
                 cap.release()
             cv2.destroyAllWindows()
-            print(f"✅ Multi-Stream complete. Processed {frame_count} frames, found {len(self.all_clean_detections)} total unique objects.")
+            print(f"Multi-Stream complete. Processed {frame_count} frames, found {len(self.all_clean_detections)} total unique objects.")
             
-            # --- NEW: Close the Video Writer cleanly ---
             if writer:
                 writer.release()
-                print(f"🎬 Video saved to: {output_video}")
+                print(f"Video saved to: {output_video}")
 
             if output_image:
-                print(f"🖼️ Image saved to: {output_image}")
+                print(f"Image saved to: {output_image}")
                 
             if output_json:
                 with open(output_json, 'w') as f:
                     json.dump(self.all_clean_detections, f, indent=2)
-                print(f"📁 JSON saved to: {output_json}")
+                print(f"JSON saved to: {output_json}")
             
             if output_validate:
                 first_person=None
@@ -336,98 +373,6 @@ class MultiCameraPipeline:
                         "v": v_val
                     }
                     print(json.dumps(validation_output, indent=2))
-
-
-    
-    def process_streams_old(self, video_paths, show_live=True, upload=False, output_json=None):
-        """
-        Processes multiple videos in parallel, running YOLO, 3D math, and deduplication.
-        """
-        if len(self.detectors) != len(video_paths):
-            print("❌ Error: Number of detectors must match number of video paths.")
-            return
-
-        caps = [cv2.VideoCapture(str(path)) for path in video_paths]
-        frame_count = 0
-        
-        global_start_time = datetime.now(timezone.utc)
-        global_start_epoch = time.time()
-        fps = 30
-        if len(caps) > 0:
-            fps = int(caps[0].get(cv2.CAP_PROP_FPS)) or 30
-        
-        print(f"🚀 Starting Multi-Stream Pipeline for {len(caps)} cameras...")
-
-        try:
-            while True:
-                # Read 1 frame from all cameras
-                ret_frames = [cap.read() for cap in caps]
-                frames = [f for ret, f in ret_frames if ret]
-                
-                # If any video ends, stop the loop
-                if len(frames) != len(caps):
-                    break
-                    
-                frame_count += 1
-                
-                # Speed optimization: Skip 9 out of 10 frames
-                if frame_count != 1 and frame_count % 10 != 0:
-                    continue
-
-                raw_buffer = []
-                annotated_frames = []
-
-                current_offset = frame_count / fps
-                current_time = global_start_time + timedelta(seconds=current_offset)
-                current_epoch = int(global_start_epoch + current_offset)
-                current_utc_str = current_time.strftime("%Y-%m-%dT%H:%M:%SZ")
-
-                # Process each camera's frame with its specific detector
-                for i, frame in enumerate(frames):
-                    detector = self.detectors[i]
-                    results = detector.model(frame, conf=detector.conf, verbose=False)
-                    
-                    det_2d = detector.extract_detections(results[0], frame_count)
-                    det_3d = detector.compute_3d_detections(det_2d, current_utc_str, current_epoch)
-                    
-                    raw_buffer.extend(det_3d)
-                    
-                    # Optional visualization
-                    if show_live:
-                        annotated = detector.draw_detections_3d(frame, det_3d)
-                        # Resize to fit on screen (otherwise 2560x1920 is too huge)
-                        annotated = cv2.resize(annotated, (640, 480))
-                        annotated_frames.append(annotated)
-
-                # Deduplicate objects crossing the seams
-                clean_batch = self.deduplicate(raw_buffer, current_epoch, merge_radius_meters=3.0)
-                self.all_clean_detections.extend(clean_batch)
-
-                # Batch Upload
-                if upload and clean_batch:
-                    # You can call the upload_batch from any of the detectors
-                    self.detectors[0].upload_batch(clean_batch) 
-                    print(f"Frame {frame_count}: Uploaded {len(clean_batch)} unique objects (merged from {len(raw_buffer)} raw detections).")
-
-                # Build the 2x2 Grid View
-                if show_live and len(annotated_frames) == 4:
-                    top_row = cv2.hconcat([annotated_frames[0], annotated_frames[1]])
-                    bottom_row = cv2.hconcat([annotated_frames[2], annotated_frames[3]])
-                    grid = cv2.vconcat([top_row, bottom_row])
-                    
-                    cv2.imshow('V2X Multi-Camera Feed', grid)
-                    if cv2.waitKey(1) & 0xFF == ord('q'):
-                        break
-
-        finally:
-            for cap in caps:
-                cap.release()
-            cv2.destroyAllWindows()
-            print(f"✅ Multi-Stream complete. Processed {frame_count} frames, found {len(self.all_clean_detections)} total unique objects.")
-            if output_json:
-                with open(output_json, 'w') as f:
-                    json.dump(self.all_clean_detections, f, indent=2)
-                print(f"JSON saved to: {output_json}")
 
 class VideoObjectDetector:
     def __init__(self, model_path, conf=0.25, K=np.eye(3,3), dist_coeffs=None, camera_height=5.0, pitch_deg=0.0, yaw_deg=0.0, heading_deg=0.0, device_id="cam-001", origin_lat=0.0, origin_lon=0.0,
@@ -489,90 +434,18 @@ class VideoObjectDetector:
         print(f"Camera parameters:")
         print(f"  Intrinsics: fx={self.fx:.1f}, fy={self.fy:.1f}, cx={self.cx:.1f}, cy={self.cy:.1f}")
         print(f"  Height: {self.camera_height}m")
-    
-    def process_video(self, video_path, output_path=None, output_json=None, show_live=True, upload=False):
-        
-        """
-        Process video, collect 3D detections, and optionally save/upload.
-
-        Args:
-            video_path:   Input video path
-            output_path:  Save annotated video here (optional)
-            output_json:  Save V2X JSON here (optional)
-            show_live:    Show OpenCV preview window
-            upload:       POST each detection to the V2X API in real time
-        """
-        
-        cap = cv2.VideoCapture(str(video_path))
-        fps = int(cap.get(cv2.CAP_PROP_FPS)) or 30
-        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        print(f"Video: {width} x {height} @ {fps}fps, {total_frames} frames")
-
-        writer = None
-        if output_path:
-            fourcc = cv2.VideoWriter_fourcc(*'avc1')
-            writer = cv2.VideoWriter(
-                str(output_path),
-                fourcc,
-                fps // 10,
-                (width, height)
-            )
-
-        global_start_time = datetime.now(timezone.utc)
-        global_start_epoch = time.time()
-
-        frame = 0
-        try:
-            while cap.isOpened():
-                ret, f = cap.read()
-                if not ret:
-                    break
-                frame += 1
-                if frame != 1 and frame % 10 != 0:
-                    continue
-                
-                current_offset = frame / fps
-                current_time = global_start_time + timedelta(seconds=current_offset)
-                current_epoch = int(global_start_epoch + current_offset)
-                current_utc_str = current_time.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
-
-                results = self.model(f, conf=self.conf, verbose=False)
-                detections_2d = self.extract_detections(results[0], frame)
-                detections_3d = self.compute_3d_detections(detections_2d, current_utc_str, current_epoch)
-                self.all_detections_3d.extend(detections_3d)
-
-                # if upload:
-                #     for det in detections_3d:
-                #         self.upload_detection(det)
-
-                if upload and detections_3d:
-                    self.upload_batch(detections_3d)
-
-                annotated_frame = self.draw_detections_3d(f, detections_3d)
-                if writer:
-                    writer.write(annotated_frame)
-                if show_live:
-                    cv2.imshow('YOLO Detection', annotated_frame)
-                    if cv2.waitKey(1) & 0xFF == ord('q'):
-                        break
-                if frame % 30 == 0:
-                    print(f"Processed {frame}/{total_frames} frames ({frame/total_frames*100:.1f}%)")
-        
-        finally:
-            cap.release()
-            if writer:
-                writer.release()
-            cv2.destroyAllWindows()
-        print(f"\n✅ Processed {frame} frames, {len(self.all_detections_3d)} total detections")
-        if output_json:
-            self.save_detections_json(output_json)
-            print(f"JSON saved to: {output_json}")
-        if output_path:
-            print(f"Output saved to: {output_path}")
 
     def extract_detections(self, result, frame_num):
+        """
+        Extract 2D bounding boxes and track IDs from YOLO results.
+        
+        Args:
+            result: YOLO inference result object.
+            frame_num: Current frame number.
+            
+        Returns:
+            List of 2D detection dictionaries.
+        """
         detections = []
         
         # Check if any tracks were actually found
@@ -586,6 +459,7 @@ class VideoObjectDetector:
                 cls = int(box.cls[0])
                 class_name = self.class_names.get(cls, 'unknown')
                 
+                # person only -- changeable
                 if class_name != 'person':
                     continue
 
@@ -599,41 +473,16 @@ class VideoObjectDetector:
                 })
         return detections
 
-    def draw_detections(self, frame, detections):
-        """Draw bounding boxes and labels on frame"""
-        annotated = frame.copy()
-        
-        for det in detections:
-            # Extract data
-            x1 = int(det['bbox']['x1'])
-            y1 = int(det['bbox']['y1'])
-            x2 = int(det['bbox']['x2'])
-            y2 = int(det['bbox']['y2'])
-            conf = det['confidence']
-            label = det['class_name']
-            
-            # Color based on class
-            color = self.get_class_color(det['class_id'])
-            
-            # Draw box
-            cv2.rectangle(annotated, (x1, y1), (x2, y2), color, 2)
-            
-            # Draw label
-            text = f"{label} {conf:.2f}"
-            (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)
-            cv2.rectangle(annotated, (x1, y1 - text_height - 10), (x1 + text_width, y1), color, -1)
-            cv2.putText(annotated, text, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-        
-        # Add frame info
-        cv2.putText(annotated, f"Frame: {detections[0]['frame'] if detections else 0}", 
-                   (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-        cv2.putText(annotated, f"Detections: {len(detections)}", 
-                   (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-        
-        return annotated
-
     def get_class_color(self, class_id):
-        """Get color for each class"""
+        """
+        Get color for each class for visualization.
+        
+        Args:
+            class_id: Integer ID of the object class.
+            
+        Returns:
+            RGB color tuple (B, G, R).
+        """
         colors = {
             0: (0, 255, 0),      # car - green
             1: (0, 255, 255),    # truck - yellow
@@ -647,16 +496,18 @@ class VideoObjectDetector:
             9: (255, 255, 0),    # train - cyan
         }
         return colors.get(class_id, (255, 255, 255))
-
-
-    # def pixel_to_ray(self, u, v):
-    #     pixel = np.array([[u, v]], dtype=np.float32)
-    #     undistorted = cv2.undistortPoints(pixel, self.K, self.dist_coeffs, P=self.K)
-    #     u_u, v_u = undistorted[0][0]
-    #     ray = np.array([(u_u - self.cx) / self.fx, (v_u - self.cy) / self.fy, 1.0])
-    #     return ray / np.linalg.norm(ray)
     
     def compute_world_coordinates(self, u, v):
+        """
+        Compute 3D world coordinates (X, Y, Z) from 2D pixel coordinates (u, v).
+        
+        Args:
+            u: X pixel coordinate.
+            v: Y pixel coordinate.
+            
+        Returns:
+            Dictionary containing X, Y, Z, distance, and angle if valid, else None.
+        """
         # 1. Undistort the pixel
         pixel = np.array([[u, v]], dtype=np.float32)
         undistorted = cv2.undistortPoints(pixel, self.K, self.dist_coeffs, P=self.K)
@@ -721,7 +572,17 @@ class VideoObjectDetector:
         }
 
     def compute_3d_detections(self, detections_2d, current_utc_str=None, current_epoch=None):
-        """Convert 2D detections to V2X-schema dicts with 3D world coords."""
+        """
+        Convert 2D detections to V2X-schema dicts with 3D world coordinates.
+        
+        Args:
+            detections_2d: List of 2D detection dictionaries.
+            current_utc_str: Current timestamp in UTC string format.
+            current_epoch: Current time in epoch seconds.
+            
+        Returns:
+            List of 3D detection records formatted for V2X schema.
+        """
         records = []
         if current_utc_str is None or current_epoch is None:
             now_utc = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
@@ -785,7 +646,15 @@ class VideoObjectDetector:
     V2X_ENDPOINT = "https://qxacv7wah0.execute-api.us-west-1.amazonaws.com/detections"
 
     def upload_detection(self, record):
-        """POST a single V2X record to the API."""
+        """
+        POST a single V2X record to the API.
+        
+        Args:
+            record: Dictionary containing the detection record.
+            
+        Returns:
+            None
+        """
         try:
             r = requests.post(self.V2X_ENDPOINT,
                               headers={"content-type": "application/json"},
@@ -797,7 +666,15 @@ class VideoObjectDetector:
             print(f"  ❌ Upload error: {e}")
     
     def upload_batch(self, records):
-        """POST a list of V2X records to the API in a single request."""
+        """
+        POST a list of V2X records to the API in a single request.
+        
+        Args:
+            records: List of detection record dictionaries.
+            
+        Returns:
+            None
+        """
         if not records:
             return
 
@@ -817,7 +694,15 @@ class VideoObjectDetector:
             print(f"  ❌ Batch upload error: {e}")
 
     def upload_all(self):
-        """Upload all accumulated detections to the V2X API."""
+        """
+        Upload all accumulated detections to the V2X API.
+        
+        Args:
+            None
+            
+        Returns:
+            None
+        """
         print(f"\nUploading {len(self.all_detections_3d)} detections to V2X API...")
         for i, det in enumerate(self.all_detections_3d):
             self.upload_detection(det)
@@ -826,6 +711,16 @@ class VideoObjectDetector:
         print("✅ Upload complete")
     
     def draw_detections_3d(self, frame, detections_3d):
+        """
+        Draw 3D bounding boxes, metadata, and labels on a video frame.
+        
+        Args:
+            frame: The input video frame as a NumPy array.
+            detections_3d: List of 3D detection records.
+            
+        Returns:
+            Annotated image as a NumPy array.
+        """
         annotated = frame.copy()
         for det in detections_3d:
             x1, y1 = int(det['camera_data']['bifocal_metadata']['bbox']['x1']), \
@@ -856,11 +751,6 @@ class VideoObjectDetector:
         cv2.putText(annotated, f"Detections: {len(detections_3d)}",
                     (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
         return annotated
-    
-    def save_detections_json(self, output_path):
-        """Save all detections as a JSON array in V2X schema format."""
-        with open(output_path, 'w') as f:
-            json.dump(self.all_detections_3d, f, indent=2)
 
 if __name__ == "__main__":
     K = np.array([
@@ -869,36 +759,15 @@ if __name__ == "__main__":
         [     0,      0,      1]
     ], dtype=np.float64)
 
-    # K = np.array([
-    #     [1005.0,      0, 1920.0],
-    #     [     0, 1076.0, 1080.0],
-    #     [     0,      0,      1]
-    # ], dtype=np.float64)
-
     base_lat = 37.91560117034595
     base_lon = -122.33478756387032
 
-    #DONE
     cam4 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -43.48, -22.63, 260.0, "cam-001-ch4", base_lat, base_lon, "Richmond", "CA", "USA")
     cam1 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -39.20, -46.06, 200.0, "cam-001-ch1", base_lat, base_lon, "Richmond", "CA", "USA")
     cam3 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -30.42, 14.58, 315.0, "cam-001-ch3", base_lat, base_lon, "Richmond", "CA", "USA")
     cam2 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -40.52, 71.25, 300.0,"cam-001-ch2", base_lat, base_lon, "Richmond", "CA", "USA")
     
-    
-    #cam1 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -39.20, -46.06, 200.0, "cam-001-ch1", base_lat, base_lon, "Richmond", "CA", "USA")
-    #cam1 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -39.20, -46.06, 200.0, "cam-001-ch1", base_lat, base_lon, "Richmond", "CA", "USA")
-    #cam2 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -40.52, 71.25, 300.0,"cam-001-ch2", base_lat, base_lon, "Richmond", "CA", "USA")
-    #cam3 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -32.63, 9.53, 315.0, "cam-001-ch3", base_lat, base_lon, "Richmond", "CA", "USA")
-    #cam4 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -43.48, -22.63, 260.0, "cam-001-ch4", base_lat, base_lon, "Richmond", "CA", "USA")
-    #video_path = 'camera_views/ch4/Centerline_NE-SW_16m_ch4.png'
-
-    #cam1.process_video(video_path=video_path, output_json='multi_cam_detections.json', show_live=True, upload=False)
-    # cam2 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -17.21, 88.68, "cam-001-ch2", base_lat, base_lon, "Richmond", "CA", "USA")
-    # cam3 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -26.32, 50.44, "cam-001-ch3", base_lat, base_lon, "Richmond", "CA", "USA")
-    # cam4 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -43.67, -39.49, "cam-001-ch4", base_lat, base_lon, "Richmond", "CA", "USA")
-    #cam4.process_video(video_path=video_path, output_json='multi_cam_detections.json', show_live=True, upload=False)
-    #pipeline = MultiCameraPipeline(detectors=[cam1, cam2, cam3, cam4])
-    pipeline = MultiCameraPipeline(detectors=[cam4])
+    pipeline = MultiCameraPipeline(detectors=[cam3])
 
     video_paths = [
         #'camera_views/ch1/event3/sensor_0_20260302_123255.ts'

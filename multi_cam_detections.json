@@ -1,13 +1,13 @@
 [
   {
-    "event_id": "fcd5083b-fc94-48b8-8b02-ac4710ae978b",
+    "event_id": "cd91e4e9-0485-463d-a21c-fb0a53aad871",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T20:16:48.152Z",
+    "timestamp_utc": "2026-05-27T19:32:42.564Z",
     "confidence_score": 0.8428,
     "gps_location": {
-      "latitude": 37.91558565,
-      "longitude": -122.33479431
+      "latitude": 37.91562044,
+      "longitude": -122.33481806
     },
     "geohash": "9q9p8",
     "street_name_normalized": "",
@@ -32,31 +32,31 @@
           "y": 1695.86962890625
         },
         "world_position": {
-          "X": -1.5984589325114136,
+          "X": -0.3769354629873544,
           "Y": 0.0,
-          "Z": 0.8836916971401001,
-          "theta_rad": -1.0657754712324827,
-          "theta_deg": -61.064436410187746,
-          "distance": 1.8264670745786464,
-          "uncertainty_meters": 0.0032087885302722885
+          "Z": 3.4112760687583776,
+          "theta_rad": -0.11005046898029949,
+          "theta_deg": -6.305427406006546,
+          "distance": 3.4320379893790665,
+          "uncertainty_meters": 0.0043307162409029765
         }
       }
     },
-    "notes": "theta=-61.1deg dist=1.8m",
-    "device_id": "cam-001-ch4",
-    "ts_event": "2026-05-13T20:16:48.152Z#fcd5083b-fc94-48b8-8b02-ac4710ae978b",
-    "expires_at": 1778789808,
-    "ingested_at_epoch": 1778703408
+    "notes": "theta=-6.3deg dist=3.4m",
+    "device_id": "cam-001-ch3",
+    "ts_event": "2026-05-27T19:32:42.564Z#cd91e4e9-0485-463d-a21c-fb0a53aad871",
+    "expires_at": 1779996762,
+    "ingested_at_epoch": 1779910362
   },
   {
-    "event_id": "8fe97f92-7743-40ff-acb8-d1279c1da6da",
+    "event_id": "cbc2705e-0b51-42b1-bce6-2f798b8bb0a6",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T20:16:48.485Z",
+    "timestamp_utc": "2026-05-27T19:32:42.897Z",
     "confidence_score": 0.8394,
     "gps_location": {
-      "latitude": 37.91558544,
-      "longitude": -122.33479522
+      "latitude": 37.91562126,
+      "longitude": -122.33481839
     },
     "geohash": "9q9p8",
     "street_name_normalized": "",
@@ -81,31 +81,31 @@
           "y": 1635.4036865234375
         },
         "world_position": {
-          "X": -1.607796053206198,
+          "X": -0.3327028843806368,
           "Y": 0.0,
-          "Z": 0.9661349990210039,
-          "theta_rad": -1.0297105946751985,
-          "theta_deg": -58.99807119479506,
-          "distance": 1.8757465140681302,
-          "uncertainty_meters": 0.003278570817712656
+          "Z": 3.4956600969684324,
+          "theta_rad": -0.09489015160758525,
+          "theta_deg": -5.436805204471159,
+          "distance": 3.5114570654946853,
+          "uncertainty_meters": 0.004435696435449721
         }
       }
     },
-    "notes": "theta=-59.0deg dist=1.9m",
-    "device_id": "cam-001-ch4",
-    "ts_event": "2026-05-13T20:16:48.485Z#8fe97f92-7743-40ff-acb8-d1279c1da6da",
-    "expires_at": 1778789808,
-    "ingested_at_epoch": 1778703408
+    "notes": "theta=-5.4deg dist=3.5m",
+    "device_id": "cam-001-ch3",
+    "ts_event": "2026-05-27T19:32:42.897Z#cbc2705e-0b51-42b1-bce6-2f798b8bb0a6",
+    "expires_at": 1779996762,
+    "ingested_at_epoch": 1779910362
   },
   {
-    "event_id": "77a7eb9f-f90c-445b-8eca-852b07f779b9",
+    "event_id": "f498984a-b0d8-4b1f-b487-83acad050252",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T20:16:48.818Z",
+    "timestamp_utc": "2026-05-27T19:32:43.231Z",
     "confidence_score": 0.8609,
     "gps_location": {
-      "latitude": 37.91558212,
-      "longitude": -122.33479946
+      "latitude": 37.91562534,
+      "longitude": -122.33482331
     },
     "geohash": "9q9p8",
     "street_name_normalized": "",
@@ -130,31 +130,31 @@
           "y": 1514.908203125
         },
         "world_position": {
-          "X": -1.9068961415150916,
+          "X": -0.3176762656874831,
           "Y": 0.0,
-          "Z": 1.397259388753025,
-          "theta_rad": -0.9384333333443805,
-          "theta_deg": -53.76826935502651,
-          "distance": 2.3640191822368153,
-          "uncertainty_meters": 0.0036966958109549974
+          "Z": 4.122063453885342,
+          "theta_rad": -0.07691525592081462,
+          "theta_deg": -4.406919544431294,
+          "distance": 4.134286556062399,
+          "uncertainty_meters": 0.005203022698308857
         }
       }
     },
-    "notes": "theta=-53.8deg dist=2.4m",
-    "device_id": "cam-001-ch4",
-    "ts_event": "2026-05-13T20:16:48.818Z#77a7eb9f-f90c-445b-8eca-852b07f779b9",
-    "expires_at": 1778789808,
-    "ingested_at_epoch": 1778703408
+    "notes": "theta=-4.4deg dist=4.1m",
+    "device_id": "cam-001-ch3",
+    "ts_event": "2026-05-27T19:32:43.231Z#f498984a-b0d8-4b1f-b487-83acad050252",
+    "expires_at": 1779996763,
+    "ingested_at_epoch": 1779910363
   },
   {
-    "event_id": "c982cde5-47da-43e9-9aca-cecac1018761",
+    "event_id": "ca358317-dc71-4ab1-8758-915ac12034cc",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T20:16:49.152Z",
+    "timestamp_utc": "2026-05-27T19:32:43.564Z",
     "confidence_score": 0.8803,
     "gps_location": {
-      "latitude": 37.91557945,
-      "longitude": -122.3348038
+      "latitude": 37.91562959,
+      "longitude": -122.33482745
     },
     "geohash": "9q9p8",
     "street_name_normalized": "",
@@ -179,31 +179,31 @@
           "y": 1405.17138671875
         },
         "world_position": {
-          "X": -2.1331044085701087,
+          "X": -0.23952216416593514,
           "Y": 0.0,
-          "Z": 1.8239477878266492,
-          "theta_rad": -0.8633677907698384,
-          "theta_deg": -49.46733057864565,
-          "distance": 2.806585104816699,
-          "uncertainty_meters": 0.004123090523854511
+          "Z": 4.7137772366412864,
+          "theta_rad": -0.05076954713282209,
+          "theta_deg": -2.9088807785012154,
+          "distance": 4.71985875888297,
+          "uncertainty_meters": 0.005995207962066651
         }
       }
     },
-    "notes": "theta=-49.5deg dist=2.8m",
-    "device_id": "cam-001-ch4",
-    "ts_event": "2026-05-13T20:16:49.152Z#c982cde5-47da-43e9-9aca-cecac1018761",
-    "expires_at": 1778789809,
-    "ingested_at_epoch": 1778703409
+    "notes": "theta=-2.9deg dist=4.7m",
+    "device_id": "cam-001-ch3",
+    "ts_event": "2026-05-27T19:32:43.564Z#ca358317-dc71-4ab1-8758-915ac12034cc",
+    "expires_at": 1779996763,
+    "ingested_at_epoch": 1779910363
   },
   {
-    "event_id": "3977cc9b-053a-43d8-bbcf-c70dacc23fff",
+    "event_id": "73fd439e-2d84-4a0f-ab62-c9a94a83dae2",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T20:16:49.485Z",
+    "timestamp_utc": "2026-05-27T19:32:43.897Z",
     "confidence_score": 0.8361,
     "gps_location": {
-      "latitude": 37.91557605,
-      "longitude": -122.3348085
+      "latitude": 37.91563442,
+      "longitude": -122.33483288
     },
     "geohash": "9q9p8",
     "street_name_normalized": "",
@@ -228,31 +228,31 @@
           "y": 1301.640625
         },
         "world_position": {
-          "X": -2.4345423801851362,
+          "X": -0.19663169004884862,
           "Y": 0.0,
-          "Z": 2.2960210100524225,
-          "theta_rad": -0.8146720125012995,
-          "theta_deg": -46.677268003753504,
-          "distance": 3.3464472324421397,
-          "uncertainty_meters": 0.004631333808712945
+          "Z": 5.431558627104295,
+          "theta_rad": -0.036185903823223176,
+          "theta_deg": -2.073299566936998,
+          "distance": 5.435116663071967,
+          "uncertainty_meters": 0.007021589080538959
         }
       }
     },
-    "notes": "theta=-46.7deg dist=3.3m",
-    "device_id": "cam-001-ch4",
-    "ts_event": "2026-05-13T20:16:49.485Z#3977cc9b-053a-43d8-bbcf-c70dacc23fff",
-    "expires_at": 1778789809,
-    "ingested_at_epoch": 1778703409
+    "notes": "theta=-2.1deg dist=5.4m",
+    "device_id": "cam-001-ch3",
+    "ts_event": "2026-05-27T19:32:43.897Z#73fd439e-2d84-4a0f-ab62-c9a94a83dae2",
+    "expires_at": 1779996763,
+    "ingested_at_epoch": 1779910363
   },
   {
-    "event_id": "51045232-f4c7-4bb1-bdd0-b7f915a77b7f",
+    "event_id": "146a0a8f-9ffe-42b8-b365-d0620301b2e2",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T20:16:49.818Z",
+    "timestamp_utc": "2026-05-27T19:32:44.231Z",
     "confidence_score": 0.8532,
     "gps_location": {
-      "latitude": 37.91557152,
-      "longitude": -122.33481387
+      "latitude": 37.91564027,
+      "longitude": -122.33484039
     },
     "geohash": "9q9p8",
     "street_name_normalized": "",
@@ -277,31 +277,31 @@
           "y": 1199.0968017578125
         },
         "world_position": {
-          "X": -2.8494071838475103,
+          "X": -0.2027169218895005,
           "Y": 0.0,
-          "Z": 2.848023087870059,
-          "theta_rad": -0.785641096769901,
-          "theta_deg": -45.013919056944424,
-          "distance": 4.028691699348897,
-          "uncertainty_meters": 0.005275273015573845
+          "Z": 6.358020466538869,
+          "theta_rad": -0.0318728561855337,
+          "theta_deg": -1.8261801404585207,
+          "distance": 6.361251323705697,
+          "uncertainty_meters": 0.008453308200201626
         }
       }
     },
-    "notes": "theta=-45.0deg dist=4.0m",
-    "device_id": "cam-001-ch4",
-    "ts_event": "2026-05-13T20:16:49.818Z#51045232-f4c7-4bb1-bdd0-b7f915a77b7f",
-    "expires_at": 1778789809,
-    "ingested_at_epoch": 1778703409
+    "notes": "theta=-1.8deg dist=6.4m",
+    "device_id": "cam-001-ch3",
+    "ts_event": "2026-05-27T19:32:44.231Z#146a0a8f-9ffe-42b8-b365-d0620301b2e2",
+    "expires_at": 1779996764,
+    "ingested_at_epoch": 1779910364
   },
   {
-    "event_id": "6177c9ea-7101-4d2a-bb75-08dedf882651",
+    "event_id": "c97baa48-2f50-4a60-8d73-d7f57defe812",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T20:16:50.152Z",
+    "timestamp_utc": "2026-05-27T19:32:44.564Z",
     "confidence_score": 0.8719,
     "gps_location": {
-      "latitude": 37.91556826,
-      "longitude": -122.33481713
+      "latitude": 37.91564403,
+      "longitude": -122.33484597
     },
     "geohash": "9q9p8",
     "street_name_normalized": "",
@@ -326,31 +326,31 @@
           "y": 1130.9202880859375
         },
         "world_position": {
-          "X": -3.1572916562453397,
+          "X": -0.25291989821693667,
           "Y": 0.0,
-          "Z": 3.1932205153789854,
-          "theta_rad": -0.7797405920357195,
-          "theta_deg": -44.67584503867886,
-          "distance": 4.490562087582541,
-          "uncertainty_meters": 0.0057090794046947835
+          "Z": 7.0009133591704,
+          "theta_rad": -0.03611099573743788,
+          "theta_deg": -2.0690076497700964,
+          "distance": 7.00548045015648,
+          "uncertainty_meters": 0.009514583293765533
         }
       }
     },
-    "notes": "theta=-44.7deg dist=4.5m",
-    "device_id": "cam-001-ch4",
-    "ts_event": "2026-05-13T20:16:50.152Z#6177c9ea-7101-4d2a-bb75-08dedf882651",
-    "expires_at": 1778789810,
-    "ingested_at_epoch": 1778703410
+    "notes": "theta=-2.1deg dist=7.0m",
+    "device_id": "cam-001-ch3",
+    "ts_event": "2026-05-27T19:32:44.564Z#c97baa48-2f50-4a60-8d73-d7f57defe812",
+    "expires_at": 1779996764,
+    "ingested_at_epoch": 1779910364
   },
   {
-    "event_id": "5cb89a98-acaf-4d97-b1dc-baa7d92f3920",
+    "event_id": "74f2bb02-6d92-451b-a5d1-088e75207503",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T20:16:50.485Z",
+    "timestamp_utc": "2026-05-27T19:32:44.897Z",
     "confidence_score": 0.8451,
     "gps_location": {
-      "latitude": 37.9155635,
-      "longitude": -122.33482338
+      "latitude": 37.91565138,
+      "longitude": -122.33485465
     },
     "geohash": "9q9p8",
     "street_name_normalized": "",
@@ -375,31 +375,31 @@
           "y": 1043.41650390625
         },
         "world_position": {
-          "X": -3.5835659632092334,
+          "X": -0.213656198018243,
           "Y": 0.0,
-          "Z": 3.825717240744411,
-          "theta_rad": -0.7527276458418968,
-          "theta_deg": -43.12811722955884,
-          "distance": 5.241951680319149,
-          "uncertainty_meters": 0.006518361758665936
+          "Z": 8.118832651604485,
+          "theta_rad": -0.026310050467455968,
+          "theta_deg": -1.5074548505614256,
+          "distance": 8.12164346642419,
+          "uncertainty_meters": 0.01154005517779133
         }
       }
     },
-    "notes": "theta=-43.1deg dist=5.2m",
-    "device_id": "cam-001-ch4",
-    "ts_event": "2026-05-13T20:16:50.485Z#5cb89a98-acaf-4d97-b1dc-baa7d92f3920",
-    "expires_at": 1778789810,
-    "ingested_at_epoch": 1778703410
+    "notes": "theta=-1.5deg dist=8.1m",
+    "device_id": "cam-001-ch3",
+    "ts_event": "2026-05-27T19:32:44.897Z#74f2bb02-6d92-451b-a5d1-088e75207503",
+    "expires_at": 1779996764,
+    "ingested_at_epoch": 1779910364
   },
   {
-    "event_id": "2f4e8e77-adac-491f-99cd-3ae120919de9",
+    "event_id": "42a17ec9-677c-419d-89f0-808b35e90119",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T20:16:50.818Z",
+    "timestamp_utc": "2026-05-27T19:32:45.231Z",
     "confidence_score": 0.8096,
     "gps_location": {
-      "latitude": 37.91556073,
-      "longitude": -122.33482649
+      "latitude": 37.91565527,
+      "longitude": -122.33485987
     },
     "geohash": "9q9p8",
     "street_name_normalized": "",
@@ -424,31 +424,31 @@
           "y": 994.3206787109375
         },
         "world_position": {
-          "X": -3.8400561321875077,
+          "X": -0.2317585127505653,
           "Y": 0.0,
-          "Z": 4.148265275255363,
-          "theta_rad": -0.7468348245258187,
-          "theta_deg": -42.79048343872284,
-          "distance": 5.652798943199761,
-          "uncertainty_meters": 0.006960455020812439
+          "Z": 8.74905721202729,
+          "theta_rad": -0.02648334808593987,
+          "theta_deg": -1.5173840727002215,
+          "distance": 8.752126262089636,
+          "uncertainty_meters": 0.012757597679149413
         }
       }
     },
-    "notes": "theta=-42.8deg dist=5.7m",
-    "device_id": "cam-001-ch4",
-    "ts_event": "2026-05-13T20:16:50.818Z#2f4e8e77-adac-491f-99cd-3ae120919de9",
-    "expires_at": 1778789810,
-    "ingested_at_epoch": 1778703410
+    "notes": "theta=-1.5deg dist=8.8m",
+    "device_id": "cam-001-ch3",
+    "ts_event": "2026-05-27T19:32:45.231Z#42a17ec9-677c-419d-89f0-808b35e90119",
+    "expires_at": 1779996765,
+    "ingested_at_epoch": 1779910365
   },
   {
-    "event_id": "b83d8110-32cb-41e6-b464-0b0f97365cec",
+    "event_id": "52a44443-cd55-4dc6-8042-dead9047bed7",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T20:16:51.152Z",
+    "timestamp_utc": "2026-05-27T19:32:45.564Z",
     "confidence_score": 0.7946,
     "gps_location": {
-      "latitude": 37.91555631,
-      "longitude": -122.33483015
+      "latitude": 37.91566022,
+      "longitude": -122.33486831
     },
     "geohash": "9q9p8",
     "street_name_normalized": "",
@@ -473,31 +473,31 @@
           "y": 939.0762939453125
         },
         "world_position": {
-          "X": -4.268960730987084,
+          "X": -0.36673654829865876,
           "Y": 0.0,
-          "Z": 4.550193374545155,
-          "theta_rad": -0.7535201204506295,
-          "theta_deg": -43.17352268001051,
-          "distance": 6.2392535986658215,
-          "uncertainty_meters": 0.0075570608949036
+          "Z": 9.662391842497659,
+          "theta_rad": -0.03793683812388079,
+          "theta_deg": -2.1736207125693694,
+          "distance": 9.66934908945909,
+          "uncertainty_meters": 0.014600436360051816
         }
       }
     },
-    "notes": "theta=-43.2deg dist=6.2m",
-    "device_id": "cam-001-ch4",
-    "ts_event": "2026-05-13T20:16:51.152Z#b83d8110-32cb-41e6-b464-0b0f97365cec",
-    "expires_at": 1778789811,
-    "ingested_at_epoch": 1778703411
+    "notes": "theta=-2.2deg dist=9.7m",
+    "device_id": "cam-001-ch3",
+    "ts_event": "2026-05-27T19:32:45.564Z#52a44443-cd55-4dc6-8042-dead9047bed7",
+    "expires_at": 1779996765,
+    "ingested_at_epoch": 1779910365
   },
   {
-    "event_id": "41502b9a-fa30-46aa-870c-62461fff1afe",
+    "event_id": "dfd9197f-2c37-44a5-8b82-67a56d23fdb5",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T20:16:51.485Z",
+    "timestamp_utc": "2026-05-27T19:32:45.897Z",
     "confidence_score": 0.8442,
     "gps_location": {
-      "latitude": 37.91555295,
-      "longitude": -122.33483299
+      "latitude": 37.91566419,
+      "longitude": -122.33487498
     },
     "geohash": "9q9p8",
     "street_name_normalized": "",
@@ -522,31 +522,31 @@
           "y": 897.5467529296875
         },
         "world_position": {
-          "X": -4.5934062709910926,
+          "X": -0.4680726150497873,
           "Y": 0.0,
-          "Z": 4.860553965695393,
-          "theta_rad": -0.7571479258050937,
-          "theta_deg": -43.38138061571626,
-          "distance": 6.687627832334685,
-          "uncertainty_meters": 0.008032825379700625
+          "Z": 10.389331410207342,
+          "theta_rad": -0.04502275317182499,
+          "theta_deg": -2.5796137388048126,
+          "distance": 10.39987014938554,
+          "uncertainty_meters": 0.016157606112066958
         }
       }
     },
-    "notes": "theta=-43.4deg dist=6.7m",
-    "device_id": "cam-001-ch4",
-    "ts_event": "2026-05-13T20:16:51.485Z#41502b9a-fa30-46aa-870c-62461fff1afe",
-    "expires_at": 1778789811,
-    "ingested_at_epoch": 1778703411
+    "notes": "theta=-2.6deg dist=10.4m",
+    "device_id": "cam-001-ch3",
+    "ts_event": "2026-05-27T19:32:45.897Z#dfd9197f-2c37-44a5-8b82-67a56d23fdb5",
+    "expires_at": 1779996765,
+    "ingested_at_epoch": 1779910365
   },
   {
-    "event_id": "95c01bf1-b2ca-470c-bdd4-fb10349092c6",
+    "event_id": "c1a4239c-15e2-400b-bb4e-48971c4a720d",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T20:16:51.818Z",
+    "timestamp_utc": "2026-05-27T19:32:46.231Z",
     "confidence_score": 0.812,
     "gps_location": {
-      "latitude": 37.91554901,
-      "longitude": -122.33483703
+      "latitude": 37.91566992,
+      "longitude": -122.3348833
     },
     "geohash": "9q9p8",
     "street_name_normalized": "",
@@ -571,31 +571,31 @@
           "y": 850.5961303710938
         },
         "world_position": {
-          "X": -4.964242219065282,
+          "X": -0.533080993294917,
           "Y": 0.0,
-          "Z": 5.286953489994031,
-          "theta_rad": -0.7539282022561576,
-          "theta_deg": -43.19690404516334,
-          "distance": 7.252280883619322,
-          "uncertainty_meters": 0.008691400255953496
+          "Z": 11.356669443287593,
+          "theta_rad": -0.04690547616616784,
+          "theta_deg": -2.68748582037289,
+          "distance": 11.36917394490534,
+          "uncertainty_meters": 0.01837340118359876
         }
       }
     },
-    "notes": "theta=-43.2deg dist=7.3m",
-    "device_id": "cam-001-ch4",
-    "ts_event": "2026-05-13T20:16:51.818Z#95c01bf1-b2ca-470c-bdd4-fb10349092c6",
-    "expires_at": 1778789811,
-    "ingested_at_epoch": 1778703411
+    "notes": "theta=-2.7deg dist=11.4m",
+    "device_id": "cam-001-ch3",
+    "ts_event": "2026-05-27T19:32:46.231Z#c1a4239c-15e2-400b-bb4e-48971c4a720d",
+    "expires_at": 1779996766,
+    "ingested_at_epoch": 1779910366
   },
   {
-    "event_id": "d5cfd600-79da-4f56-9409-1d1ce23cd898",
+    "event_id": "41b1ffd8-b821-4d40-ab10-c493f2277da9",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T20:16:52.152Z",
+    "timestamp_utc": "2026-05-27T19:32:46.564Z",
     "confidence_score": 0.7913,
     "gps_location": {
-      "latitude": 37.91554652,
-      "longitude": -122.33483909
+      "latitude": 37.91567304,
+      "longitude": -122.3348886
     },
     "geohash": "9q9p8",
     "street_name_normalized": "",
@@ -620,31 +620,31 @@
           "y": 821.06298828125
         },
         "world_position": {
-          "X": -5.205617390712843,
+          "X": -0.617628724812044,
           "Y": 0.0,
-          "Z": 5.512456510407901,
-          "theta_rad": -0.756777784589264,
-          "theta_deg": -43.36017308622538,
-          "distance": 7.581927802190577,
-          "uncertainty_meters": 0.009061642610020293
+          "Z": 11.931511869890153,
+          "theta_rad": -0.05171833698471107,
+          "theta_deg": -2.9632424326592965,
+          "distance": 11.947486796102458,
+          "uncertainty_meters": 0.01974276521681162
         }
       }
     },
-    "notes": "theta=-43.4deg dist=7.6m",
-    "device_id": "cam-001-ch4",
-    "ts_event": "2026-05-13T20:16:52.152Z#d5cfd600-79da-4f56-9409-1d1ce23cd898",
-    "expires_at": 1778789812,
-    "ingested_at_epoch": 1778703412
+    "notes": "theta=-3.0deg dist=11.9m",
+    "device_id": "cam-001-ch3",
+    "ts_event": "2026-05-27T19:32:46.564Z#41b1ffd8-b821-4d40-ab10-c493f2277da9",
+    "expires_at": 1779996766,
+    "ingested_at_epoch": 1779910366
   },
   {
-    "event_id": "fcceccc5-0d55-4624-9f9e-804262202ad7",
+    "event_id": "83ae3083-7945-468c-85fc-1a7d67582086",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T20:16:52.485Z",
+    "timestamp_utc": "2026-05-27T19:32:46.897Z",
     "confidence_score": 0.8158,
     "gps_location": {
-      "latitude": 37.9155422,
-      "longitude": -122.33484193
+      "latitude": 37.9156777,
+      "longitude": -122.33489794
     },
     "geohash": "9q9p8",
     "street_name_normalized": "",
@@ -669,31 +669,31 @@
           "y": 787.1922607421875
         },
         "world_position": {
-          "X": -5.635290630034561,
+          "X": -0.830657392554383,
           "Y": 0.0,
-          "Z": 5.841664662623244,
-          "theta_rad": -0.7674184999077261,
-          "theta_deg": -43.96984116497347,
-          "distance": 8.116744822618022,
-          "uncertainty_meters": 0.009636121708122225
+          "Z": 12.877989493682348,
+          "theta_rad": -0.06441287057627267,
+          "theta_deg": -3.6905856303428264,
+          "distance": 12.904751260803062,
+          "uncertainty_meters": 0.02207940514091078
         }
       }
     },
-    "notes": "theta=-44.0deg dist=8.1m",
-    "device_id": "cam-001-ch4",
-    "ts_event": "2026-05-13T20:16:52.485Z#fcceccc5-0d55-4624-9f9e-804262202ad7",
-    "expires_at": 1778789812,
-    "ingested_at_epoch": 1778703412
+    "notes": "theta=-3.7deg dist=12.9m",
+    "device_id": "cam-001-ch3",
+    "ts_event": "2026-05-27T19:32:46.897Z#83ae3083-7945-468c-85fc-1a7d67582086",
+    "expires_at": 1779996766,
+    "ingested_at_epoch": 1779910366
   },
   {
-    "event_id": "06f1ae41-c000-433b-9fcd-f257b80826bf",
+    "event_id": "e1d52b59-de10-46bf-ac20-2d73d13779bd",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T20:16:52.818Z",
+    "timestamp_utc": "2026-05-27T19:32:47.231Z",
     "confidence_score": 0.6509,
     "gps_location": {
-      "latitude": 37.91553963,
-      "longitude": -122.33484297
+      "latitude": 37.9156797,
+      "longitude": -122.3349035
     },
     "geohash": "9q9p8",
     "street_name_normalized": "",
@@ -718,31 +718,31 @@
           "y": 768.0151977539062
         },
         "world_position": {
-          "X": -5.901724785045374,
+          "X": -1.017645689587314,
           "Y": 0.0,
-          "Z": 5.981906256862969,
-          "theta_rad": -0.778651045886406,
-          "theta_deg": -44.613418642738466,
-          "distance": 8.403187365774679,
-          "uncertainty_meters": 0.009908173895164296
+          "Z": 13.380958680978694,
+          "theta_rad": -0.07590565943339718,
+          "theta_deg": -4.349073926691042,
+          "distance": 13.41959976942661,
+          "uncertainty_meters": 0.023348387618844058
         }
       }
     },
-    "notes": "theta=-44.6deg dist=8.4m",
-    "device_id": "cam-001-ch4",
-    "ts_event": "2026-05-13T20:16:52.818Z#06f1ae41-c000-433b-9fcd-f257b80826bf",
-    "expires_at": 1778789812,
-    "ingested_at_epoch": 1778703412
+    "notes": "theta=-4.3deg dist=13.4m",
+    "device_id": "cam-001-ch3",
+    "ts_event": "2026-05-27T19:32:47.231Z#e1d52b59-de10-46bf-ac20-2d73d13779bd",
+    "expires_at": 1779996767,
+    "ingested_at_epoch": 1779910367
   },
   {
-    "event_id": "5fd7d7d5-291c-4072-8b11-3f03f3abda80",
+    "event_id": "29278976-4f47-46ee-8cd5-8f3269c8a1c9",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T20:16:53.152Z",
+    "timestamp_utc": "2026-05-27T19:32:47.564Z",
     "confidence_score": 0.6172,
     "gps_location": {
-      "latitude": 37.91553574,
-      "longitude": -122.33484604
+      "latitude": 37.91568484,
+      "longitude": -122.33491263
     },
     "geohash": "9q9p8",
     "street_name_normalized": "",
@@ -767,31 +767,31 @@
           "y": 736.5953369140625
         },
         "world_position": {
-          "X": -6.281639785856981,
+          "X": -1.1802255242030233,
           "Y": 0.0,
-          "Z": 6.321916041170485,
-          "theta_rad": -0.7822025479087441,
-          "theta_deg": -44.816904719550614,
-          "distance": 8.912105297339682,
-          "uncertainty_meters": 0.010510839219964652
+          "Z": 14.352691819539567,
+          "theta_rad": -0.08204566251992108,
+          "theta_deg": -4.70087018974616,
+          "distance": 14.40113518979175,
+          "uncertainty_meters": 0.025973341762744795
         }
       }
     },
-    "notes": "theta=-44.8deg dist=8.9m",
-    "device_id": "cam-001-ch4",
-    "ts_event": "2026-05-13T20:16:53.152Z#5fd7d7d5-291c-4072-8b11-3f03f3abda80",
-    "expires_at": 1778789813,
-    "ingested_at_epoch": 1778703413
+    "notes": "theta=-4.7deg dist=14.4m",
+    "device_id": "cam-001-ch3",
+    "ts_event": "2026-05-27T19:32:47.564Z#29278976-4f47-46ee-8cd5-8f3269c8a1c9",
+    "expires_at": 1779996767,
+    "ingested_at_epoch": 1779910367
   },
   {
-    "event_id": "2d7b17d4-e049-4254-b85f-485a1ad42aa0",
+    "event_id": "b294a110-1ca7-4219-999b-26c0627f5ae9",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T20:16:53.485Z",
+    "timestamp_utc": "2026-05-27T19:32:47.897Z",
     "confidence_score": 0.478,
     "gps_location": {
-      "latitude": 37.91553049,
-      "longitude": -122.33484873
+      "latitude": 37.91569007,
+      "longitude": -122.33492499
     },
     "geohash": "9q9p8",
     "street_name_normalized": "",
@@ -816,31 +816,31 @@
           "y": 710.099853515625
         },
         "world_position": {
-          "X": -6.8158600522479125,
+          "X": -1.53619578116476,
           "Y": 0.0,
-          "Z": 6.656598143098092,
-          "theta_rad": -0.7972189082743095,
-          "theta_deg": -45.67727879214504,
-          "distance": 9.527132154563928,
-          "uncertainty_meters": 0.011166010519859881
+          "Z": 15.532066807191763,
+          "theta_rad": -0.09858416740917898,
+          "theta_deg": -5.648456719357116,
+          "distance": 15.607850485609365,
+          "uncertainty_meters": 0.02928437466686873
         }
       }
     },
-    "notes": "theta=-45.7deg dist=9.5m",
-    "device_id": "cam-001-ch4",
-    "ts_event": "2026-05-13T20:16:53.485Z#2d7b17d4-e049-4254-b85f-485a1ad42aa0",
-    "expires_at": 1778789813,
-    "ingested_at_epoch": 1778703413
+    "notes": "theta=-5.6deg dist=15.6m",
+    "device_id": "cam-001-ch3",
+    "ts_event": "2026-05-27T19:32:47.897Z#b294a110-1ca7-4219-999b-26c0627f5ae9",
+    "expires_at": 1779996767,
+    "ingested_at_epoch": 1779910367
   },
   {
-    "event_id": "3bcc0e5a-6dd6-4f2d-b3ce-7f74c8abe797",
+    "event_id": "e8acb184-aed4-4d6d-ba4b-fbd45f8afccd",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T20:16:53.818Z",
+    "timestamp_utc": "2026-05-27T19:32:48.231Z",
     "confidence_score": 0.6204,
     "gps_location": {
-      "latitude": 37.91552777,
-      "longitude": -122.33484856
+      "latitude": 37.91569061,
+      "longitude": -122.33493095
     },
     "geohash": "9q9p8",
     "street_name_normalized": "",
@@ -865,31 +865,31 @@
           "y": 701.0709228515625
         },
         "world_position": {
-          "X": -7.116187829394996,
+          "X": -1.8639156223954296,
           "Y": 0.0,
-          "Z": 6.694148073355989,
-          "theta_rad": -0.8159483579942531,
-          "theta_deg": -46.75039721370029,
-          "distance": 9.769941025986041,
-          "uncertainty_meters": 0.011307916841897914
+          "Z": 15.94455720629147,
+          "theta_rad": -0.11637162801655823,
+          "theta_deg": -6.667603140415154,
+          "distance": 16.053133212931083,
+          "uncertainty_meters": 0.03040771524599073
         }
       }
     },
-    "notes": "theta=-46.8deg dist=9.8m",
-    "device_id": "cam-001-ch4",
-    "ts_event": "2026-05-13T20:16:53.818Z#3bcc0e5a-6dd6-4f2d-b3ce-7f74c8abe797",
-    "expires_at": 1778789813,
-    "ingested_at_epoch": 1778703413
+    "notes": "theta=-6.7deg dist=16.1m",
+    "device_id": "cam-001-ch3",
+    "ts_event": "2026-05-27T19:32:48.231Z#e8acb184-aed4-4d6d-ba4b-fbd45f8afccd",
+    "expires_at": 1779996768,
+    "ingested_at_epoch": 1779910368
   },
   {
-    "event_id": "7897b809-3e8e-47b4-918e-ea9daa75af65",
+    "event_id": "aca6ce17-6b4b-4205-a89c-fcbab70b9ebf",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T20:16:55.485Z",
+    "timestamp_utc": "2026-05-27T19:32:49.897Z",
     "confidence_score": 0.4164,
     "gps_location": {
-      "latitude": 37.91551236,
-      "longitude": -122.33484601
+      "latitude": 37.91569146,
+      "longitude": -122.33496555
     },
     "geohash": "9q9p8",
     "street_name_normalized": "",
@@ -914,31 +914,31 @@
           "y": 667.05810546875
         },
         "world_position": {
-          "X": -8.845251870793575,
+          "X": -3.9461684835367863,
           "Y": 0.0,
-          "Z": 6.771341938336408,
-          "theta_rad": -0.9174272949814963,
-          "theta_deg": -52.56471201254335,
-          "distance": 11.139549017067555,
-          "uncertainty_meters": 0.011914175488677792
+          "Z": 18.160074489032528,
+          "theta_rad": -0.21397267208994283,
+          "theta_deg": -12.259731041890428,
+          "distance": 18.58387879716366,
+          "uncertainty_meters": 0.0366546330360471
         }
       }
     },
-    "notes": "theta=-52.6deg dist=11.1m",
-    "device_id": "cam-001-ch4",
-    "ts_event": "2026-05-13T20:16:55.485Z#7897b809-3e8e-47b4-918e-ea9daa75af65",
-    "expires_at": 1778789815,
-    "ingested_at_epoch": 1778703415
+    "notes": "theta=-12.3deg dist=18.6m",
+    "device_id": "cam-001-ch3",
+    "ts_event": "2026-05-27T19:32:49.897Z#aca6ce17-6b4b-4205-a89c-fcbab70b9ebf",
+    "expires_at": 1779996769,
+    "ingested_at_epoch": 1779910369
   },
   {
-    "event_id": "592a2435-b61a-408d-b272-e1a0e01122c8",
+    "event_id": "2350ed65-e3df-463a-9d10-b7300b89303b",
     "object_id": "global_person_1",
     "object_type": "person",
-    "timestamp_utc": "2026-05-13T20:16:57.818Z",
+    "timestamp_utc": "2026-05-27T19:32:52.231Z",
     "confidence_score": 0.6568,
     "gps_location": {
-      "latitude": 37.91550451,
-      "longitude": -122.33482552
+      "latitude": 37.91566463,
+      "longitude": -122.33497257
     },
     "geohash": "9q9p8",
     "street_name_normalized": "",
@@ -963,20 +963,20 @@
           "y": 723.1240234375
         },
         "world_position": {
-          "X": -10.01772475966915,
+          "X": -6.493798794024779,
           "Y": 0.0,
-          "Z": 5.151256639288572,
-          "theta_rad": -1.0958421030558665,
-          "theta_deg": -62.78712751784136,
-          "distance": 11.264557440232746,
-          "uncertainty_meters": 0.009750562710844513
+          "Z": 16.483503157704682,
+          "theta_rad": -0.37528644911867515,
+          "theta_deg": -21.5023296429512,
+          "distance": 17.71652615857121,
+          "uncertainty_meters": 0.030177493236593023
         }
       }
     },
-    "notes": "theta=-62.8deg dist=11.3m",
-    "device_id": "cam-001-ch4",
-    "ts_event": "2026-05-13T20:16:57.818Z#592a2435-b61a-408d-b272-e1a0e01122c8",
-    "expires_at": 1778789817,
-    "ingested_at_epoch": 1778703417
+    "notes": "theta=-21.5deg dist=17.7m",
+    "device_id": "cam-001-ch3",
+    "ts_event": "2026-05-27T19:32:52.231Z#2350ed65-e3df-463a-9d10-b7300b89303b",
+    "expires_at": 1779996772,
+    "ingested_at_epoch": 1779910372
   }
 ]
