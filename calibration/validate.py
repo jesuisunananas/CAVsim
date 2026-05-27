@@ -1,4 +1,4 @@
-from process_video import MultiCameraPipeline, VideoObjectDetector
+from process_video import VideoObjectDetector, MultiCameraPipeline
 from pathlib import Path
 import numpy as np
 

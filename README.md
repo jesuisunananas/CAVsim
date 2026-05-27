@@ -163,7 +163,7 @@ Place representative images or short video clips from a camera view into the app
 Run `validate.py` to open a live detection window over your reference frames. Note the `(u, v)` pixel coordinates of objects whose real-world `(X, Z)` positions (in meters, relative to the camera pole) you have measured on the ground.
 
 ```bash
-python validate.py
+python -m calibration.validate
 ```
 
 Update the `VideoObjectDetector` constructor arguments in `validate.py` to match your camera's known parameters:
@@ -181,7 +181,7 @@ Update the `VideoObjectDetector` constructor arguments in `validate.py` to match
 Add the `(u, v, true_X, true_Z)` pairs collected in Step 2 to the `calibration_points` list in `pitch_yaw_minimize.py`, then run:
 
 ```bash
-python pitch_yaw_minimize.py
+python calibration/pitch_yaw_minimize.py
 ```
 
 The script will print the optimal pitch and yaw angles and write a `calibration_errors.csv` showing per-point reprojection errors. Aim for an average error below ~0.5 meters for reliable GPS output.
