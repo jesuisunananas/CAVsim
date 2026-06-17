@@ -842,7 +842,7 @@ if __name__ == "__main__":
     
     pipeline = MultiCameraPipeline(detectors=[cam1])#, cam2, cam3, cam4])
 
-    aws_kinesis_cam1 = "https://b-665840f5.kinesisvideo.us-west-2.amazonaws.com/hls/v1/getHLSMasterPlaylist.m3u8?SessionToken=CiDWrI7yDAXNU-1K49RtJ9OIjm6R54HWECRoAJovhNR0hBIQDKzqHhbTSlJkJ4_6AmHTuhoZ6B06Zy7-7Wm9beIJjKbmBJ5jZBX6-HggSiIgxoKHYlcDfG7TEkRcv8LSyDWY9koPTY9LchpXMY0qtXI~"
+    aws_kinesis_cam1 = "https://b-665840f5.kinesisvideo.us-west-2.amazonaws.com/hls/v1/getHLSMasterPlaylist.m3u8?SessionToken=CiCFoR1mcLvygXssoS1n6xTvCnUVWSwu0EXKi2tJy7R56xIQn2_6r8h2CBMz-LgdMF4kzBoZL4BNEKNUaZI3mgsj81NMJPVOhEdVg5Y_CSIgrjIIzn9ypYR5yQaSbwaXdA8efugKITtPVX4nqkRrGnE~"
     aws_kinesis_cam2 = "https://b-a0e805c9.kinesisvideo.us-west-2.amazonaws.com/hls/v1/getHLSMasterPlaylist.m3u8?SessionToken=CiDq_HuEhH8Vh4Ccq6gkF60OHgrIX0sOcbH97D4lwZ648BIQzlCUT88ncVIUzkPE0NVriRoZTN3uwhsXJE9i1N8rVCRJqsldhHBw0vqOHyIgPVArCg9bp5VX77utiMuMllKKrOvIUFL09Ty1Hxf3RTI~"
     aws_kinesis_cam3 = "https://b-e27f89d5.kinesisvideo.us-west-2.amazonaws.com/hls/v1/getHLSMasterPlaylist.m3u8?SessionToken=CiBcdk9ZpV0q6DaQt1K7OQzLDClksXVsVt7tPDP9UXNZnhIQUH1aHwcMKBhm2shRc4FTORoZaOY-Mtb7PFetwga6bvFDP0i-kfRox742FSIgFAyFb48beIfVViqK4V4JSzKMg-JADVVpTnknV8gB9y4~"
     aws_kinesis_cam4 = "https://b-a0e805c9.kinesisvideo.us-west-2.amazonaws.com/hls/v1/getHLSMasterPlaylist.m3u8?SessionToken=CiD7epLvEp2DmSIRIQwC5gRYQvzErHqSc8ACUeDaT3iQDhIQCg_auFY22sXrm6dcOZC9UxoZl_YUNu-5FEvdCxcOFuFCzHf4lB9-AuP_iiIgiX0KTbRS78k8Aa_iMd5bqC4XJpnpSkVWaD7F0nZ_4v8~"
