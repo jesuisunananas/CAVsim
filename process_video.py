@@ -8,6 +8,7 @@ import time
 import requests
 from datetime import datetime, timezone, timedelta
 from math import radians, cos, sin, asin, sqrt
+from tracking_utils import AppearanceExtractor, KalmanTracker
 
 def xy_to_gps(X, Z, origin_lat, origin_lon, heading_deg):
         """
@@ -95,8 +96,9 @@ class MultiCameraPipeline:
         """
         self.detectors = detectors
         self.all_clean_detections = []
-        self.global_tracks = {} # Store global tracks: global_id -> { 'type': str, 'lat': float, 'lon': float, 'last_seen': float }
+        self.global_tracks = {} # Store global tracks
         self.next_global_id = 0
+        self.extractor = AppearanceExtractor()
 
     @staticmethod
     def haversine_distance_meters(lat1, lon1, lat2, lon2):
@@ -179,24 +181,48 @@ class MultiCameraPipeline:
             for gid, track in self.global_tracks.items():
                 if track['type'] != det['object_type'] or gid in claimed_gids:
                     continue
-                # Forget tracks that haven't been seen in > 3 seconds
-                if current_time_epoch - track['last_seen'] > 3.0:
+                dt = current_time_epoch - track['last_seen']
+                if dt > 15.0:
                     continue
                     
-                dist = self.haversine_distance_meters(
-                    det['gps_location']['latitude'], det['gps_location']['longitude'],
-                    track['lat'], track['lon']
-                )
+                pred_lat, pred_lon = track['kf'].get_prediction(dt=dt if dt > 0 else 0.1)
+                last_lat, last_lon = track['kf'].x[0], track['kf'].x[1]
                 
-                # Match to track if within larger tracking radius (e.g. 5m)
-                if dist < 5.0 and dist < min_dist:
-                    best_match_id = gid
-                    min_dist = dist
+                dist_pred = self.haversine_distance_meters(
+                    det['gps_location']['latitude'], det['gps_location']['longitude'],
+                    pred_lat, pred_lon
+                )
+                dist_last = self.haversine_distance_meters(
+                    det['gps_location']['latitude'], det['gps_location']['longitude'],
+                    last_lat, last_lon
+                )
+                dist = min(dist_pred, dist_last)
+                
+                emb_sim = 0.0
+                if track.get('embedding') is not None and det.get('embedding') is not None:
+                    emb_sim = np.dot(track['embedding'], det['embedding'])
+                
+                # Match to track if within 15m
+                if dist < 15.0 and dist < min_dist:
+                    # Allow match if very close physically OR if visually similar
+                    if dist < 2.5 or emb_sim > 0.50:
+                        best_match_id = gid
+                        min_dist = dist
                     
             if best_match_id is not None:
                 claimed_gids.add(best_match_id)
-                self.global_tracks[best_match_id]['lat'] = det['gps_location']['latitude']
-                self.global_tracks[best_match_id]['lon'] = det['gps_location']['longitude']
+                dt = current_time_epoch - self.global_tracks[best_match_id]['last_seen']
+                self.global_tracks[best_match_id]['kf'].predict(dt=dt if dt > 0 else 0.1)
+                self.global_tracks[best_match_id]['kf'].update([det['gps_location']['latitude'], det['gps_location']['longitude']])
+                
+                if det.get('embedding') is not None:
+                    old_emb = self.global_tracks[best_match_id].get('embedding')
+                    if old_emb is not None:
+                        new_emb = 0.8 * old_emb + 0.2 * det['embedding']
+                        self.global_tracks[best_match_id]['embedding'] = new_emb / np.linalg.norm(new_emb)
+                    else:
+                        self.global_tracks[best_match_id]['embedding'] = det['embedding']
+                        
                 self.global_tracks[best_match_id]['last_seen'] = current_time_epoch
                 det['object_id'] = f"global_{det['object_type']}_{best_match_id}"
             else:
@@ -204,8 +230,8 @@ class MultiCameraPipeline:
                 new_gid = self.next_global_id
                 self.global_tracks[new_gid] = {
                     'type': det['object_type'],
-                    'lat': det['gps_location']['latitude'],
-                    'lon': det['gps_location']['longitude'],
+                    'kf': KalmanTracker(det['gps_location']['latitude'], det['gps_location']['longitude']),
+                    'embedding': det.get('embedding'),
                     'last_seen': current_time_epoch
                 }
                 det['object_id'] = f"global_{det['object_type']}_{new_gid}"
@@ -265,42 +291,77 @@ class MultiCameraPipeline:
         print(f"Starting Multi-Stream Pipeline for {len(caps)} cameras...")
 
         try:
+            buffered_frames = [None] * len(caps)
+            buffered_msecs = [-1.0] * len(caps)
+            
+            for i, cap in enumerate(caps):
+                ret, frame = cap.read()
+                if ret:
+                    buffered_frames[i] = frame
+                    buffered_msecs[i] = cap.get(cv2.CAP_PROP_POS_MSEC)
+            
+            last_valid_frames = [None] * len(caps)
+            for i, f in enumerate(buffered_frames):
+                if f is not None:
+                    last_valid_frames[i] = f.copy()
+            
             while True:
-                # Read 1 frame from all cameras
-                ret_frames = [cap.read() for cap in caps]
-                frames = [f for ret, f in ret_frames if ret]
-                
-                # If any video ends, stop the loop
-                if len(frames) != len(caps):
+                valid_msecs = [m for m in buffered_msecs if m >= 0]
+                if not valid_msecs:
                     break
                     
+                global_msec = min(valid_msecs)
+                
+                frames_to_process = [None] * len(caps)
+                for i in range(len(caps)):
+                    if buffered_msecs[i] >= 0 and buffered_msecs[i] <= global_msec + 35.0:
+                        frames_to_process[i] = buffered_frames[i]
+                        ret, frame = caps[i].read()
+                        if ret:
+                            buffered_frames[i] = frame
+                            buffered_msecs[i] = caps[i].get(cv2.CAP_PROP_POS_MSEC)
+                        else:
+                            buffered_frames[i] = None
+                            buffered_msecs[i] = -1.0
+                            
                 frame_count += 1
                 
                 if frame_count != 1 and frame_count % 10 != 0:
                     continue
-
+                    
                 raw_buffer = []
                 annotated_frames = []
 
-                current_offset = frame_count / fps
+                current_offset = global_msec / 1000.0
                 current_time = global_start_time + timedelta(seconds=current_offset)
-                current_epoch = int(global_start_epoch + current_offset)
+                current_epoch = global_start_epoch + current_offset
                 current_utc_str = current_time.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
-
-                # Process each camera's frame with its specific detector
-                for i, frame in enumerate(frames):
+                
+                for i, frame in enumerate(frames_to_process):
                     detector = self.detectors[i]
-                    results = detector.model.track(frame, persist=True, conf=detector.conf, verbose=False)
+                    if frame is None:
+                        if last_valid_frames[i] is not None:
+                            annotated_frames.append(cv2.resize(last_valid_frames[i], (640, 480)))
+                        continue
+                        
+                    last_valid_frames[i] = frame.copy()
+                    
+                    results = detector.model.track(frame, persist=True, conf=detector.conf, tracker="botsort.yaml", verbose=False)
                     
                     det_2d = detector.extract_detections(results[0], frame_count)
                     det_3d = detector.compute_3d_detections(det_2d, current_utc_str, current_epoch)
                     
+                    for det in det_3d:
+                        if det['object_type'] == 'person':
+                            emb = self.extractor.extract(frame, det['camera_data']['bifocal_metadata']['bbox'])
+                            det['embedding'] = emb
+                        else:
+                            det['embedding'] = None
+                            
                     raw_buffer.extend(det_3d)
                     
-                    # Optional visualization
                     if show_live or writer or output_image:
                         annotated = detector.draw_detections_3d(frame, det_3d)
-                        # Resize to fit on screen
                         annotated = cv2.resize(annotated, (640, 480))
                         annotated_frames.append(annotated)
 
@@ -352,6 +413,10 @@ class MultiCameraPipeline:
                 print(f"Image saved to: {output_image}")
                 
             if output_json:
+                for det in self.all_clean_detections:
+                    if 'embedding' in det and det['embedding'] is not None:
+                        # Convert ndarray to list for JSON serialization
+                        det['embedding'] = det['embedding'].tolist()
                 with open(output_json, 'w') as f:
                     json.dump(self.all_clean_detections, f, indent=2)
                 print(f"JSON saved to: {output_json}")
@@ -643,7 +708,7 @@ class VideoObjectDetector:
             records.append(record)
         return records
 
-    V2X_ENDPOINT = "https://qxacv7wah0.execute-api.us-west-1.amazonaws.com/detections"
+    V2X_ENDPOINT = "https://w0j9m7dgpg.execute-api.us-west-1.amazonaws.com/detections"
 
     def upload_detection(self, record):
         """
@@ -678,11 +743,19 @@ class VideoObjectDetector:
         if not records:
             return
 
+        # Prepare payload: strip internal non-serializable fields (like embeddings)
+        payload = []
+        for r in records:
+            clean_r = r.copy()
+            if 'embedding' in clean_r:
+                del clean_r['embedding']
+            payload.append(clean_r)
+
         try:
-            # Note: We send 'records' (a list) directly, not a single 'record'
+            # Wrap array in the "items" object as per the API documentation
             r = requests.post(self.V2X_ENDPOINT,
                             headers={"content-type": "application/json"},
-                            data=json.dumps(records),
+                            data=json.dumps({"items": payload}),
                             timeout=5)
             
             if r.status_code not in (200, 201):
@@ -762,35 +835,37 @@ if __name__ == "__main__":
     base_lat = 37.91560117034595
     base_lon = -122.33478756387032
 
-    cam4 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -43.48, -22.63, 260.0, "cam-001-ch4", base_lat, base_lon, "Richmond", "CA", "USA")
     cam1 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -39.20, -46.06, 200.0, "cam-001-ch1", base_lat, base_lon, "Richmond", "CA", "USA")
-    cam3 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -30.42, 14.58, 315.0, "cam-001-ch3", base_lat, base_lon, "Richmond", "CA", "USA")
     cam2 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -40.52, 71.25, 300.0,"cam-001-ch2", base_lat, base_lon, "Richmond", "CA", "USA")
+    cam3 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -30.42, 14.58, 315.0, "cam-001-ch3", base_lat, base_lon, "Richmond", "CA", "USA")
+    cam4 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -43.48, -22.63, 260.0, "cam-001-ch4", base_lat, base_lon, "Richmond", "CA", "USA")
     
-    pipeline = MultiCameraPipeline(detectors=[cam3])
+    pipeline = MultiCameraPipeline(detectors=[cam1])#, cam2, cam3, cam4])
+
+    aws_kinesis_cam1 = "https://b-665840f5.kinesisvideo.us-west-2.amazonaws.com/hls/v1/getHLSMasterPlaylist.m3u8?SessionToken=CiDWrI7yDAXNU-1K49RtJ9OIjm6R54HWECRoAJovhNR0hBIQDKzqHhbTSlJkJ4_6AmHTuhoZ6B06Zy7-7Wm9beIJjKbmBJ5jZBX6-HggSiIgxoKHYlcDfG7TEkRcv8LSyDWY9koPTY9LchpXMY0qtXI~"
+    aws_kinesis_cam2 = "https://b-a0e805c9.kinesisvideo.us-west-2.amazonaws.com/hls/v1/getHLSMasterPlaylist.m3u8?SessionToken=CiDq_HuEhH8Vh4Ccq6gkF60OHgrIX0sOcbH97D4lwZ648BIQzlCUT88ncVIUzkPE0NVriRoZTN3uwhsXJE9i1N8rVCRJqsldhHBw0vqOHyIgPVArCg9bp5VX77utiMuMllKKrOvIUFL09Ty1Hxf3RTI~"
+    aws_kinesis_cam3 = "https://b-e27f89d5.kinesisvideo.us-west-2.amazonaws.com/hls/v1/getHLSMasterPlaylist.m3u8?SessionToken=CiBcdk9ZpV0q6DaQt1K7OQzLDClksXVsVt7tPDP9UXNZnhIQUH1aHwcMKBhm2shRc4FTORoZaOY-Mtb7PFetwga6bvFDP0i-kfRox742FSIgFAyFb48beIfVViqK4V4JSzKMg-JADVVpTnknV8gB9y4~"
+    aws_kinesis_cam4 = "https://b-a0e805c9.kinesisvideo.us-west-2.amazonaws.com/hls/v1/getHLSMasterPlaylist.m3u8?SessionToken=CiD7epLvEp2DmSIRIQwC5gRYQvzErHqSc8ACUeDaT3iQDhIQCg_auFY22sXrm6dcOZC9UxoZl_YUNu-5FEvdCxcOFuFCzHf4lB9-AuP_iiIgiX0KTbRS78k8Aa_iMd5bqC4XJpnpSkVWaD7F0nZ_4v8~"
 
     video_paths = [
-        #'camera_views/ch1/event3/sensor_0_20260302_123255.ts'
-        #'camera_views/ch1/NE-SE_5m_ch1.png'
-        #'camera_views/ch1/center/EastRoad_center_0_ch1.png',
-        #'camera_views/ch4/NE-SE_5m_ch4.png'
-        #'camera_views/ch1/event1/sensor_0_20260302_122940.ts',
-        #'camera_views/ch2/event1/sensor_1_20260302_122940.ts',
-        # 'camera_views/ch3/event2/sensor_2_20260302_123039.ts',
-        # 'camera_views/ch4/event2/sensor_3_20260302_123039.ts'
-        # 'camera_views/ch4/event3/sensor_3_20260302_123255.ts',
-        'camera_views/ch3/event3/sensor_2_20260302_123255.ts'
-        #'camera_views/ch1/event2/sensor_0_20260302_123039.ts',
-        #'camera_views/ch4/event2/sensor_3_20260302_123039.ts'
+        #'camera_views/ch1/event3/sensor_0_20260302_123255.ts',
+        #'camera_views/ch2/event3/sensor_1_20260302_123255.ts',
+        #'camera_views/ch3/event3/sensor_2_20260302_123255.ts',
+        #'camera_views/ch4/event3/sensor_3_20260302_123255.ts'
+        #'camera_views/ch1/event2/sensor_0_20260302_123039.ts'
+        aws_kinesis_cam1,
+        # aws_kinesis_cam2,
+        # aws_kinesis_cam3,
+        # aws_kinesis_cam4
     ]
 
     pipeline.process_streams(
         video_paths=video_paths, 
         show_live=True, 
-        upload=False,
+        upload=True,
         output_json='multi_cam_detections.json',
-        output_video=None,#'output.mp4',
-        output_image=None, #'annotated_output.jpg',
+        output_video=None,
+        output_image=None,
         output_validate=False
     )
 
