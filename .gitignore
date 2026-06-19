@@ -21,3 +21,4 @@ __pycache__/
 !multi_cam_detections.json
 *.mp4
 camera_views
+v2x-backend-hls-reader-credentials

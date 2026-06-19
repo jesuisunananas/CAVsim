@@ -6,6 +6,8 @@ import json
 import uuid
 import time
 import requests
+import tracking_utils
+import kinesis_utils
 from datetime import datetime, timezone, timedelta
 from math import radians, cos, sin, asin, sqrt
 from tracking_utils import AppearanceExtractor, KalmanTracker
@@ -260,7 +262,16 @@ class MultiCameraPipeline:
             print("Error: Number of detectors must match number of video paths.")
             return
 
-        caps = [cv2.VideoCapture(str(path)) for path in video_paths]
+        caps = []
+        is_kinesis = []
+        for path in video_paths:
+            if "v2x-backend-cam" in path:
+                url = kinesis_utils.get_kvs_hls_url(path)
+                caps.append(cv2.VideoCapture(url))
+                is_kinesis.append(True)
+            else:
+                caps.append(cv2.VideoCapture(str(path)))
+                is_kinesis.append(False)
         frame_count = 0
         
         global_start_time = datetime.now(timezone.utc)
@@ -321,8 +332,17 @@ class MultiCameraPipeline:
                             buffered_frames[i] = frame
                             buffered_msecs[i] = caps[i].get(cv2.CAP_PROP_POS_MSEC)
                         else:
-                            buffered_frames[i] = None
-                            buffered_msecs[i] = -1.0
+                            if is_kinesis[i]:
+                                new_url = kinesis_utils.get_kvs_hls_url(video_paths[i])
+                                caps[i] = cv2.VideoCapture(new_url)
+                                ret, frame = caps[i].read()
+                                
+                            if ret:
+                                buffered_frames[i] = frame
+                                buffered_msecs[i] = caps[i].get(cv2.CAP_PROP_POS_MSEC)
+                            else:
+                                buffered_frames[i] = None
+                                buffered_msecs[i] = -1.0
                             
                 frame_count += 1
                 
@@ -525,8 +545,8 @@ class VideoObjectDetector:
                 class_name = self.class_names.get(cls, 'unknown')
                 
                 # person only -- changeable
-                if class_name != 'person':
-                    continue
+                # if class_name != 'person':
+                #     continue
 
                 detections.append({
                     'frame': frame_num,
@@ -835,36 +855,26 @@ if __name__ == "__main__":
     base_lat = 37.91560117034595
     base_lon = -122.33478756387032
 
-    cam1 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -39.20, -46.06, 200.0, "cam-001-ch1", base_lat, base_lon, "Richmond", "CA", "USA")
-    cam2 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -40.52, 71.25, 300.0,"cam-001-ch2", base_lat, base_lon, "Richmond", "CA", "USA")
-    cam3 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -30.42, 14.58, 315.0, "cam-001-ch3", base_lat, base_lon, "Richmond", "CA", "USA")
-    cam4 = VideoObjectDetector('yolov8n.pt', 0.3, K, None, 7.0, -43.48, -22.63, 260.0, "cam-001-ch4", base_lat, base_lon, "Richmond", "CA", "USA")
+    cam1 = VideoObjectDetector('yolov8n.pt', 0.5, K, None, 7.0, -39.20, -46.06, 200.0, "cam-001-ch1", base_lat, base_lon, "Richmond", "CA", "USA")
+    cam2 = VideoObjectDetector('yolov8n.pt', 0.5, K, None, 7.0, -40.52, 71.25, 300.0,"cam-001-ch2", base_lat, base_lon, "Richmond", "CA", "USA")
+    cam3 = VideoObjectDetector('yolov8n.pt', 0.5, K, None, 7.0, -30.42, 14.58, 315.0, "cam-001-ch3", base_lat, base_lon, "Richmond", "CA", "USA")
+    cam4 = VideoObjectDetector('yolov8n.pt', 0.5, K, None, 7.0, -43.48, -22.63, 260.0, "cam-001-ch4", base_lat, base_lon, "Richmond", "CA", "USA")
     
-    pipeline = MultiCameraPipeline(detectors=[cam1])#, cam2, cam3, cam4])
-
-    aws_kinesis_cam1 = "https://b-665840f5.kinesisvideo.us-west-2.amazonaws.com/hls/v1/getHLSMasterPlaylist.m3u8?SessionToken=CiCFoR1mcLvygXssoS1n6xTvCnUVWSwu0EXKi2tJy7R56xIQn2_6r8h2CBMz-LgdMF4kzBoZL4BNEKNUaZI3mgsj81NMJPVOhEdVg5Y_CSIgrjIIzn9ypYR5yQaSbwaXdA8efugKITtPVX4nqkRrGnE~"
-    aws_kinesis_cam2 = "https://b-a0e805c9.kinesisvideo.us-west-2.amazonaws.com/hls/v1/getHLSMasterPlaylist.m3u8?SessionToken=CiDq_HuEhH8Vh4Ccq6gkF60OHgrIX0sOcbH97D4lwZ648BIQzlCUT88ncVIUzkPE0NVriRoZTN3uwhsXJE9i1N8rVCRJqsldhHBw0vqOHyIgPVArCg9bp5VX77utiMuMllKKrOvIUFL09Ty1Hxf3RTI~"
-    aws_kinesis_cam3 = "https://b-e27f89d5.kinesisvideo.us-west-2.amazonaws.com/hls/v1/getHLSMasterPlaylist.m3u8?SessionToken=CiBcdk9ZpV0q6DaQt1K7OQzLDClksXVsVt7tPDP9UXNZnhIQUH1aHwcMKBhm2shRc4FTORoZaOY-Mtb7PFetwga6bvFDP0i-kfRox742FSIgFAyFb48beIfVViqK4V4JSzKMg-JADVVpTnknV8gB9y4~"
-    aws_kinesis_cam4 = "https://b-a0e805c9.kinesisvideo.us-west-2.amazonaws.com/hls/v1/getHLSMasterPlaylist.m3u8?SessionToken=CiD7epLvEp2DmSIRIQwC5gRYQvzErHqSc8ACUeDaT3iQDhIQCg_auFY22sXrm6dcOZC9UxoZl_YUNu-5FEvdCxcOFuFCzHf4lB9-AuP_iiIgiX0KTbRS78k8Aa_iMd5bqC4XJpnpSkVWaD7F0nZ_4v8~"
+    pipeline = MultiCameraPipeline(detectors=[cam1, cam2, cam3, cam4])
 
     video_paths = [
-        #'camera_views/ch1/event3/sensor_0_20260302_123255.ts',
-        #'camera_views/ch2/event3/sensor_1_20260302_123255.ts',
-        #'camera_views/ch3/event3/sensor_2_20260302_123255.ts',
-        #'camera_views/ch4/event3/sensor_3_20260302_123255.ts'
-        #'camera_views/ch1/event2/sensor_0_20260302_123039.ts'
-        aws_kinesis_cam1,
-        # aws_kinesis_cam2,
-        # aws_kinesis_cam3,
-        # aws_kinesis_cam4
+        'v2x-backend-cam-ch1',
+        'v2x-backend-cam-ch2',
+        'v2x-backend-cam-ch3',
+        'v2x-backend-cam-ch4'
     ]
 
     pipeline.process_streams(
         video_paths=video_paths, 
         show_live=True, 
-        upload=True,
+        upload=False, 
         output_json='multi_cam_detections.json',
-        output_video=None,
+        output_video= None,#'output/multi_cam_tracking.mp4',
         output_image=None,
         output_validate=False
     )
