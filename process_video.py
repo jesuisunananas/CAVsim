@@ -148,8 +148,6 @@ class MultiCameraPipeline:
                 if new_det['object_type'] != existing_det['object_type']:
                     continue
                 
-                # ✅ FIX: Prevent merging distinct objects seen by the SAME camera.
-                # If YOLO separated them into two boxes on the same feed, keep them separate.
                 if new_det['device_id'] == existing_det['device_id']:
                     continue
                     
@@ -166,7 +164,6 @@ class MultiCameraPipeline:
                         existing_det['confidence_score'] = new_det['confidence_score']
                         existing_det['gps_location'] = new_det['gps_location']
                         existing_det['device_id'] = new_det['device_id']
-                        # Good practice: also update the underlying camera metadata when overwriting
                         existing_det['camera_data'] = new_det['camera_data'] 
                     break
                     
@@ -855,10 +852,11 @@ if __name__ == "__main__":
     base_lat = 37.91560117034595
     base_lon = -122.33478756387032
 
-    cam1 = VideoObjectDetector('yolov8n.pt', 0.5, K, None, 7.0, -39.20, -46.06, 200.0, "cam-001-ch1", base_lat, base_lon, "Richmond", "CA", "USA")
-    cam2 = VideoObjectDetector('yolov8n.pt', 0.5, K, None, 7.0, -40.52, 71.25, 300.0,"cam-001-ch2", base_lat, base_lon, "Richmond", "CA", "USA")
-    cam3 = VideoObjectDetector('yolov8n.pt', 0.5, K, None, 7.0, -30.42, 14.58, 315.0, "cam-001-ch3", base_lat, base_lon, "Richmond", "CA", "USA")
-    cam4 = VideoObjectDetector('yolov8n.pt', 0.5, K, None, 7.0, -43.48, -22.63, 260.0, "cam-001-ch4", base_lat, base_lon, "Richmond", "CA", "USA")
+    model_path = 'best.pt'
+    cam1 = VideoObjectDetector(model_path, 0.5, K, None, 7.0, -39.20, -46.06, 200.0, "cam-001-ch1", base_lat, base_lon, "Richmond", "CA", "USA")
+    cam2 = VideoObjectDetector(model_path, 0.5, K, None, 7.0, -40.52, 71.25, 300.0,"cam-001-ch2", base_lat, base_lon, "Richmond", "CA", "USA")
+    cam3 = VideoObjectDetector(model_path, 0.5, K, None, 7.0, -30.42, 14.58, 315.0, "cam-001-ch3", base_lat, base_lon, "Richmond", "CA", "USA")
+    cam4 = VideoObjectDetector(model_path, 0.5, K, None, 7.0, -43.48, -22.63, 260.0, "cam-001-ch4", base_lat, base_lon, "Richmond", "CA", "USA")
     
     pipeline = MultiCameraPipeline(detectors=[cam1, cam2, cam3, cam4])
 
