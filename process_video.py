@@ -541,9 +541,9 @@ class VideoObjectDetector:
                 cls = int(box.cls[0])
                 class_name = self.class_names.get(cls, 'unknown')
                 
-                # person only -- changeable
-                # if class_name != 'person':
-                #     continue
+                allowed_classes = {'car', 'person'}#'truck', 'bus', 'person', 'bike', 'bicycle', 'motor', 'motorcycle', 'rider', 'traffic light', 'traffic sign', 'train'}
+                if class_name not in allowed_classes:
+                    continue
 
                 detections.append({
                     'frame': frame_num,
@@ -870,7 +870,7 @@ if __name__ == "__main__":
     pipeline.process_streams(
         video_paths=video_paths, 
         show_live=True, 
-        upload=False, 
+        upload=True, 
         output_json='multi_cam_detections.json',
         output_video= None,#'output/multi_cam_tracking.mp4',
         output_image=None,
