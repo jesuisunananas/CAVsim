@@ -99,6 +99,7 @@ class MultiCameraPipeline:
         self.detectors = detectors
         self.all_clean_detections = []
         self.global_tracks = {} # Store global tracks
+        self.local_to_global = {} # "device_id_local_track_id" -> global_id
         self.next_global_id = 0
         self.extractor = AppearanceExtractor()
 
@@ -158,7 +159,9 @@ class MultiCameraPipeline:
                     existing_det['gps_location']['longitude']
                 )
 
-                if dist < merge_radius_meters:
+                radius = 8.0 if new_det['object_type'] in {'car', 'truck', 'bus'} else 1.5
+
+                if dist < radius:
                     is_duplicate = True
                     if new_det['confidence_score'] > existing_det['confidence_score']:
                         existing_det['confidence_score'] = new_det['confidence_score']
@@ -173,40 +176,59 @@ class MultiCameraPipeline:
         # 2. Temporal Tracking (Cross frames)
         tracked_buffer = []
         claimed_gids = set() # Prevent multiple detections in the same frame from claiming the same track
+        vehicle_classes = {'car', 'truck', 'bus'}
         for det in clean_buffer:
             best_match_id = None
             min_dist = float('inf')
+            local_key = f"{det['device_id']}_{det['track_id']}"
             
-            for gid, track in self.global_tracks.items():
-                if track['type'] != det['object_type'] or gid in claimed_gids:
-                    continue
-                dt = current_time_epoch - track['last_seen']
-                if dt > 15.0:
-                    continue
-                    
-                pred_lat, pred_lon = track['kf'].get_prediction(dt=dt if dt > 0 else 0.1)
-                last_lat, last_lon = track['kf'].x[0], track['kf'].x[1]
-                
-                dist_pred = self.haversine_distance_meters(
-                    det['gps_location']['latitude'], det['gps_location']['longitude'],
-                    pred_lat, pred_lon
-                )
-                dist_last = self.haversine_distance_meters(
-                    det['gps_location']['latitude'], det['gps_location']['longitude'],
-                    last_lat, last_lon
-                )
-                dist = min(dist_pred, dist_last)
-                
-                emb_sim = 0.0
-                if track.get('embedding') is not None and det.get('embedding') is not None:
-                    emb_sim = np.dot(track['embedding'], det['embedding'])
-                
-                # Match to track if within 15m
-                if dist < 15.0 and dist < min_dist:
-                    # Allow match if very close physically OR if visually similar
-                    if dist < 2.5 or emb_sim > 0.50:
+            # 1. Fast Path: Use visual local tracker ID
+            if local_key in self.local_to_global:
+                gid = self.local_to_global[local_key]
+                if gid in self.global_tracks and gid not in claimed_gids:
+                    if current_time_epoch - self.global_tracks[gid]['last_seen'] <= 40.0:
                         best_match_id = gid
-                        min_dist = dist
+            
+            # 2. Slow Path: Spatial Math Search
+            if best_match_id is None:
+                for gid, track in self.global_tracks.items():
+                    if gid in claimed_gids:
+                        continue
+                        
+                    t_type = track['type']
+                    d_type = det['object_type']
+                    if t_type != d_type:
+                        # Allow matches between vehicle types
+                        if not (t_type in vehicle_classes and d_type in vehicle_classes):
+                            continue
+                            
+                    dt = current_time_epoch - track['last_seen']
+                    if dt > 40.0:
+                        continue
+                        
+                    pred_lat, pred_lon = track['kf'].get_prediction(dt=dt if dt > 0 else 0.1)
+                    last_lat, last_lon = track['kf'].x[0], track['kf'].x[1]
+                    
+                    dist_pred = self.haversine_distance_meters(
+                        det['gps_location']['latitude'], det['gps_location']['longitude'],
+                        pred_lat, pred_lon
+                    )
+                    dist_last = self.haversine_distance_meters(
+                        det['gps_location']['latitude'], det['gps_location']['longitude'],
+                        last_lat, last_lon
+                    )
+                    dist = min(dist_pred, dist_last)
+                    
+                    emb_sim = 0.0
+                    if track.get('embedding') is not None and det.get('embedding') is not None:
+                        emb_sim = np.dot(track['embedding'], det['embedding'])
+                    
+                    # Match to track if within 40m
+                    if dist < 40.0 and dist < min_dist:
+                        # Allow match if very close physically OR if visually similar
+                        if dist < 30.0 or emb_sim > 0.50:
+                            best_match_id = gid
+                            min_dist = dist
                     
             if best_match_id is not None:
                 claimed_gids.add(best_match_id)
@@ -223,7 +245,9 @@ class MultiCameraPipeline:
                         self.global_tracks[best_match_id]['embedding'] = det['embedding']
                         
                 self.global_tracks[best_match_id]['last_seen'] = current_time_epoch
-                det['object_id'] = f"global_{det['object_type']}_{best_match_id}"
+                det['object_id'] = f"global_{self.global_tracks[best_match_id]['type']}_{best_match_id}"
+                det['object_type'] = self.global_tracks[best_match_id]['type'] # Enforce stable class
+                self.local_to_global[local_key] = best_match_id
             else:
                 self.next_global_id += 1
                 new_gid = self.next_global_id
@@ -234,6 +258,7 @@ class MultiCameraPipeline:
                     'last_seen': current_time_epoch
                 }
                 det['object_id'] = f"global_{det['object_type']}_{new_gid}"
+                self.local_to_global[local_key] = new_gid
 
             tracked_buffer.append(det)
 
@@ -343,7 +368,7 @@ class MultiCameraPipeline:
                             
                 frame_count += 1
                 
-                if frame_count != 1 and frame_count % 10 != 0:
+                if frame_count != 1 and frame_count % 2 != 0:
                     continue
                     
                 raw_buffer = []
@@ -384,7 +409,7 @@ class MultiCameraPipeline:
 
                 # Deduplicate objects crossing the seams
                 # Using a smaller radius (1.5m) so we don't accidentally merge multiple people in the same frame
-                clean_batch = self.deduplicate(raw_buffer, current_epoch, merge_radius_meters=1.5)
+                clean_batch = self.deduplicate(raw_buffer, current_epoch, merge_radius_meters=3.0)
                 self.all_clean_detections.extend(clean_batch)
 
                 # Batch Upload
@@ -431,9 +456,8 @@ class MultiCameraPipeline:
                 
             if output_json:
                 for det in self.all_clean_detections:
-                    if 'embedding' in det and det['embedding'] is not None:
-                        # Convert ndarray to list for JSON serialization
-                        det['embedding'] = det['embedding'].tolist()
+                    if 'embedding' in det:
+                        del det['embedding']
                 with open(output_json, 'w') as f:
                     json.dump(self.all_clean_detections, f, indent=2)
                 print(f"JSON saved to: {output_json}")
@@ -541,7 +565,7 @@ class VideoObjectDetector:
                 cls = int(box.cls[0])
                 class_name = self.class_names.get(cls, 'unknown')
                 
-                allowed_classes = {'car', 'person'}#'truck', 'bus', 'person', 'bike', 'bicycle', 'motor', 'motorcycle', 'rider', 'traffic light', 'traffic sign', 'train'}
+                allowed_classes = {'car', 'person', 'truck'} #, 'bus', 'person', 'bike', 'bicycle', 'motor', 'motorcycle', 'rider', 'traffic light', 'traffic sign', 'train'}
                 if class_name not in allowed_classes:
                     continue
 
@@ -720,7 +744,8 @@ class VideoObjectDetector:
                 "device_id": self.device_id,
                 "ts_event": f"{now_utc}#{event_id}",
                 "expires_at": epoch_now + 86400,   # expire in 24 h
-                "ingested_at_epoch": epoch_now
+                "ingested_at_epoch": epoch_now,
+                "track_id": det.get('track_id')
             }
             records.append(record)
         return records
@@ -852,7 +877,7 @@ if __name__ == "__main__":
     base_lat = 37.91560117034595
     base_lon = -122.33478756387032
 
-    model_path = 'best.pt'
+    model_path = 'yolov8n.pt'#'best.pt'
     cam1 = VideoObjectDetector(model_path, 0.5, K, None, 7.0, -39.20, -46.06, 200.0, "cam-001-ch1", base_lat, base_lon, "Richmond", "CA", "USA")
     cam2 = VideoObjectDetector(model_path, 0.5, K, None, 7.0, -40.52, 71.25, 300.0,"cam-001-ch2", base_lat, base_lon, "Richmond", "CA", "USA")
     cam3 = VideoObjectDetector(model_path, 0.5, K, None, 7.0, -30.42, 14.58, 315.0, "cam-001-ch3", base_lat, base_lon, "Richmond", "CA", "USA")
@@ -861,18 +886,22 @@ if __name__ == "__main__":
     pipeline = MultiCameraPipeline(detectors=[cam1, cam2, cam3, cam4])
 
     video_paths = [
-        'v2x-backend-cam-ch1',
-        'v2x-backend-cam-ch2',
-        'v2x-backend-cam-ch3',
-        'v2x-backend-cam-ch4'
+        #'v2x-backend-cam-ch1',
+        #'v2x-backend-cam-ch2',
+        #'v2x-backend-cam-ch3',
+        #'v2x-backend-cam-ch4'
+        'camera_views/ch1/event1/sensor_0_20260302_122940.ts',
+        'camera_views/ch2/event1/sensor_1_20260302_122940.ts',
+        'camera_views/ch3/event1/sensor_2_20260302_122940.ts',
+        'camera_views/ch4/event1/sensor_3_20260302_122940.ts'
     ]
 
     pipeline.process_streams(
         video_paths=video_paths, 
         show_live=True, 
-        upload=True, 
+        upload=False, 
         output_json='multi_cam_detections.json',
-        output_video= None,#'output/multi_cam_tracking.mp4',
+        output_video='output/multi_cam_tracking.mp4',
         output_image=None,
         output_validate=False
     )

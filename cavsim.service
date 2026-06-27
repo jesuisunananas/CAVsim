@@ -1,0 +1,22 @@
+[Unit]
+Description=CAVsim Video Processing Pipeline
+After=network.target
+
+[Service]
+# IMPORTANT: Update these paths to match your exact setup on the Orin!
+User=nvidia
+WorkingDirectory=/home/nvidia/yolo/cavsim/CAVsim
+
+# This uses the conda environment explicitly to run the python script
+ExecStart=/home/nvidia/software/miniforge3/envs/v2x-pipeline/bin/python process_video.py
+
+# Auto-restart logic
+Restart=always
+RestartSec=5
+
+# Environment variables (Optional: systemd sometimes needs these to locate dependencies)
+Environment="PATH=/home/nvidia/software/miniforge3/envs/v2x-pipeline/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="PYTHONUNBUFFERED=1"
+
+[Install]
+WantedBy=multi-user.target
