@@ -102,15 +102,38 @@ The system is composed of three layers that work sequentially: calibration, dete
 
 ```
 .
-├── process_video.py          # Core pipeline: VideoObjectDetector + MultiCameraPipeline
-├── calibration
-    ├── validate.py               # Calibration validation runner
-    └── pitch_yaw_minimize.py     # Camera angle optimizer (scipy Nelder-Mead)
+├── src/co_perception/         # Importable package -- everything below is `from co_perception....`
+│   ├── ingest/
+│   │   └── kinesis_utils.py       # AWS KVS/HLS URL helpers
+│   ├── perception/
+│   │   └── tracking_utils.py      # AppearanceExtractor, KalmanTracker
+│   └── mapping/
+│       └── vis_map.py             # Detection-map HTML generation
+├── scripts/
+│   └── process_video.py       # Entry point: VideoObjectDetector + MultiCameraPipeline. Run from repo root.
+├── models/
+│   ├── yolov8n.pt              # Base YOLOv8 weights
+│   └── best.pt                 # Fine-tuned weights
+├── deploy/
+│   ├── cavsim.service          # systemd unit (edit paths for your target machine first)
+│   └── setup_service.sh
+├── output/                     # Generated at runtime -- detections JSON, map HTML, tracking video
+├── calibration/
+│   ├── validate.py               # Calibration validation runner
+│   └── pitch_yaw_minimize.py     # Camera angle optimizer (scipy Nelder-Mead)
+├── training/
+│   └── yolo/                   # YOLOv8 training scripts + BDD-derived dataset config (offline, not
+│                                # part of the runtime pipeline -- note: data.yaml and
+│                                # extract_matching_labels.py currently hardcode absolute paths from
+│                                # the original training machine, not this repo -- update before use)
+├── experiments/                # Exploratory, not wired into the runtime pipeline (not imported anywhere)
+│   ├── Fast-SCNN-pytorch/         # Empty as of this reorg -- semantic segmentation, never populated
+│   └── Nerf_py/                   # NeRF/3D reconstruction tooling (sr.py, streetview.py, view_pcd.py)
 ├── requirements.txt          # Python dependencies
 ├── docs
-    ├── calibration_flow.md       # Mathematical reference for the calibration model
-    └── video_pipeline.md         # Mathematical reference for the full V2X pipeline
-└── camera_views/
+│   ├── calibration_flow.md       # Mathematical reference for the calibration model
+│   └── video_pipeline.md         # Mathematical reference for the full V2X pipeline
+└── camera_views/              # Not included -- your own recorded/live video files go here
     └── ch1/
         └── center/           # Reference images/frames used by validate.py
 ```
@@ -197,7 +220,7 @@ Average Error: X.XX meters per point
 
 ### Step 4 — Update production parameters
 
-Copy the optimal `pitch_deg` and `yaw_deg` values into the corresponding `VideoObjectDetector` constructor call in `process_video.py`.
+Copy the optimal `pitch_deg` and `yaw_deg` values into the corresponding `VideoObjectDetector` constructor call in `scripts/process_video.py`.
 
 ---
 
@@ -205,8 +228,15 @@ Copy the optimal `pitch_deg` and `yaw_deg` values into the corresponding `VideoO
 
 Once calibration is complete, run the main pipeline against your live or recorded video streams:
 
+`VideoObjectDetector` and `MultiCameraPipeline` are defined in `scripts/process_video.py` itself (they're the entry point, not part of the `co_perception` package), so the way you configure and run a camera is by editing that file's `if __name__ == "__main__":` block directly, then running it from the repo root:
+
+```bash
+python3 scripts/process_video.py
+```
+
+That block looks like this (the actual code path, not something you import separately):
+
 ```python
-from process_video import MultiCameraPipeline, VideoObjectDetector
 import numpy as np
 
 K = np.array([
@@ -219,7 +249,7 @@ base_lat = 37.91560117034595
 base_lon = -122.33478756387032
 
 cam1 = VideoObjectDetector(
-    model_path='yolov8n.pt',
+    model_path='models/yolov8n.pt',
     conf=0.3,
     K=K,
     dist_coeffs=None,
@@ -241,8 +271,8 @@ pipeline.process_streams(
     video_paths=["path/to/stream1.mp4"],
     show_live=True,
     upload=False,          # Set True to push to V2X API
-    output_json="output.json",
-    output_video="output.mp4",
+    output_json="output/detections.json",
+    output_video="output/tracking.mp4",
     output_image=None,
     output_validate=False
 )

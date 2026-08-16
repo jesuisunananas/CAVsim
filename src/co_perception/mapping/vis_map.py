@@ -2,7 +2,7 @@ import json
 import folium
 import random
 
-def generate_map(json_file, output_html="detections_map.html"):
+def generate_map(json_file, output_html="output/detections_map.html"):
     print(f"📂 Loading data from {json_file}...")
     
     try:
@@ -103,4 +103,5 @@ def generate_map(json_file, output_html="detections_map.html"):
 
 if __name__ == "__main__":
     # Ensure this matches the output JSON from your MultiCameraPipeline
-    generate_map('multi_cam_detections.json')
+    # Run from the repo root: python3 src/co_perception/mapping/vis_map.py
+    generate_map('output/multi_cam_detections.json')

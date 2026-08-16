@@ -1,16 +1,20 @@
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+
 from ultralytics import YOLO
 import cv2
-from pathlib import Path
 import numpy as np
 import json
 import uuid
 import time
 import requests
-import tracking_utils
-import kinesis_utils
+from co_perception.perception import tracking_utils
+from co_perception.ingest import kinesis_utils
 from datetime import datetime, timezone, timedelta
 from math import radians, cos, sin, asin, sqrt
-from tracking_utils import AppearanceExtractor, KalmanTracker
+from co_perception.perception.tracking_utils import AppearanceExtractor, KalmanTracker
 
 def xy_to_gps(X, Z, origin_lat, origin_lon, heading_deg):
         """
@@ -877,7 +881,7 @@ if __name__ == "__main__":
     base_lat = 37.91560117034595
     base_lon = -122.33478756387032
 
-    model_path = 'yolov8n.pt'#'best.pt'
+    model_path = 'models/yolov8n.pt'#'models/best.pt'
     cam1 = VideoObjectDetector(model_path, 0.5, K, None, 7.0, -39.20, -46.06, 200.0, "cam-001-ch1", base_lat, base_lon, "Richmond", "CA", "USA")
     cam2 = VideoObjectDetector(model_path, 0.5, K, None, 7.0, -40.52, 71.25, 300.0,"cam-001-ch2", base_lat, base_lon, "Richmond", "CA", "USA")
     cam3 = VideoObjectDetector(model_path, 0.5, K, None, 7.0, -30.42, 14.58, 315.0, "cam-001-ch3", base_lat, base_lon, "Richmond", "CA", "USA")
@@ -900,7 +904,7 @@ if __name__ == "__main__":
         video_paths=video_paths, 
         show_live=True, 
         upload=False, 
-        output_json='multi_cam_detections.json',
+        output_json='output/multi_cam_detections.json',
         output_video='output/multi_cam_tracking.mp4',
         output_image=None,
         output_validate=False

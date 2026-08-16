@@ -8,7 +8,7 @@ User=nvidia
 WorkingDirectory=/home/nvidia/yolo/cavsim/CAVsim
 
 # This uses the conda environment explicitly to run the python script
-ExecStart=/home/nvidia/software/miniforge3/envs/v2x-pipeline/bin/python process_video.py
+ExecStart=/home/nvidia/software/miniforge3/envs/v2x-pipeline/bin/python scripts/process_video.py
 
 # Auto-restart logic
 Restart=always
