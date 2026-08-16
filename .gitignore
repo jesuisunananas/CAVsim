@@ -11,7 +11,6 @@ output
 !output/local_panos
 !output/detections_map.html
 !output/calibration_errors_root.csv
-experiments/Fast-SCNN-pytorch/*
 training/yolo/images
 training/yolo/labels
 training/yolo/runs

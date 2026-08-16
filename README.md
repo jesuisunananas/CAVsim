@@ -110,7 +110,7 @@ The system is composed of three layers that work sequentially: calibration, dete
 │   └── mapping/
 │       └── vis_map.py             # Detection-map HTML generation
 ├── scripts/
-│   └── process_video.py       # Entry point: VideoObjectDetector + MultiCameraPipeline. Run from repo root.
+│   └── process_video.py       # Entry point: VideoObjectDetector + MultiCameraPipeline. Paths are repo-root-relative internally, so it runs from any CWD.
 ├── models/
 │   ├── yolov8n.pt              # Base YOLOv8 weights
 │   └── best.pt                 # Fine-tuned weights
@@ -127,7 +127,8 @@ The system is composed of three layers that work sequentially: calibration, dete
 │                                # extract_matching_labels.py currently hardcode absolute paths from
 │                                # the original training machine, not this repo -- update before use)
 ├── experiments/                # Exploratory, not wired into the runtime pipeline (not imported anywhere)
-│   ├── Fast-SCNN-pytorch/         # Empty as of this reorg -- semantic segmentation, never populated
+│   ├── Fast-SCNN-pytorch/         # Git submodule -> github.com/Tramac/Fast-SCNN-pytorch @ 0638517
+│   │                              # (registered in .gitmodules; run `git submodule update --init` after clone)
 │   └── Nerf_py/                   # NeRF/3D reconstruction tooling (sr.py, streetview.py, view_pcd.py)
 ├── requirements.txt          # Python dependencies
 ├── docs
@@ -228,7 +229,7 @@ Copy the optimal `pitch_deg` and `yaw_deg` values into the corresponding `VideoO
 
 Once calibration is complete, run the main pipeline against your live or recorded video streams:
 
-`VideoObjectDetector` and `MultiCameraPipeline` are defined in `scripts/process_video.py` itself (they're the entry point, not part of the `co_perception` package), so the way you configure and run a camera is by editing that file's `if __name__ == "__main__":` block directly, then running it from the repo root:
+`VideoObjectDetector` and `MultiCameraPipeline` are defined in `scripts/process_video.py` itself (they're the entry point, not part of the `co_perception` package), so the way you configure and run a camera is by editing that file's `if __name__ == "__main__":` block directly. All internal paths (`models/`, `output/`, `camera_views/`) are resolved relative to the repo root via `REPO_ROOT = Path(__file__).resolve().parent.parent`, so the script can be run from any working directory:
 
 ```bash
 python3 scripts/process_video.py
@@ -249,7 +250,7 @@ base_lat = 37.91560117034595
 base_lon = -122.33478756387032
 
 cam1 = VideoObjectDetector(
-    model_path='models/yolov8n.pt',
+    model_path=str(REPO_ROOT / 'models' / 'yolov8n.pt'),  # REPO_ROOT = Path(__file__).resolve().parent.parent
     conf=0.3,
     K=K,
     dist_coeffs=None,
@@ -271,8 +272,8 @@ pipeline.process_streams(
     video_paths=["path/to/stream1.mp4"],
     show_live=True,
     upload=False,          # Set True to push to V2X API
-    output_json="output/detections.json",
-    output_video="output/tracking.mp4",
+    output_json=str(REPO_ROOT / 'output' / 'detections.json'),
+    output_video=str(REPO_ROOT / 'output' / 'tracking.mp4'),
     output_image=None,
     output_validate=False
 )

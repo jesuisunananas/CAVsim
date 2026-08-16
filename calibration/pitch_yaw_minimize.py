@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.optimize import minimize
+from pathlib import Path
 import csv
 import json
 
@@ -148,7 +149,7 @@ def find_global_best_angles():
             })
 
     # --- SAVE TO CSV ---
-    csv_filename = "calibration_errors.csv"
+    csv_filename = str(Path(__file__).resolve().parent / "calibration_errors.csv")
     with open(csv_filename, mode='w', newline='') as file:
         writer = csv.DictWriter(file, fieldnames=export_data[0].keys())
         writer.writeheader()

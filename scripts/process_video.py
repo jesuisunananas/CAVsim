@@ -1,7 +1,8 @@
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from ultralytics import YOLO
 import cv2
@@ -881,7 +882,7 @@ if __name__ == "__main__":
     base_lat = 37.91560117034595
     base_lon = -122.33478756387032
 
-    model_path = 'models/yolov8n.pt'#'models/best.pt'
+    model_path = str(REPO_ROOT / 'models' / 'yolov8n.pt')#str(REPO_ROOT / 'models' / 'best.pt')
     cam1 = VideoObjectDetector(model_path, 0.5, K, None, 7.0, -39.20, -46.06, 200.0, "cam-001-ch1", base_lat, base_lon, "Richmond", "CA", "USA")
     cam2 = VideoObjectDetector(model_path, 0.5, K, None, 7.0, -40.52, 71.25, 300.0,"cam-001-ch2", base_lat, base_lon, "Richmond", "CA", "USA")
     cam3 = VideoObjectDetector(model_path, 0.5, K, None, 7.0, -30.42, 14.58, 315.0, "cam-001-ch3", base_lat, base_lon, "Richmond", "CA", "USA")
@@ -894,18 +895,18 @@ if __name__ == "__main__":
         #'v2x-backend-cam-ch2',
         #'v2x-backend-cam-ch3',
         #'v2x-backend-cam-ch4'
-        'camera_views/ch1/event1/sensor_0_20260302_122940.ts',
-        'camera_views/ch2/event1/sensor_1_20260302_122940.ts',
-        'camera_views/ch3/event1/sensor_2_20260302_122940.ts',
-        'camera_views/ch4/event1/sensor_3_20260302_122940.ts'
+        str(REPO_ROOT / 'camera_views/ch1/event1/sensor_0_20260302_122940.ts'),
+        str(REPO_ROOT / 'camera_views/ch2/event1/sensor_1_20260302_122940.ts'),
+        str(REPO_ROOT / 'camera_views/ch3/event1/sensor_2_20260302_122940.ts'),
+        str(REPO_ROOT / 'camera_views/ch4/event1/sensor_3_20260302_122940.ts')
     ]
 
     pipeline.process_streams(
-        video_paths=video_paths, 
-        show_live=True, 
-        upload=False, 
-        output_json='output/multi_cam_detections.json',
-        output_video='output/multi_cam_tracking.mp4',
+        video_paths=video_paths,
+        show_live=True,
+        upload=False,
+        output_json=str(REPO_ROOT / 'output' / 'multi_cam_detections.json'),
+        output_video=str(REPO_ROOT / 'output' / 'multi_cam_tracking.mp4'),
         output_image=None,
         output_validate=False
     )
