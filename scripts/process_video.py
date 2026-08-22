@@ -21,6 +21,12 @@ from co_perception.perception.tracking_utils import AppearanceExtractor, KalmanT
 
 # TEMPORARY, decode-merge cost investigation -- remove after reporting.
 _STAGE_MS = {"preprocess": [], "inference": [], "postprocess": [], "projection": [], "dedup_upload": []}
+# Skip this long after process start before collecting -- otherwise the
+# 500-sample window lands on CUDA kernel autotune (first calls at a new
+# imgsz) and decode's post-restart buffer catch-up burst, not steady
+# state, which is what Commit 2's report needs to be honest.
+_TIMING_WARMUP_SEC = 90.0
+_timing_start = time.monotonic()
 
 
 def _report_stage_timing_once():
@@ -29,6 +35,36 @@ def _report_stage_timing_once():
     for stage, samples in _STAGE_MS.items():
         s = sorted(samples)
         print(f"[TIMING] {stage} median={s[250]:.2f}ms p90={s[450]:.2f}ms over 500 samples")
+
+
+# TEMPORARY, .track() vs .predict() overhead measurement -- remove after
+# reporting. Sequenced to start only once _STAGE_MS's own 500-sample window
+# is done (see the len(_STAGE_MS["preprocess"]) >= 500 gate at the call
+# site), not concurrently with it -- the extra .predict() call here is real
+# additional GPU/CPU work that would otherwise contaminate the Hz and
+# per-tick timing numbers Commit 2 actually needs to report.
+_TRACK_PREDICT_MS = {"track": [], "predict": []}
+
+
+def _report_track_predict_once():
+    if len(_TRACK_PREDICT_MS["track"]) != 500:
+        return
+    for label, samples in _TRACK_PREDICT_MS.items():
+        s = sorted(samples)
+        print(f"[TIMING] {label}() wall-clock median={s[250]:.2f}ms p90={s[450]:.2f}ms over 500 samples")
+    track_med = sorted(_TRACK_PREDICT_MS["track"])[250]
+    predict_med = sorted(_TRACK_PREDICT_MS["predict"])[250]
+    print(f"[TIMING] track() - predict() median delta = {track_med - predict_med:.2f}ms")
+
+
+# TEMPORARY, achieved-Hz measurement -- remove after reporting. Ticks
+# (process_tick calls, i.e. global cross-channel ticks, not per-channel
+# frames) per wall-clock second, reported periodically post-warmup so
+# Commit 2's Hz number reflects steady state, not the startup catch-up
+# burst through decode's buffered backlog.
+_HZ_REPORT_INTERVAL_SEC = 30.0
+_hz_last_report_time = None
+_hz_last_report_count = 0
 
 def xy_to_gps(X, Z, origin_lat, origin_lon, heading_deg):
         """
@@ -368,6 +404,21 @@ class MultiCameraPipeline:
             frame_count += 1
             raw_buffer = []
             annotated_frames = []
+            warmed_up = (time.monotonic() - _timing_start) >= _TIMING_WARMUP_SEC  # TEMPORARY, see top of file
+
+            global _hz_last_report_time, _hz_last_report_count  # TEMPORARY
+            now_mono = time.monotonic()
+            if warmed_up:
+                if _hz_last_report_time is None:
+                    _hz_last_report_time = now_mono
+                    _hz_last_report_count = frame_count
+                elif now_mono - _hz_last_report_time >= _HZ_REPORT_INTERVAL_SEC:
+                    dt = now_mono - _hz_last_report_time
+                    dcount = frame_count - _hz_last_report_count
+                    print(f"[TIMING] achieved Hz over last {dt:.1f}s: {dcount / dt:.2f}")
+                    _hz_last_report_time = now_mono
+                    _hz_last_report_count = frame_count
+
             active_channels = sorted(
                 self.detectors[i].device_id
                 for i in (channels_present if channels_present is not None else range(len(frames_to_process)))
@@ -382,19 +433,33 @@ class MultiCameraPipeline:
 
                 last_valid_frames[i] = frame.copy()
 
-                results = detector.model.track(frame, persist=True, conf=detector.conf, tracker="botsort.yaml", verbose=False)
+                t_track0 = time.monotonic()  # TEMPORARY, see top of file
+                results = detector.model.track(frame, persist=True, conf=detector.conf, imgsz=detector.imgsz, tracker="botsort.yaml", verbose=False)
+                track_ms = (time.monotonic() - t_track0) * 1000  # TEMPORARY
+                t_proj0 = time.monotonic()  # TEMPORARY -- always set; projection-timing below needs it regardless of which gate below fires
 
-                if i == 0 and len(_STAGE_MS["preprocess"]) < 500:  # TEMPORARY, see top of file
+                if i == 0 and warmed_up and len(_STAGE_MS["preprocess"]) < 500:  # TEMPORARY, see top of file
                     sp = results[0].speed
                     _STAGE_MS["preprocess"].append(sp["preprocess"])
                     _STAGE_MS["inference"].append(sp["inference"])
                     _STAGE_MS["postprocess"].append(sp["postprocess"])
-                    t_proj0 = time.monotonic()
+                elif i == 0 and len(_STAGE_MS["preprocess"]) >= 500 and len(_TRACK_PREDICT_MS["track"]) < 500:
+                    # TEMPORARY: .track() vs .predict() overhead, see top of
+                    # file. Sequenced after _STAGE_MS's own window finishes
+                    # (not concurrently) so this extra call doesn't skew the
+                    # Hz/timing numbers above. Measurement only -- discarded,
+                    # the production .track() call above is unchanged.
+                    t_pred0 = time.monotonic()
+                    _ = detector.model.predict(frame, conf=detector.conf, imgsz=detector.imgsz, verbose=False)
+                    predict_ms = (time.monotonic() - t_pred0) * 1000
+                    _TRACK_PREDICT_MS["track"].append(track_ms)
+                    _TRACK_PREDICT_MS["predict"].append(predict_ms)
+                    _report_track_predict_once()
 
                 det_2d = detector.extract_detections(results[0], frame_count)
                 det_3d = detector.compute_3d_detections(det_2d, current_utc_str, current_epoch)
 
-                if i == 0 and len(_STAGE_MS["projection"]) < 500:  # TEMPORARY
+                if i == 0 and warmed_up and len(_STAGE_MS["projection"]) < 500:  # TEMPORARY
                     _STAGE_MS["projection"].append((time.monotonic() - t_proj0) * 1000)
 
                 for det in det_3d:
@@ -434,7 +499,7 @@ class MultiCameraPipeline:
             if upload and clean_batch:
                 self.detectors[0].upload_batch(clean_batch)
                 print(f"Frame {frame_count}: Uploaded {len(clean_batch)} unique objects (merged from {len(raw_buffer)} raw detections).")
-            if len(_STAGE_MS["dedup_upload"]) < 500:  # TEMPORARY
+            if warmed_up and len(_STAGE_MS["dedup_upload"]) < 500:  # TEMPORARY
                 _STAGE_MS["dedup_upload"].append((time.monotonic() - t_dedup0) * 1000)
                 _report_stage_timing_once()
 
@@ -666,13 +731,14 @@ class MultiCameraPipeline:
                     print(json.dumps(validation_output, indent=2))
 
 class VideoObjectDetector:
-    def __init__(self, model_path, conf=0.25, K=np.eye(3,3), dist_coeffs=None, camera_height=5.0, pitch_deg=0.0, yaw_deg=0.0, heading_deg=0.0, device_id="cam-001", origin_lat=0.0, origin_lon=0.0,
+    def __init__(self, model_path, conf=0.25, imgsz=640, K=np.eye(3,3), dist_coeffs=None, camera_height=5.0, pitch_deg=0.0, yaw_deg=0.0, heading_deg=0.0, device_id="cam-001", origin_lat=0.0, origin_lon=0.0,
                  city="", state="", country=""):
-        
+
         """
         Args:
             model_path:      Path to YOLO model weights
             conf:            Detection confidence threshold
+            imgsz:           Inference resolution (side model.track() letterboxes to)
             K:               3x3 camera intrinsic matrix
             dist_coeffs:     Lens distortion coefficients [k1,k2,p1,p2,k3]
             camera_height:   Camera height above ground in meters
@@ -683,6 +749,7 @@ class VideoObjectDetector:
         
         self.model = YOLO(model_path)
         self.conf = conf
+        self.imgsz = imgsz
         self.class_names = self.model.names
         self.K = K
         self.dist_coeffs = dist_coeffs if dist_coeffs is not None else np.zeros(5)
@@ -1063,6 +1130,7 @@ if __name__ == "__main__":
         VideoObjectDetector(
             model_path=cfg.resolve(cfg.model_path),
             conf=cfg.conf,
+            imgsz=cfg.imgsz,
             K=np.array(cam.K, dtype=np.float64),
             dist_coeffs=None,
             camera_height=cam.camera_height,

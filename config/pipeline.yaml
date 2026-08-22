@@ -20,7 +20,7 @@ ingestion:
   # How often to actually run detection. Downsampling happens here, after
   # decode -- never before it (pre-decode frame-skipping breaks H.264
   # P/B-frame references). Must be <= nominal_fps; config.py raises if not.
-  target_fps: 2
+  target_fps: 10
   # Per-channel history buffer for cross-channel alignment, in seconds (see
   # ingest/frame_sources.py's LocalSocketSource). Sized to comfortably
   # exceed decode's own worst-case backlog (bounded to ~3s by its GOP-aware
@@ -42,6 +42,14 @@ ingestion:
 detection:
   model_path: models/yolov8n.pt
   conf: 0.5
+  # YOLO inference resolution (the side model.track() letterboxes the
+  # longest edge to). Left unset anywhere in the repo, Ultralytics
+  # defaults to 640 -- which letterboxes this camera's 2560x1920 frames
+  # down to 640x480 and makes vehicles beyond ~100m undetectable. At
+  # 1280 on these 4:3 frames, letterbox output is 1280x960. Tunable
+  # without a code change: drop to 960 here if throughput doesn't hold
+  # at 1280 (see Commit 2 report).
+  imgsz: 1280
   cameras:
     - channel: 0
       device_id: cam-001-ch1

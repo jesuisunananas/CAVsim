@@ -69,6 +69,7 @@ class PipelineConfig:
     sync_buffer_seconds: float
     model_path: str
     conf: float
+    imgsz: int
     cameras: list[CameraConfig]
     save: SaveOutputConfig
     upload: UploadOutputConfig
@@ -140,6 +141,18 @@ def load_config(config_path: str | Path, repo_root: str | Path) -> PipelineConfi
     detection = raw["detection"]
     cameras = [CameraConfig(**cam) for cam in detection["cameras"]]
 
+    # Side model.track() letterboxes the longest edge to. Defaults to
+    # Ultralytics' own default (640) if unset, matching this repo's
+    # previous unconfigured behaviour -- see process_video.py for why
+    # that default is wrong for this camera's resolution. Must be a
+    # multiple of the model stride (32 for YOLOv8); Ultralytics silently
+    # rounds up otherwise, which would make the config value a lie.
+    imgsz = int(detection.get("imgsz", 640))
+    if imgsz <= 0:
+        raise ValueError(f"detection.imgsz must be positive, got {imgsz}")
+    if imgsz % 32 != 0:
+        raise ValueError(f"detection.imgsz must be a multiple of 32 (model stride), got {imgsz}")
+
     out = raw["output"]
     save = SaveOutputConfig(**out.get("save", {}))
     upload = UploadOutputConfig(**out.get("upload", {}))
@@ -159,6 +172,7 @@ def load_config(config_path: str | Path, repo_root: str | Path) -> PipelineConfi
         sync_buffer_seconds=sync_buffer_seconds,
         model_path=detection["model_path"],
         conf=float(detection.get("conf", 0.25)),
+        imgsz=imgsz,
         cameras=cameras,
         save=save,
         upload=upload,
