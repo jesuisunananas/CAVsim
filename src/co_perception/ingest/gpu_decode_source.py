@@ -57,7 +57,15 @@ import torch
 import PyNvVideoCodec as nvc
 
 from co_perception.common.broadcast import BroadcastClient
-from co_perception.ingest.demux_protocol import MSG_SR_ANCHOR, MSG_VIDEO, unpack_sr_anchor, unpack_video
+from co_perception.ingest.demux_protocol import (
+    MSG_SESSION_RESET,
+    MSG_SR_ANCHOR,
+    MSG_VIDEO,
+    unpack_session_reset,
+    unpack_sr_anchor,
+    unpack_video,
+)
+from co_perception.ingest.frame_sources import MAX_ABS_TIME_SKEW_SEC
 from co_perception.ingest.rtp_time_calibration import ChannelClockCalibrator, wrapped_diff
 
 RTP_CLOCK_HZ = 90000
@@ -164,6 +172,12 @@ class GpuDecodeSource:
         self._last_output_ticks_seen = None
         self._stuck_output_count = 0
 
+        # Set by handle_session_reset(), cleared once the first IDR after a
+        # reset is seen. Feeding a fresh decoder (no reference frames) a
+        # non-IDR access unit is invalid input, not just suboptimal -- see
+        # handle_session_reset() for why the decoder is fresh after a reset.
+        self._waiting_for_idr = False
+
         self._decoder = self._create_decoder()
 
         self._thread = threading.Thread(target=self._recv_loop, daemon=True)
@@ -197,6 +211,10 @@ class GpuDecodeSource:
                         rtp_ts, ntp_time = unpack_sr_anchor(payload)
                         self.calibrator.update_anchor(rtp_ts, ntp_time)
                         continue
+                    if msg_type == MSG_SESSION_RESET:
+                        new_raw_rtp_ts = unpack_session_reset(payload)
+                        self.handle_session_reset(new_raw_rtp_ts)
+                        continue
                     if msg_type != MSG_VIDEO:
                         continue
                     _pts_ns, raw_rtp_ts, h264_bytes = unpack_video(payload)
@@ -206,6 +224,55 @@ class GpuDecodeSource:
             client.close()
             if not self._stopped:
                 time.sleep(1.0)  # demux restarted or briefly gone -- retry
+
+    def handle_session_reset(self, new_raw_rtp_ts):
+        """Demux has reconnected to the camera (RTSP session boundary) --
+        an authoritative signal, not a guess. Ordering: demux emits
+        MSG_SESSION_RESET from a pad probe on depay's sink pad, upstream of
+        appsink, so it always precedes the new session's first MSG_VIDEO on
+        the wire -- see demux/main.py's _on_rtp_buffer.
+
+        Unlike decode/main.py's handle_session_reset(), no stale-frame
+        session tagging is needed here: _handle_access_unit() runs
+        synchronously start-to-finish on this object's single receiver
+        thread (Decode() hands back whatever frames are ready in the same
+        call that fed it -- no separate GStreamer-style streaming thread
+        with its own internal buffering), so there is no async pipeline
+        stage that could still be draining the old session's frames by the
+        time this method returns. Recreating self._decoder below is
+        therefore a hard cutover, not a race: once it happens, no later
+        call can produce old-session output.
+
+        Old reference frames must not decode new-session frames, and this
+        API exposes no flush/reset call, so recreation is the only way to
+        guarantee clean decoder state. This has a real, measured cost: a
+        freshly created decoder produces no output at all for its first
+        ~48 access units (~1.6s at 30fps) -- confirmed by feeding a
+        captured sequence through a fresh decoder and diffing output ticks
+        against a parallel avdec_h264 decode of the same input. Combined
+        with waiting for the next IDR (below, in _handle_access_unit),
+        every session boundary opens a blind window on this channel of at
+        least that long -- expected to be routine now (up to one GOP,
+        ~2s, per reset), not just an outage-time cost.
+        """
+        print(
+            f"gpu_decode {self._socket_path}: session reset (demux reconnected) "
+            f"-- new origin {new_raw_rtp_ts}"
+        )
+        self._unwrapped_ticks = new_raw_rtp_ts
+        self._last_wire_ts = new_raw_rtp_ts
+        self.calibrator = ChannelClockCalibrator()
+        self._last_output_ticks_seen = None
+        self._stuck_output_count = 0
+        self._last_kept_ticks = None
+        # Everything buffered belongs to the old session -- discarding it
+        # is correct, not a loss: an RTSP reset is a genuine network
+        # discontinuity, so there's no continuity across it worth
+        # preserving (see module history).
+        with self._lock:
+            self._buffer.clear()
+        self._decoder = self._create_decoder()
+        self._waiting_for_idr = True
 
     def _handle_access_unit(self, raw_rtp_ts, h264_bytes):
         # Tick unwrapping -- identical logic to decode/main.py's
@@ -219,50 +286,27 @@ class GpuDecodeSource:
         else:
             delta = wrapped_diff(raw_rtp_ts, self._last_wire_ts)
             if abs(delta) > MAX_PLAUSIBLE_TICK_JUMP:
+                # MONITOR ONLY -- must not act on this. Session boundaries
+                # are decided exclusively by handle_session_reset(), driven
+                # by demux's authoritative MSG_SESSION_RESET, not by
+                # guessing from tick deltas (a threshold guess is wrong in
+                # both directions: a genuine long stall reads as a
+                # reconnect, and a reconnect whose new random origin lands
+                # close to the old one is missed). A jump with no preceding
+                # reset message means demux missed signaling a reconnect,
+                # or this process's socket dropped the message.
                 print(
-                    f"gpu_decode {self._socket_path}: raw_rtp_ts jumped by {delta} ticks -- "
-                    "treating as a new RTP session: flushing decoder and resetting calibrator"
+                    f"gpu_decode {self._socket_path}: WARNING raw_rtp_ts jumped by {delta} "
+                    "ticks with no preceding MSG_SESSION_RESET -- demux may have missed "
+                    "signaling a reconnect, or this process's socket dropped the reset message"
                 )
-                # A large PTS discontinuity is a real production incident
-                # in camera/stream/decode/main.py, root-caused during this
-                # commit's work: it fed the new session's ticks straight
-                # into a still-running decoder, which lost input/output PTS
-                # association after the jump and silently kept publishing
-                # frames with a frozen, stale timestamp -- undetected for
-                # ~19 hours on the live pipeline because nothing there
-                # checked for a clock that stopped advancing, only for one
-                # running fast. Not repeatable here even in principle: the
-                # decoder is recreated outright rather than patched (this
-                # API exposes no flush/reset call), so there's no live
-                # session left to lose PTS association with, and the
-                # calibrator is reset too -- its anchor belongs to the old
-                # session's numeric tick range and would compute nonsense
-                # abs_time against the new one otherwise. Recreating a
-                # decoder has real cost, but session boundaries are rare
-                # (demux restarts), not a per-frame path.
-                #
-                # One measured consequence worth knowing about: a freshly
-                # created decoder produces no output at all for its first
-                # ~48 access units (~1.6s at 30fps) -- confirmed directly
-                # by feeding a real captured sequence through a fresh
-                # decoder and diffing output ticks against a parallel
-                # avdec_h264 decode of the same input; the mismatched
-                # frames were the first ~48 by input order, nothing
-                # scattered through the middle. Not a bug, just decoder
-                # session warm-up latency (distinct from the LOW
-                # DisplayDecodeLatencyType setting above, which governs
-                # reorder latency, not initial session setup) -- but it
-                # means every decoder recreation, i.e. every session
-                # boundary, opens a ~1.6s blind window on this channel
-                # with zero frames buffered, not just zero *new* ones.
-                self._decoder = self._create_decoder()
-                self.calibrator = ChannelClockCalibrator()
-                self._last_output_ticks_seen = None
-                self._stuck_output_count = 0
-                self._unwrapped_ticks = raw_rtp_ts
-            else:
-                self._unwrapped_ticks += delta
+            self._unwrapped_ticks += delta
         self._last_wire_ts = raw_rtp_ts
+
+        if self._waiting_for_idr:
+            if not _contains_idr(h264_bytes):
+                return
+            self._waiting_for_idr = False
 
         frames = self._decode(h264_bytes, self._unwrapped_ticks)
         self._decoded_count += 1
@@ -302,6 +346,20 @@ class GpuDecodeSource:
             abs_time = self.calibrator.to_abs_time(output_ticks)
             if abs_time is None:
                 continue  # no RTCP SR anchor yet -- not calibrated, not usable
+
+            # Same guard as LocalSocketSource (frame_sources.py) -- and the
+            # same reason it exists there: a frame with a badly wrong
+            # abs_time doesn't just mis-time itself, it can stall every
+            # channel's output, since process_streams' cross-channel sync
+            # requires all channels to agree within a tight tolerance.
+            skew = abs_time - time.time()
+            if abs(skew) > MAX_ABS_TIME_SKEW_SEC:
+                print(
+                    f"gpu_decode {self._socket_path}: REJECTED frame, abs_time is "
+                    f"{skew:+.1f}s from wall clock (limit {MAX_ABS_TIME_SKEW_SEC}s) "
+                    "-- dropping rather than stalling the sync loop"
+                )
+                continue
 
             self._last_kept_ticks = output_ticks
             self._kept_count += 1

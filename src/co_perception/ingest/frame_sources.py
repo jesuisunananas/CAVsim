@@ -19,6 +19,19 @@ from co_perception.ingest.decode_protocol import MSG_FRAME, unpack_frame
 # TEMPORARY, decode-merge cost investigation -- remove after reporting.
 _SOCKET_READ_MS = []
 
+# How far a frame's abs_time may disagree with wall-clock before it's
+# rejected outright rather than buffered. Generous relative to normal
+# operation (steady-state lag is well under a second, decode's own
+# worst-case GOP-drop bounds it to ~3s) -- this exists to catch a decode
+# process broadcasting a badly wrong timestamp (confirmed happening in
+# production: a session-tracking bug left one channel's frames tagged
+# hours in the future), not to police ordinary jitter. Silently buffering
+# a value like that doesn't just mis-time one frame -- process_streams'
+# cross-channel sync requires all channels to agree within a tight
+# tolerance before processing anything, so one bad channel stalls every
+# channel's output, not just its own.
+MAX_ABS_TIME_SKEW_SEC = 60.0
+
 
 class FrameSource:
     is_live = False  # True means "no new frame yet" != "stream ended"
@@ -121,6 +134,15 @@ class LocalSocketSource(FrameSource):
                     height, width, channels, abs_time, _raw_rtp_ts, pixels = unpack_frame(payload)
                     if abs_time is None:
                         continue  # no RTCP SR anchor yet -- not calibrated, not usable
+                    skew = abs_time - time.time()
+                    if abs(skew) > MAX_ABS_TIME_SKEW_SEC:
+                        print(
+                            f"LocalSocketSource {self._socket_path}: REJECTED frame, "
+                            f"abs_time is {skew:+.1f}s from wall clock (limit "
+                            f"{MAX_ABS_TIME_SKEW_SEC}s) -- decode is broadcasting a bad "
+                            "timestamp; dropping rather than stalling the sync loop"
+                        )
+                        continue
                     frame = np.frombuffer(pixels, dtype=np.uint8).reshape(height, width, channels)
                     t = abs_time - self._t0
                     with self._lock:

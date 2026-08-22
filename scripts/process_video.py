@@ -352,15 +352,26 @@ class MultiCameraPipeline:
 
         last_valid_frames = [None] * len(caps)
 
-        def process_tick(frames_to_process, current_utc_str, current_epoch):
+        def process_tick(frames_to_process, current_utc_str, current_epoch, channels_present=None):
             """One synchronized batch: detect+track on whatever channels
             have an aligned frame this tick, dedupe/upload/write/broadcast
             the result. Returns False if the caller should stop (q pressed
-            in the live-preview window)."""
+            in the live-preview window).
+
+            channels_present: indices into self.detectors/frames_to_process
+            that actually contributed this tick, or None (file/KVS sources,
+            where every channel is always present by construction) to mean
+            "all of them." A live channel absent from this set has None in
+            frames_to_process -- see the live sync loop below for why that
+            happens routinely now, not just during an outage."""
             nonlocal frame_count
             frame_count += 1
             raw_buffer = []
             annotated_frames = []
+            active_channels = sorted(
+                self.detectors[i].device_id
+                for i in (channels_present if channels_present is not None else range(len(frames_to_process)))
+            )
 
             for i, frame in enumerate(frames_to_process):
                 detector = self.detectors[i]
@@ -387,6 +398,13 @@ class MultiCameraPipeline:
                     _STAGE_MS["projection"].append((time.monotonic() - t_proj0) * 1000)
 
                 for det in det_3d:
+                    # So a consumer can tell partial coverage (a channel
+                    # mid-session-reset, or genuinely down) apart from an
+                    # empty sector actually being empty of objects -- see
+                    # the live sync loop below, which is what makes
+                    # active_channels a strict subset of all channels
+                    # routinely now, not just during an outage.
+                    det['active_channels'] = active_channels
                     if det['object_type'] == 'person':
                         emb = self.extractor.extract(frame, det['camera_data']['bifocal_metadata']['bbox'])
                         det['embedding'] = emb
@@ -478,19 +496,52 @@ class MultiCameraPipeline:
                 # within tolerance does anything get consumed -- and only
                 # then, discarding just the now-superseded older entries,
                 # not everything.
+                # A fourth flaw in the same lineage as 1-3 above, found and
+                # fixed after this comment was first written: requiring all
+                # 4 channels aligned before processing *any* of them meant
+                # one channel's absence silenced all four. That used to be
+                # rare enough to read as an outage. It no longer is: a
+                # channel now goes through a signaled reset (see
+                # ingest/demux_protocol.py's MSG_SESSION_RESET) any time
+                # demux reconnects, and is legitimately absent for up to
+                # one GOP (~2s at the current I-frame interval) while its
+                # decoder rewarms and waits for the next IDR -- a routine
+                # event, not an incident. So: process whatever channels are
+                # aligned this tick and mark the rest unavailable, rather
+                # than waiting on all 4. The only loss is seam-merging for
+                # a missing channel's neighbours (deduplicate() already
+                # just works over however many raw detections raw_buffer
+                # actually has); which channels contributed is recorded on
+                # each detection (see active_channels above) so a consumer
+                # can tell partial coverage from a genuinely empty sector.
                 alignment_tolerance_sec = 1.5 / nominal_fps
                 min_gap_sec = 1.0 / target_fps
+                # How far a channel's newest frame may lag real time before
+                # it stops anchoring target_t. Without this, a channel
+                # stalled (e.g. mid-reset) at some frozen newest.t would
+                # pin target_t to that stale point forever: the other
+                # channels' own multi-second buffers can still satisfy a
+                # match against an old target_t, so the loop would silently
+                # crawl through their buffered history instead of tracking
+                # real time -- the mechanism behind the outage this
+                # replaces. A bit more than one GOP for margin.
+                absence_grace_sec = 3.0
                 next_target_t = None  # don't accept a set older than this
 
                 while True:
                     newests = [src.peek_newest() for src in caps]
-                    if any(n is None for n in newests):
-                        # At least one channel has never produced anything
-                        # yet -- nothing to target against.
+                    now_offset = time.time() - global_start_epoch
+                    present_idx = [
+                        i for i, n in enumerate(newests)
+                        if n is not None and (now_offset - n[1]) < absence_grace_sec
+                    ]
+                    if not present_idx:
+                        # Nothing live at all -- every channel is either
+                        # brand new or stalled. Nothing to target against.
                         time.sleep(0.01)
                         continue
 
-                    target_t = min(t for _, t in newests)
+                    target_t = min(newests[i][1] for i in present_idx)
                     if next_target_t is not None and target_t < next_target_t:
                         # Not enough new progress since the last processed
                         # set for the next target_fps-spaced sample yet --
@@ -498,29 +549,32 @@ class MultiCameraPipeline:
                         time.sleep(0.01)
                         continue
 
+                    # Every channel gets a fair shot at target_t regardless
+                    # of whether it anchored it -- a channel just outside
+                    # present_idx (e.g. its first frame back from a reset,
+                    # this exact tick) can still match.
                     matches = [src.find_closest(target_t, alignment_tolerance_sec) for src in caps]
-                    if any(m is None for m in matches):
-                        # At least one channel has nothing within tolerance
-                        # of target_t (yet, or possibly ever, if it outran
-                        # this channel's buffer window) -- wait and retry;
-                        # target_t moves forward on its own as more data
-                        # arrives, so this isn't a deadlock the way (3) was.
+                    present_this_tick = {i for i, m in enumerate(matches) if m is not None}
+                    if not present_this_tick:
+                        # target_t itself came from present_idx, so this
+                        # means transient jitter, not absence -- retry.
                         time.sleep(0.01)
                         continue
 
-                    # All 4 genuinely matched -- commit (discard superseded
-                    # history) only now that every channel has confirmed a
-                    # match, not as each one is found.
-                    for src, (idx, _frame, _t) in zip(caps, matches):
-                        src.discard_through(idx)
+                    # Commit (discard superseded history) only for channels
+                    # that actually matched -- an absent channel's buffer is
+                    # untouched, same as before.
+                    for i in present_this_tick:
+                        idx, _frame, _t = matches[i]
+                        caps[i].discard_through(idx)
 
-                    frames_to_process = [m[1] for m in matches]
-                    actual_t = min(m[2] for m in matches)
+                    frames_to_process = [matches[i][1] if i in present_this_tick else None for i in range(num_cams)]
+                    actual_t = min(matches[i][2] for i in present_this_tick)
                     next_target_t = target_t + min_gap_sec
                     current_epoch = global_start_epoch + actual_t
                     current_time = global_start_time + timedelta(seconds=actual_t)
                     current_utc_str = current_time.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
-                    if not process_tick(frames_to_process, current_utc_str, current_epoch):
+                    if not process_tick(frames_to_process, current_utc_str, current_epoch, present_this_tick):
                         break
             else:
                 # File/KVS sources: original pull-based, windowed-catchup
