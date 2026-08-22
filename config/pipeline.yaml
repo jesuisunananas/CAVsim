@@ -1,0 +1,105 @@
+# Per-machine pipeline configuration. Everything that used to be hardcoded
+# in scripts/process_video.py's __main__ block lives here instead, so the
+# same code runs unmodified on a different machine (e.g. the Orin edge
+# deployment) by pointing it at a different copy of this file --
+# see src/co_perception/config.py for the loader and README.md for the
+# full schema reference.
+
+show_live: false
+
+ingestion:
+  # local_socket: subscribe to camera/stream's decode-stage broadcast
+  #   (already-decoded frames + calibrated abs_time) over a Unix socket --
+  #   only valid on a machine that's also running that pipeline.
+  # local_file:   read a video file from disk (path).
+  # aws_kvs:      pull an HLS stream from AWS Kinesis Video Streams (stream name).
+  mode: local_socket
+  # The camera's real source rate -- used only to size the cross-channel
+  # timestamp-alignment tolerance (live sources only, see process_video.py).
+  nominal_fps: 30
+  # How often to actually run detection. Downsampling happens here, after
+  # decode -- never before it (pre-decode frame-skipping breaks H.264
+  # P/B-frame references). Must be <= nominal_fps; config.py raises if not.
+  target_fps: 2
+  # Per-channel history buffer for cross-channel alignment, in seconds (see
+  # ingest/frame_sources.py's LocalSocketSource). Sized to comfortably
+  # exceed decode's own worst-case backlog (bounded to ~3s by its GOP-aware
+  # drop, see camera/stream/decode/main.py). Memory cost is real: at this
+  # camera's resolution, roughly (seconds * nominal_fps * ~14MB * 4 channels)
+  # worst-case -- 8s is ~13GB worst-case, only reached under sustained
+  # misalignment, not steady-state operation.
+  sync_buffer_seconds: 4
+  channels:
+    - channel: 0
+      socket_path: /tmp/camera_decode_ch0.sock
+    - channel: 1
+      socket_path: /tmp/camera_decode_ch1.sock
+    - channel: 2
+      socket_path: /tmp/camera_decode_ch2.sock
+    - channel: 3
+      socket_path: /tmp/camera_decode_ch3.sock
+
+detection:
+  model_path: models/yolov8n.pt
+  conf: 0.5
+  cameras:
+    - channel: 0
+      device_id: cam-001-ch1
+      K: [[1325.4, 0, 1280.0], [0, 1325.4, 960.0], [0, 0, 1]]
+      camera_height: 7.0
+      pitch_deg: -39.20
+      yaw_deg: -46.06
+      heading_deg: 200.0
+      origin_lat: 37.91560117034595
+      origin_lon: -122.33478756387032
+      city: Richmond
+      state: CA
+      country: USA
+    - channel: 1
+      device_id: cam-001-ch2
+      K: [[1325.4, 0, 1280.0], [0, 1325.4, 960.0], [0, 0, 1]]
+      camera_height: 7.0
+      pitch_deg: -40.52
+      yaw_deg: 71.25
+      heading_deg: 300.0
+      origin_lat: 37.91560117034595
+      origin_lon: -122.33478756387032
+      city: Richmond
+      state: CA
+      country: USA
+    - channel: 2
+      device_id: cam-001-ch3
+      K: [[1325.4, 0, 1280.0], [0, 1325.4, 960.0], [0, 0, 1]]
+      camera_height: 7.0
+      pitch_deg: -30.42
+      yaw_deg: 14.58
+      heading_deg: 315.0
+      origin_lat: 37.91560117034595
+      origin_lon: -122.33478756387032
+      city: Richmond
+      state: CA
+      country: USA
+    - channel: 3
+      device_id: cam-001-ch4
+      K: [[1325.4, 0, 1280.0], [0, 1325.4, 960.0], [0, 0, 1]]
+      camera_height: 7.0
+      pitch_deg: -43.48
+      yaw_deg: -22.63
+      heading_deg: 260.0
+      origin_lat: 37.91560117034595
+      origin_lon: -122.33478756387032
+      city: Richmond
+      state: CA
+      country: USA
+
+output:
+  save:
+    enabled: true
+    json_path: output/multi_cam_detections.json
+    video_path: null
+  upload:
+    enabled: false
+    endpoint: https://w0j9m7dgpg.execute-api.us-west-1.amazonaws.com/detections
+  broadcast:
+    enabled: true
+    socket_path: /tmp/coperception_output.sock

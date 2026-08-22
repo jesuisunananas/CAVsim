@@ -12,10 +12,23 @@ import uuid
 import time
 import requests
 from co_perception.perception import tracking_utils
-from co_perception.ingest import kinesis_utils
+from co_perception.ingest.frame_sources import build_frame_source
+from co_perception.output.broadcast_sink import BroadcastSink
+from co_perception import config as pipeline_config
 from datetime import datetime, timezone, timedelta
 from math import radians, cos, sin, asin, sqrt
 from co_perception.perception.tracking_utils import AppearanceExtractor, KalmanTracker
+
+# TEMPORARY, decode-merge cost investigation -- remove after reporting.
+_STAGE_MS = {"preprocess": [], "inference": [], "postprocess": [], "projection": [], "dedup_upload": []}
+
+
+def _report_stage_timing_once():
+    if len(_STAGE_MS["preprocess"]) != 500:
+        return
+    for stage, samples in _STAGE_MS.items():
+        s = sorted(samples)
+        print(f"[TIMING] {stage} median={s[250]:.2f}ms p90={s[450]:.2f}ms over 500 samples")
 
 def xy_to_gps(X, Z, origin_lat, origin_lon, heading_deg):
         """
@@ -269,43 +282,56 @@ class MultiCameraPipeline:
 
         return tracked_buffer
     
-    def process_streams(self, video_paths, show_live=True, upload=False, output_json=None, output_video=None, output_image=None, output_validate=False):
+    def process_streams(self, sources, show_live=True, upload=False, output_json=None, output_video=None,
+                         output_image=None, output_validate=False, broadcast_sink=None,
+                         target_fps=None, nominal_fps=30):
         """
         Processes multiple videos in parallel, running YOLO, 3D math, and deduplication.
-        
+
         Args:
-            video_paths: List of file paths to the input videos.
+            sources: List of frame_sources.FrameSource instances (one per detector,
+                same order) -- see ingest/frame_sources.py for local-socket/
+                local-file/AWS-KVS implementations, and config.py for how
+                ingestion.mode picks between them.
             show_live: Boolean to display the live processing grid.
             upload: Boolean to upload detections to V2X API.
             output_json: Path to save the detections JSON.
             output_video: Path to save the annotated output video.
             output_image: Path to save a final annotated image frame.
             output_validate: Boolean to enable validation output.
-            
+            broadcast_sink: Optional output.broadcast_sink.BroadcastSink -- if set,
+                each channel's annotated frame is JPEG-broadcast locally every tick
+                for ws_broadcast_server.py to relay to browsers.
+            target_fps: Live sources only -- process at this rate (config.py's
+                ingestion.target_fps). Must be <= nominal_fps. Defaults to
+                nominal_fps (no downsampling) if not given.
+            nominal_fps: Live sources only -- the camera's real source rate
+                (config.py's ingestion.nominal_fps), used to size the
+                cross-channel timestamp-alignment tolerance below.
+
         Returns:
             None
         """
-        if len(self.detectors) != len(video_paths):
-            print("Error: Number of detectors must match number of video paths.")
+        if len(self.detectors) != len(sources):
+            print("Error: Number of detectors must match number of sources.")
             return
 
-        caps = []
-        is_kinesis = []
-        for path in video_paths:
-            if "v2x-backend-cam" in path:
-                url = kinesis_utils.get_kvs_hls_url(path)
-                caps.append(cv2.VideoCapture(url))
-                is_kinesis.append(True)
-            else:
-                caps.append(cv2.VideoCapture(str(path)))
-                is_kinesis.append(False)
+        caps = sources
         frame_count = 0
-        
+        all_live = all(getattr(src, "is_live", False) for src in caps)
+
+        if all_live:
+            target_fps = target_fps or nominal_fps
+            if target_fps > nominal_fps:
+                raise ValueError(f"target_fps ({target_fps}) cannot exceed nominal_fps ({nominal_fps})")
+            if target_fps <= 0:
+                raise ValueError(f"target_fps must be positive, got {target_fps}")
+
         global_start_time = datetime.now(timezone.utc)
         global_start_epoch = time.time()
-        fps = 30
-        if len(caps) > 0:
-            fps = int(caps[0].get(cv2.CAP_PROP_FPS)) or 30
+        fps = target_fps if all_live else 30
+        if not all_live and len(caps) > 0 and hasattr(caps[0], "fps"):
+            fps = int(caps[0].fps) or 30
 
         num_cams = len(caps)
         if num_cams == 1:
@@ -316,142 +342,242 @@ class MultiCameraPipeline:
             # Default horizontal concatenation for 2 or 3 cameras
             out_size = (640 * num_cams, 480)
 
-        # --- NEW: Initialize the Video Writer ---
+        # --- Initialize the Video Writer ---
         writer = None
         if output_video and len(caps) > 0:
-            # We skip 9/10 frames, so adjust the output framerate so it doesn't play at 10x speed
-            out_fps = max(1, fps // 10) 
-            
-            # Use mp4v codec for standard .mp4 output
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-            writer = cv2.VideoWriter(output_video, fourcc, out_fps, out_size)
-        
+            writer = cv2.VideoWriter(output_video, fourcc, max(1, int(fps)), out_size)
+
         print(f"Starting Multi-Stream Pipeline for {len(caps)} cameras...")
 
+        last_valid_frames = [None] * len(caps)
+
+        def process_tick(frames_to_process, current_utc_str, current_epoch):
+            """One synchronized batch: detect+track on whatever channels
+            have an aligned frame this tick, dedupe/upload/write/broadcast
+            the result. Returns False if the caller should stop (q pressed
+            in the live-preview window)."""
+            nonlocal frame_count
+            frame_count += 1
+            raw_buffer = []
+            annotated_frames = []
+
+            for i, frame in enumerate(frames_to_process):
+                detector = self.detectors[i]
+                if frame is None:
+                    if last_valid_frames[i] is not None:
+                        annotated_frames.append(cv2.resize(last_valid_frames[i], (640, 480)))
+                    continue
+
+                last_valid_frames[i] = frame.copy()
+
+                results = detector.model.track(frame, persist=True, conf=detector.conf, tracker="botsort.yaml", verbose=False)
+
+                if i == 0 and len(_STAGE_MS["preprocess"]) < 500:  # TEMPORARY, see top of file
+                    sp = results[0].speed
+                    _STAGE_MS["preprocess"].append(sp["preprocess"])
+                    _STAGE_MS["inference"].append(sp["inference"])
+                    _STAGE_MS["postprocess"].append(sp["postprocess"])
+                    t_proj0 = time.monotonic()
+
+                det_2d = detector.extract_detections(results[0], frame_count)
+                det_3d = detector.compute_3d_detections(det_2d, current_utc_str, current_epoch)
+
+                if i == 0 and len(_STAGE_MS["projection"]) < 500:  # TEMPORARY
+                    _STAGE_MS["projection"].append((time.monotonic() - t_proj0) * 1000)
+
+                for det in det_3d:
+                    if det['object_type'] == 'person':
+                        emb = self.extractor.extract(frame, det['camera_data']['bifocal_metadata']['bbox'])
+                        det['embedding'] = emb
+                    else:
+                        det['embedding'] = None
+
+                raw_buffer.extend(det_3d)
+
+                if show_live or writer or output_image or broadcast_sink:
+                    annotated = detector.draw_detections_3d(frame, det_3d)
+                    annotated = cv2.resize(annotated, (640, 480))
+                    annotated_frames.append(annotated)
+                    if broadcast_sink:
+                        # Tagged by the real channel index i, not by
+                        # position in annotated_frames -- that list can
+                        # be sparse (a camera with no frame yet and no
+                        # last_valid_frames[i] contributes nothing to it).
+                        broadcast_sink.send_frame(i, annotated)
+
+            t_dedup0 = time.monotonic()  # TEMPORARY, see top of file
+            # Deduplicate objects crossing the seams
+            # Using a smaller radius (1.5m) so we don't accidentally merge multiple people in the same frame
+            clean_batch = self.deduplicate(raw_buffer, current_epoch, merge_radius_meters=3.0)
+            self.all_clean_detections.extend(clean_batch)
+
+            # Batch Upload
+            if upload and clean_batch:
+                self.detectors[0].upload_batch(clean_batch)
+                print(f"Frame {frame_count}: Uploaded {len(clean_batch)} unique objects (merged from {len(raw_buffer)} raw detections).")
+            if len(_STAGE_MS["dedup_upload"]) < 500:  # TEMPORARY
+                _STAGE_MS["dedup_upload"].append((time.monotonic() - t_dedup0) * 1000)
+                _report_stage_timing_once()
+
+            if annotated_frames:
+                if len(annotated_frames) == 1:
+                    grid = annotated_frames[0]
+                elif len(annotated_frames) == 4:
+                    top_row = cv2.hconcat([annotated_frames[0], annotated_frames[1]])
+                    bottom_row = cv2.hconcat([annotated_frames[2], annotated_frames[3]])
+                    grid = cv2.vconcat([top_row, bottom_row])
+                else:
+                    grid = cv2.hconcat(annotated_frames)
+
+                if writer:
+                    writer.write(grid)
+                if output_image:
+                    cv2.imwrite(output_image, grid)
+                if show_live:
+                    cv2.imshow('V2X Multi-Camera Feed', grid)
+                    if cv2.waitKey(1) & 0xFF == ord('q'):
+                        return False
+            return True
+
         try:
-            buffered_frames = [None] * len(caps)
-            buffered_msecs = [-1.0] * len(caps)
-            
-            for i, cap in enumerate(caps):
-                ret, frame = cap.read()
-                if ret:
-                    buffered_frames[i] = frame
-                    buffered_msecs[i] = cap.get(cv2.CAP_PROP_POS_MSEC)
-            
-            last_valid_frames = [None] * len(caps)
-            for i, f in enumerate(buffered_frames):
-                if f is not None:
-                    last_valid_frames[i] = f.copy()
-            
-            while True:
-                valid_msecs = [m for m in buffered_msecs if m >= 0]
-                if not valid_msecs:
-                    break
-                    
-                global_msec = min(valid_msecs)
-                
-                frames_to_process = [None] * len(caps)
-                for i in range(len(caps)):
-                    if buffered_msecs[i] >= 0 and buffered_msecs[i] <= global_msec + 35.0:
-                        frames_to_process[i] = buffered_frames[i]
-                        ret, frame = caps[i].read()
-                        if ret:
-                            buffered_frames[i] = frame
-                            buffered_msecs[i] = caps[i].get(cv2.CAP_PROP_POS_MSEC)
-                        else:
-                            if is_kinesis[i]:
-                                new_url = kinesis_utils.get_kvs_hls_url(video_paths[i])
-                                caps[i] = cv2.VideoCapture(new_url)
-                                ret, frame = caps[i].read()
-                                
+            if all_live:
+                # Live sources: genuine cross-channel synchronization via
+                # each channel's own bounded history buffer (see
+                # ingest/frame_sources.py's LocalSocketSource), not a
+                # per-tick best-effort guess. Three earlier versions of this
+                # loop were each wrong in different ways:
+                #   1. A carried-forward "is this channel within 35ms of the
+                #      others" gate that could permanently exclude a channel
+                #      the instant it first drifted out of range, since
+                #      nothing ever refreshed its timestamp after that.
+                #   2. A median-based version that fixed (1) but silently
+                #      processed whichever *subset* of channels happened to
+                #      align each tick, quietly excluding stragglers rather
+                #      than ever requiring all 4 together.
+                #   3. An "oldest unconsumed frame per channel" version that
+                #      fixed (2) (all 4 or nothing) but deadlocked: a
+                #      channel's oldest-buffered item only advances when
+                #      something pops it, and nothing gets popped until
+                #      aligned -- fine if one channel briefly stalls while
+                #      the others already agree with each other, but a
+                #      real, permanent deadlock the moment all 4 channels
+                #      have a *persistent* mutual offset (confirmed directly
+                #      against the real pipeline: with each channel
+                #      independently 1-2s off from the others at all times,
+                #      no front ever moved and nothing was ever processed).
+                #
+                # This version keys the sync target off each channel's
+                # *newest* arrival instead, which -- unlike the oldest/front
+                # item -- always advances as new frames arrive regardless of
+                # whether anything's been consumed. target_t tracks whichever
+                # channel is currently furthest behind (the min of everyone's
+                # newest), and every channel (including the laggard) looks
+                # back through its own buffered history for the frame
+                # closest to that target. Only once *all 4* have a match
+                # within tolerance does anything get consumed -- and only
+                # then, discarding just the now-superseded older entries,
+                # not everything.
+                alignment_tolerance_sec = 1.5 / nominal_fps
+                min_gap_sec = 1.0 / target_fps
+                next_target_t = None  # don't accept a set older than this
+
+                while True:
+                    newests = [src.peek_newest() for src in caps]
+                    if any(n is None for n in newests):
+                        # At least one channel has never produced anything
+                        # yet -- nothing to target against.
+                        time.sleep(0.01)
+                        continue
+
+                    target_t = min(t for _, t in newests)
+                    if next_target_t is not None and target_t < next_target_t:
+                        # Not enough new progress since the last processed
+                        # set for the next target_fps-spaced sample yet --
+                        # wait rather than re-matching the same span.
+                        time.sleep(0.01)
+                        continue
+
+                    matches = [src.find_closest(target_t, alignment_tolerance_sec) for src in caps]
+                    if any(m is None for m in matches):
+                        # At least one channel has nothing within tolerance
+                        # of target_t (yet, or possibly ever, if it outran
+                        # this channel's buffer window) -- wait and retry;
+                        # target_t moves forward on its own as more data
+                        # arrives, so this isn't a deadlock the way (3) was.
+                        time.sleep(0.01)
+                        continue
+
+                    # All 4 genuinely matched -- commit (discard superseded
+                    # history) only now that every channel has confirmed a
+                    # match, not as each one is found.
+                    for src, (idx, _frame, _t) in zip(caps, matches):
+                        src.discard_through(idx)
+
+                    frames_to_process = [m[1] for m in matches]
+                    actual_t = min(m[2] for m in matches)
+                    next_target_t = target_t + min_gap_sec
+                    current_epoch = global_start_epoch + actual_t
+                    current_time = global_start_time + timedelta(seconds=actual_t)
+                    current_utc_str = current_time.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+                    if not process_tick(frames_to_process, current_utc_str, current_epoch):
+                        break
+            else:
+                # File/KVS sources: original pull-based, windowed-catchup
+                # pacing -- unchanged from before live-source support
+                # existed. These are pulled sequentially by this same loop
+                # rather than pushed independently, so keeping them within a
+                # shared window is both meaningful and safe here, unlike for
+                # live sources above.
+                buffered_frames = [None] * len(caps)
+                buffered_msecs = [-1.0] * len(caps)
+                for i, src in enumerate(caps):
+                    ret, frame, msec = src.read()
+                    if ret:
+                        buffered_frames[i] = frame
+                        buffered_msecs[i] = msec
+
+                for i, f in enumerate(buffered_frames):
+                    if f is not None:
+                        last_valid_frames[i] = f.copy()
+
+                raw_tick_count = 0
+                while True:
+                    valid_msecs = [m for m in buffered_msecs if m >= 0]
+                    if not valid_msecs:
+                        break
+                    global_msec = min(valid_msecs)
+
+                    frames_to_process = [None] * len(caps)
+                    for i in range(len(caps)):
+                        if buffered_msecs[i] >= 0 and buffered_msecs[i] <= global_msec + 35.0:
+                            frames_to_process[i] = buffered_frames[i]
+                            ret, frame, msec = caps[i].read()
                             if ret:
                                 buffered_frames[i] = frame
-                                buffered_msecs[i] = caps[i].get(cv2.CAP_PROP_POS_MSEC)
+                                buffered_msecs[i] = msec
                             else:
                                 buffered_frames[i] = None
                                 buffered_msecs[i] = -1.0
-                            
-                frame_count += 1
-                
-                if frame_count != 1 and frame_count % 2 != 0:
-                    continue
-                    
-                raw_buffer = []
-                annotated_frames = []
 
-                current_offset = global_msec / 1000.0
-                current_time = global_start_time + timedelta(seconds=current_offset)
-                current_epoch = global_start_epoch + current_offset
-                current_utc_str = current_time.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
-                
-                for i, frame in enumerate(frames_to_process):
-                    detector = self.detectors[i]
-                    if frame is None:
-                        if last_valid_frames[i] is not None:
-                            annotated_frames.append(cv2.resize(last_valid_frames[i], (640, 480)))
+                    raw_tick_count += 1
+                    if raw_tick_count != 1 and raw_tick_count % 2 != 0:
                         continue
-                        
-                    last_valid_frames[i] = frame.copy()
-                    
-                    results = detector.model.track(frame, persist=True, conf=detector.conf, tracker="botsort.yaml", verbose=False)
-                    
-                    det_2d = detector.extract_detections(results[0], frame_count)
-                    det_3d = detector.compute_3d_detections(det_2d, current_utc_str, current_epoch)
-                    
-                    for det in det_3d:
-                        if det['object_type'] == 'person':
-                            emb = self.extractor.extract(frame, det['camera_data']['bifocal_metadata']['bbox'])
-                            det['embedding'] = emb
-                        else:
-                            det['embedding'] = None
-                            
-                    raw_buffer.extend(det_3d)
-                    
-                    if show_live or writer or output_image:
-                        annotated = detector.draw_detections_3d(frame, det_3d)
-                        annotated = cv2.resize(annotated, (640, 480))
-                        annotated_frames.append(annotated)
 
-                # Deduplicate objects crossing the seams
-                # Using a smaller radius (1.5m) so we don't accidentally merge multiple people in the same frame
-                clean_batch = self.deduplicate(raw_buffer, current_epoch, merge_radius_meters=3.0)
-                self.all_clean_detections.extend(clean_batch)
+                    current_offset = global_msec / 1000.0
+                    current_time = global_start_time + timedelta(seconds=current_offset)
+                    current_epoch = global_start_epoch + current_offset
+                    current_utc_str = current_time.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
-                # Batch Upload
-                if upload and clean_batch:
-                    self.detectors[0].upload_batch(clean_batch) 
-                    print(f"Frame {frame_count}: Uploaded {len(clean_batch)} unique objects (merged from {len(raw_buffer)} raw detections).")
-
-                if annotated_frames:
-                    if len(annotated_frames) == 1:
-                        grid = annotated_frames[0]
-                    elif len(annotated_frames) == 4:
-                        top_row = cv2.hconcat([annotated_frames[0], annotated_frames[1]])
-                        bottom_row = cv2.hconcat([annotated_frames[2], annotated_frames[3]])
-                        grid = cv2.vconcat([top_row, bottom_row])
-                    else:
-                        grid = cv2.hconcat(annotated_frames)
-                    
-                    # Save to file if output_video was provided
-                    if writer:
-                        writer.write(grid)
-
-                    if output_image:
-                        cv2.imwrite(output_image, grid)
-                    
-                    # Show on screen if requested
-                    if show_live:
-                        cv2.imshow('V2X Multi-Camera Feed', grid)
-                        # wait key was 1
-                        if cv2.waitKey(1) & 0xFF == ord('q'):
-                            break
+                    if not process_tick(frames_to_process, current_utc_str, current_epoch):
+                        break
 
         finally:
-            for cap in caps:
-                cap.release()
+            for src in caps:
+                src.close()
             cv2.destroyAllWindows()
             print(f"Multi-Stream complete. Processed {frame_count} frames, found {len(self.all_clean_detections)} total unique objects.")
-            
+
             if writer:
                 writer.release()
                 print(f"Video saved to: {output_video}")
@@ -873,43 +999,60 @@ class VideoObjectDetector:
         return annotated
 
 if __name__ == "__main__":
-    K = np.array([
-        [1325.4,      0, 1280.0],  # fx=1325.4, cx=1280
-        [     0, 1325.4,  960.0],  # fy=1325.4, cy=960
-        [     0,      0,      1]
-    ], dtype=np.float64)
+    config_path = sys.argv[1] if len(sys.argv) > 1 else str(REPO_ROOT / "config" / "pipeline.yaml")
+    cfg = pipeline_config.load_config(config_path, REPO_ROOT)
 
-    base_lat = 37.91560117034595
-    base_lon = -122.33478756387032
+    if cfg.upload.endpoint:
+        VideoObjectDetector.V2X_ENDPOINT = cfg.upload.endpoint
 
-    model_path = str(REPO_ROOT / 'models' / 'yolov8n.pt')#str(REPO_ROOT / 'models' / 'best.pt')
-    cam1 = VideoObjectDetector(model_path, 0.5, K, None, 7.0, -39.20, -46.06, 200.0, "cam-001-ch1", base_lat, base_lon, "Richmond", "CA", "USA")
-    cam2 = VideoObjectDetector(model_path, 0.5, K, None, 7.0, -40.52, 71.25, 300.0,"cam-001-ch2", base_lat, base_lon, "Richmond", "CA", "USA")
-    cam3 = VideoObjectDetector(model_path, 0.5, K, None, 7.0, -30.42, 14.58, 315.0, "cam-001-ch3", base_lat, base_lon, "Richmond", "CA", "USA")
-    cam4 = VideoObjectDetector(model_path, 0.5, K, None, 7.0, -43.48, -22.63, 260.0, "cam-001-ch4", base_lat, base_lon, "Richmond", "CA", "USA")
-    
-    pipeline = MultiCameraPipeline(detectors=[cam1, cam2, cam3, cam4])
-
-    video_paths = [
-        #'v2x-backend-cam-ch1',
-        #'v2x-backend-cam-ch2',
-        #'v2x-backend-cam-ch3',
-        #'v2x-backend-cam-ch4'
-        str(REPO_ROOT / 'camera_views/ch1/event1/sensor_0_20260302_122940.ts'),
-        str(REPO_ROOT / 'camera_views/ch2/event1/sensor_1_20260302_122940.ts'),
-        str(REPO_ROOT / 'camera_views/ch3/event1/sensor_2_20260302_122940.ts'),
-        str(REPO_ROOT / 'camera_views/ch4/event1/sensor_3_20260302_122940.ts')
+    detectors = [
+        VideoObjectDetector(
+            model_path=cfg.resolve(cfg.model_path),
+            conf=cfg.conf,
+            K=np.array(cam.K, dtype=np.float64),
+            dist_coeffs=None,
+            camera_height=cam.camera_height,
+            pitch_deg=cam.pitch_deg,
+            yaw_deg=cam.yaw_deg,
+            heading_deg=cam.heading_deg,
+            device_id=cam.device_id,
+            origin_lat=cam.origin_lat,
+            origin_lon=cam.origin_lon,
+            city=cam.city,
+            state=cam.state,
+            country=cam.country,
+        )
+        for cam in cfg.cameras
     ]
 
-    pipeline.process_streams(
-        video_paths=video_paths,
-        show_live=True,
-        upload=False,
-        output_json=str(REPO_ROOT / 'output' / 'multi_cam_detections.json'),
-        output_video=str(REPO_ROOT / 'output' / 'multi_cam_tracking.mp4'),
-        output_image=None,
-        output_validate=False
-    )
+    pipeline = MultiCameraPipeline(detectors=detectors)
+
+    # Shared t0 so every local-socket channel's msec is measured from the
+    # same instant -- see frame_sources.LocalSocketSource.
+    t0 = time.time()
+    sources = [
+        build_frame_source(ch, cfg.ingestion_mode, t0, cfg.nominal_fps, cfg.sync_buffer_seconds, cfg.target_fps)
+        for ch in cfg.channels
+    ]
+
+    broadcast_sink = BroadcastSink(cfg.broadcast.socket_path) if cfg.broadcast.enabled else None
+
+    try:
+        pipeline.process_streams(
+            sources=sources,
+            show_live=cfg.show_live,
+            upload=cfg.upload.enabled,
+            output_json=cfg.resolve(cfg.save.json_path) if cfg.save.enabled else None,
+            output_video=cfg.resolve(cfg.save.video_path) if cfg.save.enabled else None,
+            output_image=None,
+            target_fps=cfg.target_fps,
+            nominal_fps=cfg.nominal_fps,
+            output_validate=False,
+            broadcast_sink=broadcast_sink,
+        )
+    finally:
+        if broadcast_sink:
+            broadcast_sink.close()
 
     # Or upload all at once after processing:
     # detector.upload_all()

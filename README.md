@@ -10,7 +10,9 @@ A real-time, multi-camera object detection and localization system. It ingests v
 - [Repository Structure](#repository-structure)
 - [Setup](#setup)
 - [Camera Calibration](#camera-calibration)
+- [Configuration](#configuration)
 - [Running the Pipeline](#running-the-pipeline)
+- [Live Viewer](#live-viewer)
 
 ---
 
@@ -102,15 +104,30 @@ The system is composed of three layers that work sequentially: calibration, dete
 
 ```
 .
+├── config/
+│   └── pipeline.yaml           # Per-machine config: ingestion source, detection/camera params,
+│                                # output destinations -- see Configuration below
 ├── src/co_perception/         # Importable package -- everything below is `from co_perception....`
+│   ├── config.py                  # Loads/validates config/pipeline.yaml
+│   ├── common/
+│   │   ├── broadcast.py           # Local Unix-socket pub/sub (verbatim copy of camera/stream's --
+│   │   │                          # pure stdlib, no GStreamer dependency, safe to duplicate)
+│   │   └── protocol.py            # Wire format for this project's own output broadcast
 │   ├── ingest/
-│   │   └── kinesis_utils.py       # AWS KVS/HLS URL helpers
+│   │   ├── kinesis_utils.py       # AWS KVS/HLS URL helpers
+│   │   ├── decode_protocol.py     # Read-only reimplementation of camera/stream's decode-broadcast framing
+│   │   └── frame_sources.py       # Uniform local_socket / local_file / aws_kvs frame source
 │   ├── perception/
 │   │   └── tracking_utils.py      # AppearanceExtractor, KalmanTracker
-│   └── mapping/
-│       └── vis_map.py             # Detection-map HTML generation
+│   ├── mapping/
+│   │   └── vis_map.py             # Detection-map HTML generation
+│   └── output/
+│       └── broadcast_sink.py      # JPEG-encodes annotated frames onto a local broadcast socket
 ├── scripts/
-│   └── process_video.py       # Entry point: VideoObjectDetector + MultiCameraPipeline. Paths are repo-root-relative internally, so it runs from any CWD.
+│   ├── process_video.py       # Entry point: VideoObjectDetector + MultiCameraPipeline, config-driven.
+│   │                          # Paths are repo-root-relative internally, so it runs from any CWD.
+│   └── ws_broadcast_server.py # Bridges the local output broadcast to a browser-facing WebSocket
+│                              # (separate process from process_video.py -- see Live Viewer below)
 ├── models/
 │   ├── yolov8n.pt              # Base YOLOv8 weights
 │   └── best.pt                 # Fine-tuned weights
@@ -143,33 +160,24 @@ The system is composed of three layers that work sequentially: calibration, dete
 
 ## Setup
 
-### 1. Install Conda
-
-If you don't have Conda installed, download [Miniconda](https://docs.conda.io/en/latest/miniconda.html) and follow the installer instructions for your OS.
-
-### 2. Create the environment
+This project uses a plain `venv` (not Conda) at `.venv/` in the repo root:
 
 ```bash
-conda create -n v2x-pipeline python=3.10 -y
-conda activate v2x-pipeline
+python3 -m venv .venv
+.venv/bin/pip install --upgrade pip
+.venv/bin/pip install -r requirements.txt websockets
 ```
 
-### 3. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
+`websockets` isn't in `requirements.txt` (it's only needed by `scripts/ws_broadcast_server.py`, not the detection pipeline itself) — install it alongside if you want the live viewer.
 
 > **Note:** YOLOv8 (`ultralytics`) will automatically download model weights (e.g., `yolov8n.pt`) on first use if they are not already present locally. Ensure you have an internet connection on first run.
 
-### 4. (Optional) GPU support
+### GPU support
 
-If you have a CUDA-capable GPU, install the matching PyTorch build before installing the rest of the requirements:
+`requirements.txt` pins `torch==2.9.1` — its default PyPI wheel already bundles a recent CUDA runtime, so on a machine with an NVIDIA GPU and a reasonably current driver (checked with `nvidia-smi`), no special index URL is needed; a plain install picks a CUDA-enabled build automatically. Verify after installing:
 
 ```bash
-# Example for CUDA 11.8 — adjust the index URL for your CUDA version
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
-pip install -r requirements.txt
+.venv/bin/python3 -c "import torch; print(torch.cuda.is_available())"
 ```
 
 ---
@@ -221,81 +229,84 @@ Average Error: X.XX meters per point
 
 ### Step 4 — Update production parameters
 
-Copy the optimal `pitch_deg` and `yaw_deg` values into the corresponding `VideoObjectDetector` constructor call in `scripts/process_video.py`.
+Copy the optimal `pitch_deg` and `yaw_deg` values into the matching camera's entry under `detection.cameras` in `config/pipeline.yaml`.
 
 ---
 
+## Configuration
+
+Everything that differs machine-to-machine — where video comes from, per-camera calibration, and where results go — lives in `config/pipeline.yaml`, loaded by `src/co_perception/config.py`. Nothing in `scripts/process_video.py` is hardcoded to a specific deployment anymore; the same code runs unmodified here or on the Orin edge box by pointing it at a different copy of this file (`python3 scripts/process_video.py path/to/other-config.yaml`).
+
+Three sections, matching the three pipeline stages:
+
+### `ingestion` — where frames come from
+
+```yaml
+ingestion:
+  mode: local_socket   # local_socket | local_file | aws_kvs
+  channels:
+    - channel: 0
+      socket_path: /tmp/camera_decode_ch0.sock   # local_socket
+      # file_path: camera_views/ch1/event1/clip.ts   # local_file
+      # kvs_stream_name: v2x-backend-cam-ch1          # aws_kvs
+```
+
+- **`local_socket`** (this machine's default) — subscribes directly to the `camera/stream` project's `decode` stage broadcast (`/tmp/camera_decode_ch{N}.sock`), the same local Unix-socket pub/sub `upload_aws` already consumes. Frames arrive already decoded, each carrying a calibrated wall-clock timestamp (`abs_time`), so this mode needs no decoding of its own and gets cross-camera synchronization for free instead of the old per-stream `CAP_PROP_POS_MSEC` approach. Only valid on a machine also running that pipeline.
+- **`local_file`** — reads a video file from disk, same as the original `cv2.VideoCapture(path)` behavior.
+- **`aws_kvs`** — pulls an HLS stream from AWS Kinesis Video Streams by stream name, same as the original `"v2x-backend-cam" in path` behavior.
+
+### `detection` — the method
+
+`model_path`, `conf`, and one entry per camera under `cameras:` (intrinsics `K`, `camera_height`, `pitch_deg`/`yaw_deg`/`heading_deg`, `device_id`, `origin_lat`/`origin_lon`, city/state/country) — exactly the fields `VideoObjectDetector`'s constructor already took, now read from config instead of hand-typed per deployment.
+
+### `output` — where results go
+
+```yaml
+output:
+  save:      { enabled: true, json_path: output/multi_cam_detections.json, video_path: null }
+  upload:    { enabled: false, endpoint: https://.../detections }
+  broadcast: { enabled: true, socket_path: /tmp/coperception_output.sock }
+```
+
+All three can be on at once — save is local-file persistence, upload is the external V2X API push, broadcast is the new local Unix-socket fan-out (channel-tagged, JPEG-encoded annotated frames) that `scripts/ws_broadcast_server.py` picks up to feed the live viewer. `save.video_path: null` means don't write an mp4; set a path to enable it.
+
 ## Running the Pipeline
 
-Once calibration is complete, run the main pipeline against your live or recorded video streams:
-
-`VideoObjectDetector` and `MultiCameraPipeline` are defined in `scripts/process_video.py` itself (they're the entry point, not part of the `co_perception` package), so the way you configure and run a camera is by editing that file's `if __name__ == "__main__":` block directly. All internal paths (`models/`, `output/`, `camera_views/`) are resolved relative to the repo root via `REPO_ROOT = Path(__file__).resolve().parent.parent`, so the script can be run from any working directory:
-
 ```bash
-python3 scripts/process_video.py
+.venv/bin/python3 scripts/process_video.py                        # uses config/pipeline.yaml
+.venv/bin/python3 scripts/process_video.py path/to/other.yaml      # or a different config
 ```
 
-That block looks like this (the actual code path, not something you import separately):
-
-```python
-import numpy as np
-
-K = np.array([
-    [1325.4,      0, 1280.0],
-    [     0, 1325.4,  960.0],
-    [     0,      0,      1]
-], dtype=np.float64)
-
-base_lat = 37.91560117034595
-base_lon = -122.33478756387032
-
-cam1 = VideoObjectDetector(
-    model_path=str(REPO_ROOT / 'models' / 'yolov8n.pt'),  # REPO_ROOT = Path(__file__).resolve().parent.parent
-    conf=0.3,
-    K=K,
-    dist_coeffs=None,
-    camera_height=7.0,
-    pitch_deg=-103.63,   # <-- from calibration
-    yaw_deg=-166.80,     # <-- from calibration
-    heading_deg=200.0,
-    device_id="cam-001-ch1",
-    origin_lat=base_lat,
-    origin_lon=base_lon,
-    city="Richmond",
-    state="CA",
-    country="USA"
-)
-
-pipeline = MultiCameraPipeline(detectors=[cam1])
-
-pipeline.process_streams(
-    video_paths=["path/to/stream1.mp4"],
-    show_live=True,
-    upload=False,          # Set True to push to V2X API
-    output_json=str(REPO_ROOT / 'output' / 'detections.json'),
-    output_video=str(REPO_ROOT / 'output' / 'tracking.mp4'),
-    output_image=None,
-    output_validate=False
-)
-```
+`VideoObjectDetector` and `MultiCameraPipeline` still live in `scripts/process_video.py` (they're the entry point, not part of the `co_perception` package) — but its `__main__` block now just loads the config, builds one `VideoObjectDetector` and one `ingest.frame_sources.FrameSource` per configured camera, and calls `pipeline.process_streams(sources=..., ...)`. To add a camera, add an entry under both `ingestion.channels` and `detection.cameras` in the config — no code changes needed.
 
 ### `process_streams` parameters
 
 | Parameter | Type | Description |
 |---|---|---|
-| `video_paths` | `list[str]` | One path per camera stream, in the same order as `detectors` |
+| `sources` | `list[FrameSource]` | One per camera, same order as `detectors` — see `ingest/frame_sources.py` |
 | `show_live` | `bool` | Display annotated frames in a live OpenCV window |
 | `upload` | `bool` | Upload detection records to the V2X API |
 | `output_json` | `str \| None` | Path to write all detections as JSON |
 | `output_video` | `str \| None` | Path to write annotated output video |
 | `output_image` | `str \| None` | Path to write a single annotated frame |
 | `output_validate` | `bool` | Print per-frame detection details for debugging |
+| `broadcast_sink` | `BroadcastSink \| None` | If set, each channel's annotated frame is broadcast locally every tick |
 
-### Adding more cameras
+## Live Viewer
 
-Instantiate one `VideoObjectDetector` per camera with its own calibrated parameters, then pass all detectors to `MultiCameraPipeline`. Overlapping detections between cameras are automatically merged using Haversine distance thresholding.
+The `apps/web` project (a separate SvelteKit app, sibling directory) displays these annotated frames in a browser, channel-by-channel or all four in a grid. Getting a frame from here to a browser tab is two hops:
 
-```python
-pipeline = MultiCameraPipeline(detectors=[cam1, cam2, cam3])
-pipeline.process_streams(video_paths=["ch1.mp4", "ch2.mp4", "ch3.mp4"], ...)
 ```
+process_video.py  --(local broadcast, /tmp/coperception_output.sock)-->  ws_broadcast_server.py  --(WebSocket, :8766)-->  browser
+```
+
+`process_video.py` never talks WebSocket or knows a browser exists — it just broadcasts locally when `output.broadcast.enabled` is true, the same pattern `camera/stream`'s `decode` stage already uses for `upload_aws`. `ws_broadcast_server.py` is a deliberately separate process (not a thread inside `process_video.py`) so a bug or restart on the browser-facing side can't take down detection, and vice versa — same reasoning `camera/stream` used to split `demux`/`decode`/`upload_aws` apart.
+
+Run both processes:
+
+```bash
+.venv/bin/python3 scripts/process_video.py &
+.venv/bin/python3 scripts/ws_broadcast_server.py &
+```
+
+The bridge listens on `ws://127.0.0.1:8766` — see `apps/web`'s own README for how the frontend connects to it and the plan for putting this behind nginx at `/perception/ws` alongside the app itself.

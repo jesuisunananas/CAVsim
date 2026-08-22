@@ -23,3 +23,5 @@ __pycache__/
 *.mp4
 camera_views
 v2x-backend-hls-reader-credentials
+.venv
+logs/
