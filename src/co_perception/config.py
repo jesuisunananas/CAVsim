@@ -67,6 +67,8 @@ class PipelineConfig:
     nominal_fps: float
     target_fps: float
     sync_buffer_seconds: float
+    max_buffer_ahead_sec: float
+    max_consecutive_skips: int
     model_path: str
     conf: float
     imgsz: int
@@ -138,6 +140,23 @@ def load_config(config_path: str | Path, repo_root: str | Path) -> PipelineConfi
     if sync_buffer_seconds <= 0:
         raise ValueError(f"ingestion.sync_buffer_seconds must be positive, got {sync_buffer_seconds}")
 
+    # gpu_decode only: GpuDecodeSource buffers every decoded frame (no
+    # decimation -- see its own docstring), so this caps how far a channel
+    # may get ahead of consumption before frames start being evicted. An
+    # OOM guard, not a tuning knob -- the sync loop prunes every tick in
+    # steady state, so actual usage should stay far below this ceiling.
+    max_buffer_ahead_sec = float(ingestion.get("max_buffer_ahead_sec", 3.0))
+    if max_buffer_ahead_sec <= 0:
+        raise ValueError(f"ingestion.max_buffer_ahead_sec must be positive, got {max_buffer_ahead_sec}")
+
+    # How many consecutive ticks one channel may miss before the sync loop
+    # treats it as needing an explicit reset (halt, wait for all four
+    # stable again, re-lock the basis) rather than just skipping ticks --
+    # see process_video.py's real-time-basis sync loop.
+    max_consecutive_skips = int(ingestion.get("max_consecutive_skips", 5))
+    if max_consecutive_skips <= 0:
+        raise ValueError(f"ingestion.max_consecutive_skips must be positive, got {max_consecutive_skips}")
+
     detection = raw["detection"]
     cameras = [CameraConfig(**cam) for cam in detection["cameras"]]
 
@@ -170,6 +189,8 @@ def load_config(config_path: str | Path, repo_root: str | Path) -> PipelineConfi
         nominal_fps=nominal_fps,
         target_fps=target_fps,
         sync_buffer_seconds=sync_buffer_seconds,
+        max_buffer_ahead_sec=max_buffer_ahead_sec,
+        max_consecutive_skips=max_consecutive_skips,
         model_path=detection["model_path"],
         conf=float(detection.get("conf", 0.25)),
         imgsz=imgsz,

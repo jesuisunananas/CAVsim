@@ -166,7 +166,7 @@ class LocalSocketSource(FrameSource):
     def find_closest(self, target_t, tolerance):
         """Non-destructive: returns (index, frame, t) for the buffered
         frame closest to target_t, or None if nothing is within tolerance.
-        Does not modify the buffer -- see discard_through() for the
+        Does not modify the buffer -- see discard_older_than() for the
         follow-up commit step, kept separate so a caller comparing multiple
         channels can confirm *all* of them have a match before discarding
         anything from *any* of them (a match on channel 0 shouldn't mutate
@@ -200,20 +200,23 @@ class LocalSocketSource(FrameSource):
                 return None
             return best_idx, best_item[0], best_item[1]
 
-    def discard_through(self, index):
-        """Pops and discards index+1 items from the front -- the commit
-        step after find_closest() confirms a match, dropping now-superseded
-        older history so a channel that's consistently ahead doesn't just
-        accumulate everything it's ever seen."""
+    def discard_older_than(self, threshold_t):
+        """Drop buffered frames with t < threshold_t, keeping anything at
+        or after it -- including the frame just matched this tick, which
+        the sync loop's basis keeps by design (see process_video.py:
+        pruning to basis - 1/target_fps, not through the match itself, in
+        case a frame just before that point turns out to be the *next*
+        tick's closest match)."""
         with self._lock:
-            for _ in range(min(index + 1, len(self._buffer))):
+            while self._buffer and self._buffer[0][1] < threshold_t:
                 self._buffer.popleft()
 
     def close(self):
         self._stopped = True
 
 
-def build_frame_source(channel_cfg, mode, t0, nominal_fps=30.0, sync_buffer_seconds=8.0, target_fps=None):
+def build_frame_source(channel_cfg, mode, t0, nominal_fps=30.0, sync_buffer_seconds=8.0,
+                        target_fps=None, max_buffer_ahead_sec=3.0):
     if mode == "local_socket":
         return LocalSocketSource(channel_cfg.socket_path, t0, sync_buffer_seconds, nominal_fps)
     if mode == "gpu_decode":
@@ -221,9 +224,12 @@ def build_frame_source(channel_cfg, mode, t0, nominal_fps=30.0, sync_buffer_seco
 
         # channel_cfg.socket_path here points at demux's broadcast
         # (compressed H.264), not decode's -- see gpu_decode_source.py and
-        # config.py's validation for this mode.
+        # config.py's validation for this mode. max_buffer_ahead_sec, not
+        # sync_buffer_seconds/target_fps: GpuDecodeSource buffers every
+        # decoded frame now (no decimation), sized as an OOM guard against
+        # a channel getting ahead of consumption -- see its own docstring.
         return GpuDecodeSource(
-            channel_cfg.socket_path, t0, sync_buffer_seconds, nominal_fps, target_fps
+            channel_cfg.socket_path, t0, max_buffer_ahead_sec, nominal_fps
         )
     if mode == "local_file":
         return VideoCaptureSource(channel_cfg.file_path)

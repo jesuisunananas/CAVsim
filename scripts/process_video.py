@@ -5,11 +5,17 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from ultralytics import YOLO
+from ultralytics.engine.results import Results
+from ultralytics.models.yolo.detect.predict import DetectionPredictor
+from ultralytics.utils import nms
 import cv2
 import numpy as np
 import json
+import math
 import uuid
 import time
+import torch
+import torch.nn.functional as F
 import requests
 from co_perception.perception import tracking_utils
 from co_perception.ingest.frame_sources import build_frame_source
@@ -19,8 +25,310 @@ from datetime import datetime, timezone, timedelta
 from math import radians, cos, sin, asin, sqrt
 from co_perception.perception.tracking_utils import AppearanceExtractor, KalmanTracker
 
+# Commit 3: manual batched-inference preprocessing, replicating
+# ultralytics.data.augment.LetterBox and engine.predictor.BasePredictor.
+# preprocess() exactly -- verified directly against the installed 8.3.243
+# source, not from memory. Required because handing .track() a pre-built
+# tensor SKIPS its own preprocessing entirely (predictor.py's preprocess():
+# `not_tensor = not isinstance(im, torch.Tensor)`, and every letterbox/
+# BGR->RGB/CHW/normalize step is gated on not_tensor) -- any mismatch here
+# degrades detections silently, no error.
+#
+# A second, less obvious consequence of the tensor-input path: postprocess()
+# rescales boxes via `ops.scale_boxes(img.shape[2:], boxes, orig_img.shape)`,
+# and when the input isn't a list, `orig_imgs` becomes the input tensor
+# itself (DetectionPredictor.postprocess: `if not isinstance(orig_imgs,
+# list): orig_imgs = ops.convert_torch2numpy_batch(orig_imgs)[..., ::-1]`).
+# With no separate original-resolution image to reference, that rescale is
+# from the letterboxed shape to itself -- a no-op. Returned box coordinates
+# are therefore in letterboxed-tensor space, not the original 2560x1920
+# frame's space compute_3d_detections expects. _rescale_xyxy_from_letterbox
+# below undoes this.
+LETTERBOX_PAD_VALUE = 114
+LETTERBOX_STRIDE = 32
+
+
+def _letterbox_target_shape(src_h, src_w, long_side, stride=LETTERBOX_STRIDE):
+    """Target (h, w) scaling src's long side to `long_side`, each dimension
+    then rounded up to a multiple of stride -- mirrors Ultralytics' own
+    check_imgsz(..., min_dim=2) + LetterBox sizing. Passing imgsz as a bare
+    scalar to .track() instead forces a SQUARE target (check_imgsz pads a
+    length-1 list to [imgsz, imgsz]) with real padding, not the long-side
+    scaling this pipeline actually wants -- computed here explicitly rather
+    than relying on that scalar behavior."""
+    scale = long_side / max(src_h, src_w)
+    new_h = math.ceil((src_h * scale) / stride) * stride
+    new_w = math.ceil((src_w * scale) / stride) * stride
+    return new_h, new_w
+
+
+def _letterbox(img_bgr, new_shape):
+    """Resize+pad one HWC uint8 BGR image to new_shape=(h, w). Replicates
+    LetterBox.__call__ with auto=False, scale_fill=False, scaleup=True,
+    center=True, padding_value=114 -- the defaults BasePredictor.
+    pre_transform uses whenever args.rect is False (the default), which is
+    what a bare imgsz scalar would otherwise get via the normal (list-of-
+    arrays) path. Returns (padded_bgr_uint8, r, pad_left, pad_top) so the
+    transform can be inverted on returned box coordinates."""
+    shape = img_bgr.shape[:2]  # (h, w)
+    r = min(new_shape[0] / shape[0], new_shape[1] / shape[1])
+    new_unpad = (round(shape[1] * r), round(shape[0] * r))  # (w, h)
+    dw, dh = new_shape[1] - new_unpad[0], new_shape[0] - new_unpad[1]
+    dw /= 2
+    dh /= 2
+    img = img_bgr
+    if shape[::-1] != new_unpad:
+        img = cv2.resize(img, new_unpad, interpolation=cv2.INTER_LINEAR)
+    top, bottom = round(dh - 0.1), round(dh + 0.1)
+    left, right = round(dw - 0.1), round(dw + 0.1)
+    img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT,
+                              value=(LETTERBOX_PAD_VALUE,) * 3)
+    return img, r, left, top
+
+
+def _letterboxed_batch_to_tensor(letterboxed_bgr_list, device):
+    """N HWC uint8 BGR letterboxed frames (all the same shape) -> one
+    (N, 3, H, W) float32 RGB tensor in [0, 1] on `device`. Replicates
+    BasePredictor.preprocess()'s not-a-tensor branch (BGR->RGB, HWC->CHW,
+    /255) -- that branch is exactly what's skipped when .track() is handed
+    a tensor directly, so it has to happen here instead."""
+    stacked = np.stack(letterboxed_bgr_list)  # (N, H, W, 3) BGR uint8
+    stacked = stacked[..., ::-1]  # BGR -> RGB
+    stacked = stacked.transpose((0, 3, 1, 2))  # NHWC -> NCHW
+    stacked = np.ascontiguousarray(stacked)
+    tensor = torch.from_numpy(stacked).to(device)
+    return tensor.float() / 255.0
+
+
+def _gpu_letterbox(rgb_tensor, new_shape):
+    """GPU equivalent of _letterbox(), for the gpu_decode ingestion path
+    only -- frames there are born in VRAM (see gpu_decode_source.py's
+    RGBP decode) and should never cross back to host memory for this
+    step; local_socket keeps using _letterbox/_letterboxed_batch_to_tensor
+    unchanged, this is a parallel implementation, not a replacement.
+
+    Pure geometry (resize + pad) -- no colour math belongs here. NVDEC's
+    own RGBP output already handles BT.601/BT.709 and video-range/full-
+    range conversion (see gpu_decode_source.py's module docstring), so
+    unlike _letterbox this never touches BGR<->RGB at all: the input is
+    already RGB and stays RGB.
+
+    Same algorithm as _letterbox(): same r computation, same round()
+    convention for split padding, same 114/255 pad value, same center-
+    padding. Returns (padded_float_tensor, r, pad_left, pad_top,
+    content_h, content_w) -- the first four match what _letterbox()
+    returns, so _rescale_xyxy_from_letterbox works unchanged regardless
+    of which letterbox path produced a given frame's boxes. content_h/w
+    (the pre-padding resized content size) are extra, for the output path
+    to crop padding back off this same tensor -- see
+    _unletterbox_uint8_to_bgr_numpy.
+
+    rgb_tensor: (3, H, W) CUDA uint8. Returns (3, new_h, new_w) CUDA
+    float32 in [0, 1].
+    """
+    _, h, w = rgb_tensor.shape
+    new_h, new_w = new_shape
+    r = min(new_h / h, new_w / w)
+    new_unpad_w, new_unpad_h = round(w * r), round(h * r)
+    dw, dh = new_w - new_unpad_w, new_h - new_unpad_h
+    dw /= 2
+    dh /= 2
+
+    x = rgb_tensor.unsqueeze(0).float() / 255.0  # (1, 3, H, W), [0, 1]
+    if (new_unpad_h, new_unpad_w) != (h, w):
+        # align_corners=False (half-pixel-center convention) is the
+        # standard match for cv2.INTER_LINEAR's own behavior -- the two
+        # implementations can still differ by sub-pixel interpolation
+        # detail, which is expected and fine (pure geometry, not a
+        # correctness-critical exact match the way pad value/BGR order
+        # were for the numpy path).
+        x = F.interpolate(x, size=(new_unpad_h, new_unpad_w), mode="bilinear", align_corners=False)
+
+    top, bottom = round(dh - 0.1), round(dh + 0.1)
+    left, right = round(dw - 0.1), round(dw + 0.1)
+    # F.pad pads from the last dim backward: (left, right, top, bottom)
+    # for a 4D NCHW tensor's W then H dims.
+    x = F.pad(x, (left, right, top, bottom), mode="constant", value=LETTERBOX_PAD_VALUE / 255.0)
+
+    return x.squeeze(0), r, left, top, new_unpad_h, new_unpad_w
+
+
+def _gpu_frame_to_bgr_numpy(rgb_tensor, target_hw=None):
+    """CHW CUDA RGB uint8 -> HWC CPU BGR uint8 numpy, downscaling on GPU
+    first if target_hw=(h, w) is given -- so annotation (off the hot
+    path, but still touching every tick that draws) only ever transfers
+    a small frame back to host memory, never the full-resolution one.
+    Used by the gpu_decode path's draw_detections_3d bridge."""
+    x = rgb_tensor
+    if target_hw is not None and tuple(x.shape[1:]) != tuple(target_hw):
+        x = F.interpolate(x.unsqueeze(0).float(), size=target_hw, mode="bilinear", align_corners=False)
+        x = x.squeeze(0).round().clamp(0, 255).to(torch.uint8)
+    hwc_rgb = x.permute(1, 2, 0).contiguous().cpu().numpy()  # (H, W, 3) RGB uint8
+    return np.ascontiguousarray(hwc_rgb[:, :, ::-1])  # RGB -> BGR
+
+
+def _gpu_crop_to_bgr_numpy(rgb_tensor, x1, y1, x2, y2):
+    """CHW CUDA RGB uint8 -> HWC CPU BGR uint8 numpy for one bbox crop --
+    crops on GPU first (a view, no copy yet) so only the small patch
+    AppearanceExtractor needs crosses back to host memory, never the
+    full-resolution frame. bbox coords are expected in rgb_tensor's own
+    (full-resolution, original-frame) pixel space -- i.e. already passed
+    through _rescale_xyxy_from_letterbox. Returns None for a
+    degenerate/too-small crop, matching AppearanceExtractor.extract()'s
+    own bounds check (duplicated here deliberately: this crop has to
+    happen before extract() ever sees a frame, to know how much to
+    transfer)."""
+    _, h, w = rgb_tensor.shape
+    x1, y1 = max(0, int(x1)), max(0, int(y1))
+    x2, y2 = min(w, int(x2)), min(h, int(y2))
+    if x2 - x1 < 10 or y2 - y1 < 10:
+        return None
+    crop = rgb_tensor[:, y1:y2, x1:x2]
+    hwc_rgb = crop.permute(1, 2, 0).contiguous().cpu().numpy()
+    return np.ascontiguousarray(hwc_rgb[:, :, ::-1])
+
+
+def _unletterbox_uint8_to_bgr_numpy(letterboxed_float, pad_left, pad_top, content_h, content_w):
+    """Output-path counterpart to _gpu_letterbox's forward transform:
+    reuses the tensor already computed for inference (1280x960, already
+    in GPU memory) instead of re-touching the full-resolution frame for
+    drawing. Converts to uint8 on GPU first (3.7MB to transfer instead of
+    the 14.7MB a float32 transfer -- or the original frame -- would cost),
+    crops padding off using the same values _gpu_letterbox produced, then
+    converts to BGR numpy. After cropping, image (0,0) matches original-
+    frame (0,0) scaled by r, with no pad offset left to account for --
+    draw_detections_3d's scale=r alone is correct on the result (see
+    process_tick's drawing block)."""
+    uint8 = (letterboxed_float * 255.0).round().clamp(0, 255).to(torch.uint8)
+    cropped = uint8[:, pad_top:pad_top + content_h, pad_left:pad_left + content_w]
+    hwc_rgb = cropped.permute(1, 2, 0).contiguous().cpu().numpy()
+    return np.ascontiguousarray(hwc_rgb[:, :, ::-1])
+
+
+def _rescale_xyxy_from_letterbox(x1, y1, x2, y2, r, pad_left, pad_top):
+    """Invert _letterbox()'s transform on one box -- see the module
+    docstring above for why .track() returns letterboxed-space coordinates
+    when handed a tensor, instead of the original-frame coordinates
+    compute_3d_detections needs."""
+    return (
+        (x1 - pad_left) / r,
+        (y1 - pad_top) / r,
+        (x2 - pad_left) / r,
+        (y2 - pad_top) / r,
+    )
+
+
+# orig_img placeholder for _NoRoundTripDetectionPredictor below. Content
+# doesn't matter -- extract_detections only reads .boxes.xyxy/.conf/.cls/
+# .id (Boxes.xyxy is a direct `self.data[:, :4]` passthrough, no re-
+# clipping against orig_shape at that layer), and drawing uses this
+# pipeline's own held frame arrays, never result.orig_img.
+#
+# Its SHAPE does matter, though -- found empirically, not assumed: the
+# tracking callback (register_tracker's "on_predict_postprocess_end") is
+# separate from this predictor's postprocess() and runs regardless,
+# calling `tracker.update(det, result.orig_img, ...)` directly (see
+# ultralytics/trackers/track.py's on_predict_postprocess_end). A (1,1,3)
+# placeholder collapsed every returned box to ~1px -- caught by re-running
+# verify_batched_letterbox.py after attaching this predictor, which is
+# exactly why that harness gets re-run on every change here, not just
+# once. Must match the model's actual input shape, i.e. img.shape[2:] at
+# postprocess() call time -- built fresh per call since imgsz is the only
+# thing that shape depends on and this dwarfs in cost what it replaces
+# (a few MB zeros allocation vs. the avoided full-batch GPU->CPU
+# round-trip).
+def _orig_img_placeholder(letterboxed_hw):
+    return np.zeros((*letterboxed_hw, 3), dtype=np.uint8)
+
+
+class _NoRoundTripDetectionPredictor(DetectionPredictor):
+    """DetectionPredictor whose postprocess() skips two things the normal
+    list-input path needs but this pipeline's batched-tensor path does not
+    -- see _letterboxed_batch_to_tensor and _rescale_xyxy_from_letterbox
+    above for the tensor-input path this exists to serve.
+
+    1. ops.convert_torch2numpy_batch(orig_imgs) -- reconstructs an "original
+       image" by dragging the full GPU batch tensor back to CPU (permute +
+       scale + clamp + cast + a synchronous .cpu()), every tick, at every
+       achieved Hz. Confirmed by measurement to be a real cost: GPU
+       utilization stayed pinned at 12-16% under Commit 3's batched
+       inference despite the batch itself being correct (0.00px against
+       this file's own verify_batched_letterbox.py harness). And what it
+       reconstructs is useless here regardless of its cost: with a tensor
+       input, DetectionPredictor.postprocess's own `orig_imgs = ... if not
+       isinstance(orig_imgs, list)` branch has no reference to the true
+       original frame, only to the letterboxed one -- this pipeline already
+       rescales box coordinates itself via _rescale_xyxy_from_letterbox,
+       so that reconstructed value was never read.
+
+    2. ops.scale_boxes(img.shape[2:], boxes, orig_img.shape) -- rescales
+       boxes from the model's input shape to orig_img's shape. Skipped
+       entirely (not fed a shape stand-in): it would be a no-op here
+       regardless, since our own rescale happens downstream of this
+       method, not inside it, and a (C, H, W) tensor shape fed to code
+       expecting (H, W, C) numpy would otherwise silently corrupt every
+       box -- confirmed safe to drop against Boxes.xyxy, see
+       _orig_img_placeholder's comment above. That comment also covers why
+       orig_img still needs the real letterboxed (H, W), just not the
+       full-cost GPU round-trip: the separate tracking callback
+       (on_predict_postprocess_end) reads result.orig_img directly.
+
+    NMS and Results construction are unchanged from the base class.
+    """
+
+    def postprocess(self, preds, img, orig_imgs, **kwargs):
+        preds = nms.non_max_suppression(
+            preds,
+            self.args.conf,
+            self.args.iou,
+            self.args.classes,
+            self.args.agnostic_nms,
+            max_det=self.args.max_det,
+            nc=0 if self.args.task == "detect" else len(self.model.names),
+            end2end=getattr(self.model, "end2end", False),
+            rotated=self.args.task == "obb",
+        )
+        placeholder = _orig_img_placeholder(img.shape[2:])
+        paths = self.batch[0]
+        return [
+            Results(placeholder, path=img_path, names=self.model.names, boxes=pred[:, :6])
+            for pred, img_path in zip(preds, paths)
+        ]
+
+
+def _attach_no_roundtrip_predictor(model):
+    """Force `model` (a shared ultralytics.YOLO instance) to use
+    _NoRoundTripDetectionPredictor, constructed and attached the same way
+    Model.predict() builds its own default predictor -- see
+    engine/model.py's `if not self.predictor: self.predictor = (predictor
+    or self._smart_load("predictor"))(...); self.predictor.setup_model(...)`.
+
+    Pre-assigning model.predictor directly (rather than passing
+    predictor=_NoRoundTripDetectionPredictor through .track()'s **kwargs,
+    which _would_ also reach Model.predict()'s predictor= parameter, just
+    less certainly) means that `if not self.predictor:` check is already
+    false on the very first .track() call, so Ultralytics never has a
+    chance to construct its own default DetectionPredictor first. Verified
+    by construction, not assumed -- the assert below fails loudly if this
+    doesn't hold, rather than silently falling back to the round-trip path.
+    """
+    predictor = _NoRoundTripDetectionPredictor(overrides={}, _callbacks=model.callbacks)
+    predictor.setup_model(model=model.model, verbose=False)
+    model.predictor = predictor
+    assert isinstance(model.predictor, _NoRoundTripDetectionPredictor), (
+        "model.predictor is not _NoRoundTripDetectionPredictor after attaching -- "
+        "the GPU round-trip removal did not land"
+    )
+
+
 # TEMPORARY, decode-merge cost investigation -- remove after reporting.
-_STAGE_MS = {"preprocess": [], "inference": [], "postprocess": [], "projection": [], "dedup_upload": []}
+_STAGE_MS = {
+    "preprocess": [], "inference": [], "postprocess": [], "projection": [], "dedup_upload": [],
+    # Whole-tick and draw+broadcast timers, added because the per-stage
+    # numbers above summed to ~2ms while an actual tick was taking ~900ms
+    # at 1.1Hz -- nothing above measured where that gap actually went.
+    "tick_total": [], "draw_broadcast": [],
+}
 # Skip this long after process start before collecting -- otherwise the
 # 500-sample window lands on CUDA kernel autotune (first calls at a new
 # imgsz) and decode's post-restart buffer catch-up burst, not steady
@@ -29,32 +337,45 @@ _TIMING_WARMUP_SEC = 90.0
 _timing_start = time.monotonic()
 
 
-def _report_stage_timing_once():
-    if len(_STAGE_MS["preprocess"]) != 500:
+def _record_tick_timing(warmed_up, t_draw_broadcast_total, t_tick_start):
+    # TEMPORARY -- called from both of process_tick's return points, so a
+    # 'q'-press early exit still gets recorded, not just the normal path.
+    if not warmed_up:
         return
+    if len(_STAGE_MS["draw_broadcast"]) < 500:
+        _STAGE_MS["draw_broadcast"].append(t_draw_broadcast_total * 1000)
+    if len(_STAGE_MS["tick_total"]) < 500:
+        _STAGE_MS["tick_total"].append((time.monotonic() - t_tick_start) * 1000)
+
+
+_stage_timing_reported = False  # TEMPORARY -- module-level, so the report below fires exactly once
+
+
+def _report_stage_timing_once():
+    # "projection" is gated on i==0 (channel 0 specifically having a
+    # result this tick), unlike the other keys here which are all tick-
+    # level (unconditional on any one channel's presence) since Commit 3's
+    # batching change -- they can no longer be assumed to reach 500 in
+    # lockstep. A channel-0 absence is routine now (session resets, see
+    # MultiCameraPipeline), so checking only preprocess's length crashed
+    # with IndexError the first time this ran against gpu_decode live
+    # traffic: preprocess hit 500 while projection was still short.
+    #
+    # And once every key DOES reach 500, each one's own `< 500` append
+    # guard means none of them grows any further -- so a length-only check
+    # here would stay satisfied forever and print on every subsequent
+    # tick, not just once, which is exactly what happened the first time
+    # this ran long enough to find out (the log kept repeating this report
+    # once a second until the deploying agent's own log-tailing monitor
+    # got killed for excessive output). The module-level flag is what
+    # actually makes this a one-time report.
+    global _stage_timing_reported
+    if _stage_timing_reported or any(len(samples) != 500 for samples in _STAGE_MS.values()):
+        return
+    _stage_timing_reported = True
     for stage, samples in _STAGE_MS.items():
         s = sorted(samples)
         print(f"[TIMING] {stage} median={s[250]:.2f}ms p90={s[450]:.2f}ms over 500 samples")
-
-
-# TEMPORARY, .track() vs .predict() overhead measurement -- remove after
-# reporting. Sequenced to start only once _STAGE_MS's own 500-sample window
-# is done (see the len(_STAGE_MS["preprocess"]) >= 500 gate at the call
-# site), not concurrently with it -- the extra .predict() call here is real
-# additional GPU/CPU work that would otherwise contaminate the Hz and
-# per-tick timing numbers Commit 2 actually needs to report.
-_TRACK_PREDICT_MS = {"track": [], "predict": []}
-
-
-def _report_track_predict_once():
-    if len(_TRACK_PREDICT_MS["track"]) != 500:
-        return
-    for label, samples in _TRACK_PREDICT_MS.items():
-        s = sorted(samples)
-        print(f"[TIMING] {label}() wall-clock median={s[250]:.2f}ms p90={s[450]:.2f}ms over 500 samples")
-    track_med = sorted(_TRACK_PREDICT_MS["track"])[250]
-    predict_med = sorted(_TRACK_PREDICT_MS["predict"])[250]
-    print(f"[TIMING] track() - predict() median delta = {track_med - predict_med:.2f}ms")
 
 
 # TEMPORARY, achieved-Hz measurement -- remove after reporting. Ticks
@@ -140,22 +461,49 @@ def compute_geohash(lat, lon, precision=5):
     return "".join(geohash)
 
 class MultiCameraPipeline:
-    def __init__(self, detectors):
+    def __init__(self, detectors, model, conf, imgsz, device="cuda"):
         """
         Initialize the MultiCameraPipeline.
-        
+
         Args:
-            detectors: List of VideoObjectDetector instances.
-            
+            detectors: List of VideoObjectDetector instances (camera geometry/
+                projection only as of Commit 3 -- inference itself is batched
+                across all of them through the shared `model` below, not
+                called per-detector; see process_tick).
+            model: Single shared ultralytics.YOLO instance used for the
+                batched .track() call. Must be shared (not one per detector)
+                so its internal per-stream tracker state stays correctly
+                indexed 0..3 to channel across ticks -- see process_tick's
+                fixed-batch-index handling.
+            conf: Detection confidence threshold, applied to the whole batch
+                (all cameras currently share one global value -- see
+                config.py).
+            imgsz: Long-side target for the batched letterbox (see
+                _letterbox_target_shape) -- same tunable as Commit 2's
+                imgsz, now consumed here instead of per-call.
+            device: torch device the batched inference tensor is built on.
+
         Returns:
             None
         """
         self.detectors = detectors
+        self.model = model
+        self.conf = conf
+        self.imgsz = imgsz
+        self.device = device
         self.all_clean_detections = []
         self.global_tracks = {} # Store global tracks
         self.local_to_global = {} # "device_id_local_track_id" -> global_id
         self.next_global_id = 0
         self.extractor = AppearanceExtractor()
+
+        # Commit 3 batching state, lazily computed from the first real frame
+        # seen (see process_tick) -- all 4 channels share one camera model's
+        # native resolution (same K/cx/cy in pipeline.yaml), so one shared
+        # target shape and one cached black-frame placeholder is correct,
+        # not per-channel.
+        self._letterbox_shape = None
+        self._black_frame = None
 
     @staticmethod
     def haversine_distance_meters(lat1, lon1, lat2, lon2):
@@ -320,7 +668,7 @@ class MultiCameraPipeline:
     
     def process_streams(self, sources, show_live=True, upload=False, output_json=None, output_video=None,
                          output_image=None, output_validate=False, broadcast_sink=None,
-                         target_fps=None, nominal_fps=30):
+                         target_fps=None, nominal_fps=30, max_consecutive_skips=5):
         """
         Processes multiple videos in parallel, running YOLO, 3D math, and deduplication.
 
@@ -342,8 +690,13 @@ class MultiCameraPipeline:
                 ingestion.target_fps). Must be <= nominal_fps. Defaults to
                 nominal_fps (no downsampling) if not given.
             nominal_fps: Live sources only -- the camera's real source rate
-                (config.py's ingestion.nominal_fps), used to size the
-                cross-channel timestamp-alignment tolerance below.
+                (config.py's ingestion.nominal_fps), used for the channel-
+                stability check the sync loop's real-time basis locks
+                against.
+            max_consecutive_skips: Live sources only -- how many consecutive
+                ticks one channel may miss before the sync loop halts,
+                waits for all four to be stable again, and re-locks the
+                basis (config.py's ingestion.max_consecutive_skips).
 
         Returns:
             None
@@ -400,6 +753,7 @@ class MultiCameraPipeline:
             "all of them." A live channel absent from this set has None in
             frames_to_process -- see the live sync loop below for why that
             happens routinely now, not just during an outage."""
+            t_tick_start = time.monotonic()  # TEMPORARY, see top of file
             nonlocal frame_count
             frame_count += 1
             raw_buffer = []
@@ -424,39 +778,110 @@ class MultiCameraPipeline:
                 for i in (channels_present if channels_present is not None else range(len(frames_to_process)))
             )
 
-            for i, frame in enumerate(frames_to_process):
-                detector = self.detectors[i]
-                if frame is None:
-                    if last_valid_frames[i] is not None:
-                        annotated_frames.append(cv2.resize(last_valid_frames[i], (640, 480)))
-                    continue
+            # Commit 3: one batched .track() call across all 4 channels
+            # instead of four sequential per-channel calls -- see the module
+            # docstring above _letterbox_target_shape for why every step
+            # here has to replicate Ultralytics' own preprocessing exactly.
+            #
+            # Two frame representations flow through here depending on
+            # ingestion.mode: local_socket gives BGR HWC numpy frames,
+            # gpu_decode gives (3, H, W) CUDA RGB uint8 tensors (frames born
+            # in VRAM, see gpu_decode_source.py). Branched on via
+            # isinstance() against the first present frame this tick rather
+            # than a stored config flag -- all present channels share one
+            # ingestion.mode, so this is unambiguous, and it means nothing
+            # here needs to know about config.py at all. The numpy path
+            # below is untouched from before this branch existed, so
+            # local_socket keeps working exactly as it did and gpu_decode
+            # can be reverted independently of it.
+            first_frame = next((f for f in frames_to_process if f is not None), None)
+            is_gpu_tensor = isinstance(first_frame, torch.Tensor)
+            if first_frame is not None and self._letterbox_shape is None:
+                if is_gpu_tensor:
+                    _, h, w = first_frame.shape  # CHW
+                    self._black_frame = torch.zeros((3, h, w), dtype=torch.uint8, device=self.device)
+                else:
+                    h, w = first_frame.shape[:2]  # HWC
+                    self._black_frame = np.zeros((h, w, 3), dtype=np.uint8)
+                self._letterbox_shape = _letterbox_target_shape(h, w, self.imgsz)
+                print(
+                    f"letterbox target shape: {self._letterbox_shape} (source {h}x{w}, "
+                    f"imgsz={self.imgsz}, gpu_tensor={is_gpu_tensor})"
+                )
 
-                last_valid_frames[i] = frame.copy()
+            batch_results = [None] * len(frames_to_process)
+            letterbox_r = letterbox_pad_left = letterbox_pad_top = None
+            content_h = content_w = None
+            letterboxed = None  # gpu path only: kept per-channel post-stack so drawing can reuse it
+            if self._letterbox_shape is not None:
+                # Fixed batch index: channel 0 is always slot 0, regardless
+                # of which channels are actually present this tick. .track()
+                # holds per-index tracker state (one BoT-SORT tracker per
+                # stream index) -- a shrinking batch would silently
+                # reassign every track to the wrong camera. A missing
+                # channel (RTSP reset, tolerance mismatch -- routine now
+                # with the relaxed sync loop, see channels_present above)
+                # gets the cached black frame instead of being omitted.
+                is_black = [f is None for f in frames_to_process]
+                batch_src = [f if f is not None else self._black_frame for f in frames_to_process]
+                if is_gpu_tensor:
+                    letterboxed = []
+                    for f in batch_src:
+                        padded, letterbox_r, letterbox_pad_left, letterbox_pad_top, content_h, content_w = _gpu_letterbox(f, self._letterbox_shape)
+                        letterboxed.append(padded)
+                    tensor = torch.stack(letterboxed, dim=0)
+                else:
+                    letterboxed = []
+                    for f in batch_src:
+                        padded, letterbox_r, letterbox_pad_left, letterbox_pad_top = _letterbox(f, self._letterbox_shape)
+                        letterboxed.append(padded)
+                    tensor = _letterboxed_batch_to_tensor(letterboxed, self.device)
 
                 t_track0 = time.monotonic()  # TEMPORARY, see top of file
-                results = detector.model.track(frame, persist=True, conf=detector.conf, imgsz=detector.imgsz, tracker="botsort.yaml", verbose=False)
+                raw_results = self.model.track(
+                    tensor, persist=True, conf=self.conf,
+                    imgsz=list(self._letterbox_shape), tracker="botsort.yaml", verbose=False,
+                )
                 track_ms = (time.monotonic() - t_track0) * 1000  # TEMPORARY
-                t_proj0 = time.monotonic()  # TEMPORARY -- always set; projection-timing below needs it regardless of which gate below fires
 
-                if i == 0 and warmed_up and len(_STAGE_MS["preprocess"]) < 500:  # TEMPORARY, see top of file
-                    sp = results[0].speed
+                if warmed_up and len(_STAGE_MS["preprocess"]) < 500:  # TEMPORARY, see top of file
+                    sp = raw_results[0].speed
                     _STAGE_MS["preprocess"].append(sp["preprocess"])
                     _STAGE_MS["inference"].append(sp["inference"])
                     _STAGE_MS["postprocess"].append(sp["postprocess"])
-                elif i == 0 and len(_STAGE_MS["preprocess"]) >= 500 and len(_TRACK_PREDICT_MS["track"]) < 500:
-                    # TEMPORARY: .track() vs .predict() overhead, see top of
-                    # file. Sequenced after _STAGE_MS's own window finishes
-                    # (not concurrently) so this extra call doesn't skew the
-                    # Hz/timing numbers above. Measurement only -- discarded,
-                    # the production .track() call above is unchanged.
-                    t_pred0 = time.monotonic()
-                    _ = detector.model.predict(frame, conf=detector.conf, imgsz=detector.imgsz, verbose=False)
-                    predict_ms = (time.monotonic() - t_pred0) * 1000
-                    _TRACK_PREDICT_MS["track"].append(track_ms)
-                    _TRACK_PREDICT_MS["predict"].append(predict_ms)
-                    _report_track_predict_once()
 
-                det_2d = detector.extract_detections(results[0], frame_count)
+                for idx in range(len(frames_to_process)):
+                    if is_black[idx]:
+                        # A black-frame slot must produce nothing -- assert
+                        # it as a sanity check, but never rely on the model
+                        # alone: drop the slot's results unconditionally
+                        # (assertions can be compiled out with -O).
+                        n_det = len(raw_results[idx].boxes)
+                        assert n_det == 0, (
+                            f"black-frame batch slot {idx} produced {n_det} detections -- "
+                            "letterbox padding or normalization is wrong"
+                        )
+                        continue
+                    batch_results[idx] = raw_results[idx]
+
+            t_draw_broadcast_total = 0.0  # TEMPORARY, see top of file
+            for i, frame in enumerate(frames_to_process):
+                detector = self.detectors[i]
+                if frame is None or batch_results[i] is None:
+                    if last_valid_frames[i] is not None:
+                        if isinstance(last_valid_frames[i], torch.Tensor):
+                            annotated_frames.append(_gpu_frame_to_bgr_numpy(last_valid_frames[i], target_hw=(480, 640)))
+                        else:
+                            annotated_frames.append(cv2.resize(last_valid_frames[i], (640, 480)))
+                    continue
+
+                last_valid_frames[i] = frame.clone() if is_gpu_tensor else frame.copy()
+                result = batch_results[i]
+
+                t_proj0 = time.monotonic()  # TEMPORARY, see top of file
+                det_2d = detector.extract_detections(
+                    result, frame_count, letterbox_params=(letterbox_r, letterbox_pad_left, letterbox_pad_top)
+                )
                 det_3d = detector.compute_3d_detections(det_2d, current_utc_str, current_epoch)
 
                 if i == 0 and warmed_up and len(_STAGE_MS["projection"]) < 500:  # TEMPORARY
@@ -471,7 +896,20 @@ class MultiCameraPipeline:
                     # routinely now, not just during an outage.
                     det['active_channels'] = active_channels
                     if det['object_type'] == 'person':
-                        emb = self.extractor.extract(frame, det['camera_data']['bifocal_metadata']['bbox'])
+                        bbox = det['camera_data']['bifocal_metadata']['bbox']
+                        if is_gpu_tensor:
+                            # Crop on GPU first -- only the small patch
+                            # AppearanceExtractor needs crosses back to
+                            # host memory, never the full-resolution
+                            # frame (see _gpu_crop_to_bgr_numpy).
+                            crop_bgr = _gpu_crop_to_bgr_numpy(frame, bbox['x1'], bbox['y1'], bbox['x2'], bbox['y2'])
+                            if crop_bgr is not None:
+                                ch, cw = crop_bgr.shape[:2]
+                                emb = self.extractor.extract(crop_bgr, {'x1': 0, 'y1': 0, 'x2': cw, 'y2': ch})
+                            else:
+                                emb = None
+                        else:
+                            emb = self.extractor.extract(frame, bbox)
                         det['embedding'] = emb
                     else:
                         det['embedding'] = None
@@ -479,8 +917,30 @@ class MultiCameraPipeline:
                 raw_buffer.extend(det_3d)
 
                 if show_live or writer or output_image or broadcast_sink:
-                    annotated = detector.draw_detections_3d(frame, det_3d)
-                    annotated = cv2.resize(annotated, (640, 480))
+                    t_draw0 = time.monotonic()  # TEMPORARY, see top of file
+                    if is_gpu_tensor:
+                        # Reuse the letterboxed tensor already computed
+                        # for inference (1280x960, already in GPU memory)
+                        # instead of re-touching the full 2560x1920 frame:
+                        # that full-res round-trip was measured taking
+                        # real GPU->CPU bandwidth every tick for a result
+                        # that just got downscaled and discarded anyway.
+                        # Strip padding using the SAME r/pad_left/pad_top/
+                        # content_h/content_w _gpu_letterbox produced this
+                        # tick (identical for every channel, since all 4
+                        # share one native resolution and target shape) --
+                        # see _unletterbox_uint8_to_bgr_numpy. After that
+                        # crop, scale=r alone (no additive pad offset) is
+                        # correct for draw_detections_3d, matching how
+                        # extract_detections' rescale already put boxes in
+                        # original-frame space.
+                        annotated = _unletterbox_uint8_to_bgr_numpy(
+                            letterboxed[i], letterbox_pad_left, letterbox_pad_top, content_h, content_w
+                        )
+                        annotated = detector.draw_detections_3d(annotated, det_3d, scale=letterbox_r)
+                    else:
+                        annotated = detector.draw_detections_3d(frame, det_3d)
+                        annotated = cv2.resize(annotated, (640, 480))
                     annotated_frames.append(annotated)
                     if broadcast_sink:
                         # Tagged by the real channel index i, not by
@@ -488,6 +948,7 @@ class MultiCameraPipeline:
                         # be sparse (a camera with no frame yet and no
                         # last_valid_frames[i] contributes nothing to it).
                         broadcast_sink.send_frame(i, annotated)
+                    t_draw_broadcast_total += time.monotonic() - t_draw0  # TEMPORARY
 
             t_dedup0 = time.monotonic()  # TEMPORARY, see top of file
             # Deduplicate objects crossing the seams
@@ -501,6 +962,13 @@ class MultiCameraPipeline:
                 print(f"Frame {frame_count}: Uploaded {len(clean_batch)} unique objects (merged from {len(raw_buffer)} raw detections).")
             if warmed_up and len(_STAGE_MS["dedup_upload"]) < 500:  # TEMPORARY
                 _STAGE_MS["dedup_upload"].append((time.monotonic() - t_dedup0) * 1000)
+            if warmed_up:  # TEMPORARY -- called every tick, not gated on any
+                # one counter, so a slower-filling key (projection, gated on
+                # channel 0 specifically having a result -- see its own
+                # comment above) still gets checked and reported once it
+                # eventually reaches 500, rather than the report being
+                # skipped forever because dedup_upload's own counter
+                # (unconditional, hits 500 first) stopped calling this.
                 _report_stage_timing_once()
 
             if annotated_frames:
@@ -520,16 +988,15 @@ class MultiCameraPipeline:
                 if show_live:
                     cv2.imshow('V2X Multi-Camera Feed', grid)
                     if cv2.waitKey(1) & 0xFF == ord('q'):
+                        _record_tick_timing(warmed_up, t_draw_broadcast_total, t_tick_start)  # TEMPORARY
                         return False
+            _record_tick_timing(warmed_up, t_draw_broadcast_total, t_tick_start)  # TEMPORARY
             return True
 
         try:
             if all_live:
-                # Live sources: genuine cross-channel synchronization via
-                # each channel's own bounded history buffer (see
-                # ingest/frame_sources.py's LocalSocketSource), not a
-                # per-tick best-effort guess. Three earlier versions of this
-                # loop were each wrong in different ways:
+                # Live sources: real-time-basis sync loop. Four earlier
+                # versions of this loop were each wrong in a different way:
                 #   1. A carried-forward "is this channel within 35ms of the
                 #      others" gate that could permanently exclude a channel
                 #      the instant it first drifted out of range, since
@@ -542,105 +1009,165 @@ class MultiCameraPipeline:
                 #      fixed (2) (all 4 or nothing) but deadlocked: a
                 #      channel's oldest-buffered item only advances when
                 #      something pops it, and nothing gets popped until
-                #      aligned -- fine if one channel briefly stalls while
-                #      the others already agree with each other, but a
-                #      real, permanent deadlock the moment all 4 channels
-                #      have a *persistent* mutual offset (confirmed directly
-                #      against the real pipeline: with each channel
-                #      independently 1-2s off from the others at all times,
-                #      no front ever moved and nothing was ever processed).
+                #      aligned -- a real, permanent deadlock the moment all
+                #      4 channels have a *persistent* mutual offset
+                #      (confirmed directly: with each channel independently
+                #      1-2s off from the others at all times, no front ever
+                #      moved).
+                #   4. A "target_t = min of everyone's newest, discard just
+                #      the superseded entries, process whatever aligns and
+                #      mark the rest unavailable" version that fixed (3) but
+                #      had its own failure mode: target_t was *derived from
+                #      channel state* (the slowest channel's own newest
+                #      arrival), so a channel stalled at some frozen value
+                #      could pin target_t to that stale point, and the other
+                #      channels' own multi-second buffers could keep
+                #      satisfying matches against it -- the loop would
+                #      silently crawl through buffered history instead of
+                #      tracking real time. Diagnosed after a batched-
+                #      inference run measured ~2ms/tick of actual stage
+                #      work (preprocess+inference+postprocess) against an
+                #      observed ~900ms/tick at 1.1Hz: nothing in the per-
+                #      stage numbers explained the gap, because the gap
+                #      wasn't in any stage -- it was in how target_t itself
+                #      was chosen.
                 #
-                # This version keys the sync target off each channel's
-                # *newest* arrival instead, which -- unlike the oldest/front
-                # item -- always advances as new frames arrive regardless of
-                # whether anything's been consumed. target_t tracks whichever
-                # channel is currently furthest behind (the min of everyone's
-                # newest), and every channel (including the laggard) looks
-                # back through its own buffered history for the frame
-                # closest to that target. Only once *all 4* have a match
-                # within tolerance does anything get consumed -- and only
-                # then, discarding just the now-superseded older entries,
-                # not everything.
-                # A fourth flaw in the same lineage as 1-3 above, found and
-                # fixed after this comment was first written: requiring all
-                # 4 channels aligned before processing *any* of them meant
-                # one channel's absence silenced all four. That used to be
-                # rare enough to read as an outage. It no longer is: a
-                # channel now goes through a signaled reset (see
-                # ingest/demux_protocol.py's MSG_SESSION_RESET) any time
-                # demux reconnects, and is legitimately absent for up to
-                # one GOP (~2s at the current I-frame interval) while its
-                # decoder rewarms and waits for the next IDR -- a routine
-                # event, not an incident. So: process whatever channels are
-                # aligned this tick and mark the rest unavailable, rather
-                # than waiting on all 4. The only loss is seam-merging for
-                # a missing channel's neighbours (deduplicate() already
-                # just works over however many raw detections raw_buffer
-                # actually has); which channels contributed is recorded on
-                # each detection (see active_channels above) so a consumer
-                # can tell partial coverage from a genuinely empty sector.
-                alignment_tolerance_sec = 1.5 / nominal_fps
-                min_gap_sec = 1.0 / target_fps
-                # How far a channel's newest frame may lag real time before
-                # it stops anchoring target_t. Without this, a channel
-                # stalled (e.g. mid-reset) at some frozen newest.t would
-                # pin target_t to that stale point forever: the other
-                # channels' own multi-second buffers can still satisfy a
-                # match against an old target_t, so the loop would silently
-                # crawl through their buffered history instead of tracking
-                # real time -- the mechanism behind the outage this
-                # replaces. A bit more than one GOP for margin.
-                absence_grace_sec = 3.0
-                next_target_t = None  # don't accept a set older than this
+                # This version's `basis` is a clock, not a derived value:
+                # it advances by exactly 1/target_fps every tick, on a wall-
+                # clock schedule set once at lock time and never touched
+                # again based on channel state. It cannot be pinned by a
+                # stalled channel, slowed by a laggard, or sped up by a fast
+                # one. A channel that can't supply a frame within tolerance
+                # of the current basis produces a skipped tick for the
+                # *whole* pipeline (no partial output -- BoT-SORT's per-
+                # index tracker state needs every tick's batch to mean the
+                # same 4 cameras, not a shrinking/growing set), not a
+                # stalled one: real time is preserved unconditionally.
+                tolerance_sec = 1.0 / target_fps
+                # "Stable" for the boot/reset-recovery wait below: each
+                # channel producing at roughly nominal_fps, not just having
+                # produced one frame (the first frame back from a reset is
+                # the start of recovery, not evidence of it).
+                min_stable_frames_per_sec = round(nominal_fps * 25 / 30)
+
+                def wait_for_stable_and_lock_basis():
+                    """Block until every channel clears
+                    min_stable_frames_per_sec for two CONSECUTIVE 1-second
+                    windows, then lock basis_0 from the minimum newest
+                    abs_time across all four (the only point every channel
+                    can already serve) minus one tick, so the first real
+                    basis point is unambiguously in the past everywhere.
+                    Runs at startup and again after any channel reset --
+                    there's nothing better to do than wait when channels
+                    genuinely aren't producing frames, so this has no
+                    timeout."""
+                    consecutive_ok = 0
+                    while consecutive_ok < 2:
+                        seen = [set() for _ in caps]
+                        window_start = time.monotonic()
+                        while time.monotonic() - window_start < 1.0:
+                            for i, src in enumerate(caps):
+                                n = src.peek_newest()
+                                if n is not None:
+                                    seen[i].add(n[1])
+                            time.sleep(0.02)
+                        counts = [len(s) for s in seen]
+                        consecutive_ok = consecutive_ok + 1 if all(c >= min_stable_frames_per_sec for c in counts) else 0
+                        print(
+                            f"[SYNC] stability check: counts={counts} "
+                            f"(need >={min_stable_frames_per_sec}/s x2 consecutive) "
+                            f"consecutive_ok={consecutive_ok}/2"
+                        )
+                    newests = [src.peek_newest() for src in caps]
+                    locked = min(n[1] for n in newests) - 1.0 / target_fps
+                    print(f"[SYNC] basis locked: basis_0={locked:.3f}")
+                    return locked
+
+                basis_0 = wait_for_stable_and_lock_basis()
+                t_start = time.monotonic()
+                n_tick = 0
+                channel_miss_count = [0] * num_cams  # consecutive per channel -- drives the reset trigger
+                channel_miss_total = [0] * num_cams  # cumulative, for rate reporting only
+                overrun_count = 0
+                ticks_attempted = 0
+                last_log = time.monotonic()
 
                 while True:
-                    newests = [src.peek_newest() for src in caps]
-                    now_offset = time.time() - global_start_epoch
-                    present_idx = [
-                        i for i, n in enumerate(newests)
-                        if n is not None and (now_offset - n[1]) < absence_grace_sec
-                    ]
-                    if not present_idx:
-                        # Nothing live at all -- every channel is either
-                        # brand new or stalled. Nothing to target against.
-                        time.sleep(0.01)
-                        continue
+                    n_tick += 1
+                    basis = basis_0 + n_tick / target_fps
+                    # Absolute deadline, not sleep(1/target_fps): relative
+                    # sleeps accumulate drift from their own overhead and
+                    # from whatever process_tick costs each iteration;
+                    # basis and the loop then advance in lockstep by
+                    # construction instead.
+                    deadline = t_start + n_tick / target_fps
+                    now = time.monotonic()
+                    if now < deadline:
+                        time.sleep(deadline - now)
+                    else:
+                        # Previous tick (or this deadline check itself) ran
+                        # long. Never queue -- proceed immediately with
+                        # whatever basis this firing owns. A throughput
+                        # signal only; must never trigger a channel reset.
+                        overrun_count += 1
 
-                    target_t = min(newests[i][1] for i in present_idx)
-                    if next_target_t is not None and target_t < next_target_t:
-                        # Not enough new progress since the last processed
-                        # set for the next target_fps-spaced sample yet --
-                        # wait rather than re-matching the same span.
-                        time.sleep(0.01)
-                        continue
+                    ticks_attempted += 1
+                    matches = [src.find_closest(basis, tolerance_sec) for src in caps]
+                    missed = [i for i, m in enumerate(matches) if m is None]
 
-                    # Every channel gets a fair shot at target_t regardless
-                    # of whether it anchored it -- a channel just outside
-                    # present_idx (e.g. its first frame back from a reset,
-                    # this exact tick) can still match.
-                    matches = [src.find_closest(target_t, alignment_tolerance_sec) for src in caps]
-                    present_this_tick = {i for i, m in enumerate(matches) if m is not None}
-                    if not present_this_tick:
-                        # target_t itself came from present_idx, so this
-                        # means transient jitter, not absence -- retry.
-                        time.sleep(0.01)
-                        continue
+                    if missed:
+                        needs_reset = False
+                        for i in missed:
+                            channel_miss_count[i] += 1
+                            channel_miss_total[i] += 1
+                            if channel_miss_count[i] >= max_consecutive_skips:
+                                print(
+                                    f"[SYNC] ch{i} missed {channel_miss_count[i]} consecutive "
+                                    "ticks -- resetting: halting, waiting for all 4 stable, re-locking basis"
+                                )
+                                needs_reset = True
+                        if needs_reset:
+                            basis_0 = wait_for_stable_and_lock_basis()
+                            t_start = time.monotonic()
+                            n_tick = 0
+                            channel_miss_count = [0] * num_cams
+                            # channel_miss_total NOT reset -- lifetime counter for rate reporting.
+                        continue  # skip this tick entirely -- no partial output, see module comment above
 
-                    # Commit (discard superseded history) only for channels
-                    # that actually matched -- an absent channel's buffer is
-                    # untouched, same as before.
-                    for i in present_this_tick:
-                        idx, _frame, _t = matches[i]
-                        caps[i].discard_through(idx)
+                    channel_miss_count = [0] * num_cams  # every channel matched -- clear all consecutive counters
 
-                    frames_to_process = [matches[i][1] if i in present_this_tick else None for i in range(num_cams)]
-                    actual_t = min(matches[i][2] for i in present_this_tick)
-                    next_target_t = target_t + min_gap_sec
+                    # Prune to basis - 1/target_fps, not through the match
+                    # itself -- a frame just before that point may still be
+                    # the *next* tick's closest match.
+                    prune_before = basis - 1.0 / target_fps
+                    for src in caps:
+                        src.discard_older_than(prune_before)
+
+                    frames_to_process = [m[1] for m in matches]
+                    actual_t = min(m[2] for m in matches)
                     current_epoch = global_start_epoch + actual_t
                     current_time = global_start_time + timedelta(seconds=actual_t)
                     current_utc_str = current_time.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
-                    if not process_tick(frames_to_process, current_utc_str, current_epoch, present_this_tick):
+                    if not process_tick(frames_to_process, current_utc_str, current_epoch):
                         break
+
+                    if time.monotonic() - last_log >= 1.0:
+                        newests = [src.peek_newest() for src in caps]
+                        if all(n is not None for n in newests):
+                            # The camera-pipeline delay: how far the
+                            # freshest available frame, across all 4
+                            # channels, trails wall clock. Expected around
+                            # -3s (matches decode's own observed lag) and
+                            # expected to be FLAT -- a trend means the
+                            # camera-side clock is drifting relative to
+                            # ours and the basis will eventually diverge.
+                            camera_delay = (global_start_epoch + min(n[1] for n in newests)) - time.time()
+                            print(
+                                f"[SYNC] camera-pipeline delay={camera_delay:.3f}s (expect ~-3s, flat) | "
+                                f"overrun={overrun_count}/{ticks_attempted} | "
+                                f"channel_miss_total={channel_miss_total} of {ticks_attempted} ticks"
+                            )
+                        last_log = time.monotonic()
             else:
                 # File/KVS sources: original pull-based, windowed-catchup
                 # pacing -- unchanged from before live-source support
@@ -731,14 +1258,17 @@ class MultiCameraPipeline:
                     print(json.dumps(validation_output, indent=2))
 
 class VideoObjectDetector:
-    def __init__(self, model_path, conf=0.25, imgsz=640, K=np.eye(3,3), dist_coeffs=None, camera_height=5.0, pitch_deg=0.0, yaw_deg=0.0, heading_deg=0.0, device_id="cam-001", origin_lat=0.0, origin_lon=0.0,
+    def __init__(self, model, K=np.eye(3,3), dist_coeffs=None, camera_height=5.0, pitch_deg=0.0, yaw_deg=0.0, heading_deg=0.0, device_id="cam-001", origin_lat=0.0, origin_lon=0.0,
                  city="", state="", country=""):
 
         """
         Args:
-            model_path:      Path to YOLO model weights
-            conf:            Detection confidence threshold
-            imgsz:           Inference resolution (side model.track() letterboxes to)
+            model:           Shared ultralytics.YOLO instance (used here only for
+                              class_names -- as of Commit 3, inference itself is
+                              batched across all cameras through
+                              MultiCameraPipeline.model, not called per-detector;
+                              see process_tick). Must be the SAME instance passed
+                              to MultiCameraPipeline, not a separate load.
             K:               3x3 camera intrinsic matrix
             dist_coeffs:     Lens distortion coefficients [k1,k2,p1,p2,k3]
             camera_height:   Camera height above ground in meters
@@ -746,11 +1276,8 @@ class VideoObjectDetector:
             origin_lat/lon:  GPS coordinates of the camera (used for XZ → GPS)
             city/state/country: Global context metadata
         """
-        
-        self.model = YOLO(model_path)
-        self.conf = conf
-        self.imgsz = imgsz
-        self.class_names = self.model.names
+
+        self.class_names = model.names
         self.K = K
         self.dist_coeffs = dist_coeffs if dist_coeffs is not None else np.zeros(5)
         self.camera_height = camera_height
@@ -793,26 +1320,35 @@ class VideoObjectDetector:
         print(f"  Intrinsics: fx={self.fx:.1f}, fy={self.fy:.1f}, cx={self.cx:.1f}, cy={self.cy:.1f}")
         print(f"  Height: {self.camera_height}m")
 
-    def extract_detections(self, result, frame_num):
+    def extract_detections(self, result, frame_num, letterbox_params=None):
         """
         Extract 2D bounding boxes and track IDs from YOLO results.
-        
+
         Args:
             result: YOLO inference result object.
             frame_num: Current frame number.
-            
+            letterbox_params: (r, pad_left, pad_top) from _letterbox(), or None.
+                Commit 3's batched call hands .track() a pre-built tensor, which
+                returns box coordinates in letterboxed-tensor space rather than
+                original-frame space (see module docstring on
+                _rescale_xyxy_from_letterbox) -- pass this to undo that. None
+                means result.boxes is already in original-frame coordinates
+                (e.g. a non-batched caller).
+
         Returns:
             List of 2D detection dictionaries.
         """
         detections = []
-        
+
         # Check if any tracks were actually found
         if result.boxes.id is not None:
             # Get IDs as an array of integers
             track_ids = result.boxes.id.int().cpu().tolist()
-            
+
             for box, track_id in zip(result.boxes, track_ids):
                 x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
+                if letterbox_params is not None:
+                    x1, y1, x2, y2 = _rescale_xyxy_from_letterbox(x1, y1, x2, y2, *letterbox_params)
                 conf = float(box.conf[0])
                 cls = int(box.cls[0])
                 class_name = self.class_names.get(cls, 'unknown')
@@ -1077,23 +1613,33 @@ class VideoObjectDetector:
                 print(f"  Uploaded {i + 1}/{len(self.all_detections_3d)}")
         print("✅ Upload complete")
     
-    def draw_detections_3d(self, frame, detections_3d):
+    def draw_detections_3d(self, frame, detections_3d, scale=1.0):
         """
         Draw 3D bounding boxes, metadata, and labels on a video frame.
-        
+
         Args:
             frame: The input video frame as a NumPy array.
             detections_3d: List of 3D detection records.
-            
+            scale: Uniform multiplier applied to each detection's bbox
+                coordinates before drawing. 1.0 (default) when frame is at
+                the same resolution the bbox coordinates were computed at
+                (the local_socket path: draw first, resize after). The
+                gpu_decode path instead downscales the frame on GPU before
+                any CPU transfer (see _gpu_frame_to_bgr_numpy) and draws
+                directly at that smaller size, so it needs the boxes
+                scaled down to match -- exact for this camera's frames
+                (2560x1920, matches the 640x480 draw target's aspect ratio
+                precisely), not a general-case assumption.
+
         Returns:
             Annotated image as a NumPy array.
         """
         annotated = frame.copy()
         for det in detections_3d:
-            x1, y1 = int(det['camera_data']['bifocal_metadata']['bbox']['x1']), \
-                     int(det['camera_data']['bifocal_metadata']['bbox']['y1'])
-            x2, y2 = int(det['camera_data']['bifocal_metadata']['bbox']['x2']), \
-                     int(det['camera_data']['bifocal_metadata']['bbox']['y2'])
+            x1, y1 = int(det['camera_data']['bifocal_metadata']['bbox']['x1'] * scale), \
+                     int(det['camera_data']['bifocal_metadata']['bbox']['y1'] * scale)
+            x2, y2 = int(det['camera_data']['bifocal_metadata']['bbox']['x2'] * scale), \
+                     int(det['camera_data']['bifocal_metadata']['bbox']['y2'] * scale)
             world = det['camera_data']['bifocal_metadata']['world_position']
             cls_id = next((k for k, v in self.class_names.items()
                            if v == det['object_type']), 0)
@@ -1126,11 +1672,15 @@ if __name__ == "__main__":
     if cfg.upload.endpoint:
         VideoObjectDetector.V2X_ENDPOINT = cfg.upload.endpoint
 
+    # One shared model for the whole pipeline (Commit 3) -- batched
+    # inference needs a single instance so its per-stream tracker state
+    # stays correctly indexed across ticks; see MultiCameraPipeline.
+    shared_model = YOLO(cfg.resolve(cfg.model_path))
+    _attach_no_roundtrip_predictor(shared_model)
+
     detectors = [
         VideoObjectDetector(
-            model_path=cfg.resolve(cfg.model_path),
-            conf=cfg.conf,
-            imgsz=cfg.imgsz,
+            model=shared_model,
             K=np.array(cam.K, dtype=np.float64),
             dist_coeffs=None,
             camera_height=cam.camera_height,
@@ -1147,15 +1697,22 @@ if __name__ == "__main__":
         for cam in cfg.cameras
     ]
 
-    pipeline = MultiCameraPipeline(detectors=detectors)
+    pipeline = MultiCameraPipeline(detectors=detectors, model=shared_model, conf=cfg.conf, imgsz=cfg.imgsz)
 
     # Shared t0 so every local-socket channel's msec is measured from the
     # same instant -- see frame_sources.LocalSocketSource.
     t0 = time.time()
     sources = [
-        build_frame_source(ch, cfg.ingestion_mode, t0, cfg.nominal_fps, cfg.sync_buffer_seconds, cfg.target_fps)
+        build_frame_source(ch, cfg.ingestion_mode, t0, cfg.nominal_fps, cfg.sync_buffer_seconds,
+                            cfg.target_fps, cfg.max_buffer_ahead_sec)
         for ch in cfg.channels
     ]
+    print(f"ingestion sources built: {[type(s).__name__ for s in sources]} (mode={cfg.ingestion_mode!r})")
+    if cfg.ingestion_mode == "gpu_decode":
+        assert all(type(s).__name__ == "GpuDecodeSource" for s in sources), (
+            "ingestion.mode is gpu_decode but not every source is a GpuDecodeSource -- "
+            f"got {[type(s).__name__ for s in sources]}"
+        )
 
     broadcast_sink = BroadcastSink(cfg.broadcast.socket_path) if cfg.broadcast.enabled else None
 
@@ -1169,6 +1726,7 @@ if __name__ == "__main__":
             output_image=None,
             target_fps=cfg.target_fps,
             nominal_fps=cfg.nominal_fps,
+            max_consecutive_skips=cfg.max_consecutive_skips,
             output_validate=False,
             broadcast_sink=broadcast_sink,
         )

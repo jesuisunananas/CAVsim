@@ -23,26 +23,44 @@ comparable internal queue that can silently grow, so there's nothing
 equivalent to detect or flush. What IS kept is a same-shaped HEALTH log
 line, for visibility.
 
-Decimation happens strictly after decode, never before it: dropping H.264
-access units before feeding them to the decoder corrupts every subsequent
-P-frame in the same GOP, since this camera's stream is a standard IPPP
-chain (confirmed via ffprobe: one IDR then 60 consecutive P-frames, no
-B-frames) where each P-frame references the immediately preceding decoded
-frame, not just the last IDR. NVDEC conceals this rather than erroring --
-silently corrupted/smeared output that still "decodes successfully" --
-exactly the failure mode this whole project is trying to avoid. So every
-access unit gets decoded, and only the decoded frames needed to hit
-target_fps are kept.
+No decimation anywhere in this class, before or after decode. Every H.264
+access unit gets decoded -- dropping any of them before feeding the
+decoder corrupts every subsequent P-frame in the same GOP, since this
+camera's stream is a standard IPPP chain (confirmed via ffprobe: one IDR
+then 60 consecutive P-frames, no B-frames) where each P-frame references
+the immediately preceding decoded frame, not just the last IDR (NVDEC
+conceals this rather than erroring -- silently corrupted/smeared output
+that still "decodes successfully"). And every decoded frame gets
+buffered, keyed by abs_time: picking a target_fps-rate subset here was
+tried and abandoned -- it meant this class's own idea of "the right frame
+to keep" could disagree with what the sync loop's real-time basis
+actually wants a tick later, with no way to reconcile after the fact.
+Downsampling now happens exactly once, in process_video.py's sync loop,
+by selecting the buffered frame closest to each tick's basis -- see
+its docstring.
 
-Buffered frame representation: NV12, not BGR. DecodedFrame.cuda() returns
-TWO separate CUDA Array Interface views for NV12 -- a full-resolution Y
-(luma) plane and a half-resolution interleaved UV (chroma) plane, confirmed
-directly (they are NOT one combined view; taking only the first silently
-discards all colour). Both are buffered. Colour-space conversion to
-whatever format inference needs happens downstream, not here -- see
-gpu_decode_source.nv12_to_bgr_numpy for the temporary bridge used by this
-commit's verification harness only; the real production conversion (exact
-Ultralytics letterbox/RGB/CHW/normalize, done on-GPU) is Commit 3's job.
+Buffered frame representation: planar RGB (outputColorType=RGBP), not NV12.
+Colour conversion (BT.601/BT.709, limited/full range) happens inside
+NVIDIA's decoder, not in this codebase -- the entire silent-corruption risk
+of hand-rolling YUV->RGB math is avoided by construction. Confirmed
+empirically, not assumed from the docs (the documented example uses
+ThreadedDecoder over a file path; this module feeds packets one access
+unit at a time via the low-level CreateDecoder/Decode path instead, since
+frames arrive over a socket, not from a file):
+- outputColorType=RGBP is accepted by CreateDecoder on this packet-fed
+  path (the docs only show it on ThreadedDecoder).
+- DecodedFrame.cuda() returns THREE separate CUDA Array Interface views in
+  RGBP mode, one per plane (R, G, B), each a plain (H, W) uint8 view --
+  not one fused (3, H, W) view. Stacked into one tensor at buffer time
+  (torch.stack, dim=0) so buffered items are a single (3, H, W) CUDA
+  tensor, not a tuple.
+- Plane order is R, G, B (not reversed) -- verified by decoding a real
+  captured frame both ways (RGBP and the old NATIVE/NV12 mode) from
+  identical input access units, converting the NV12 copy to BGR via
+  OpenCV as a known-correct reference, and confirming the RGBP planes
+  stacked as (H, W, 3) and reversed to BGR visually match (natural colours
+  -- yellow lane paint, tan dry grass, gray asphalt -- not a channel swap
+  or inversion).
 """
 from __future__ import annotations
 
@@ -51,8 +69,6 @@ import threading
 import time
 from collections import deque
 
-import cv2
-import numpy as np
 import torch
 import PyNvVideoCodec as nvc
 
@@ -104,58 +120,39 @@ def _contains_idr(h264_bytes):
     return False
 
 
-def nv12_to_bgr_numpy(y_view, uv_view):
-    """TEMPORARY bridge for this commit's verification only -- converts a
-    buffered (y_tensor, uv_tensor) pair back to a CPU BGR numpy array so it
-    can run through the existing, unmodified detector.model.track() call
-    and be compared against the old LocalSocketSource path. Not the
-    production data path: Commit 3 does colour conversion on-GPU as part
-    of the batched letterbox, never through a CPU numpy round-trip."""
-    y = y_view.cpu().numpy()[:, :, 0]
-    uv = uv_view.cpu().numpy()
-    # (960, 1280, 2) interleaved U/V -> (960, 2560) raw bytes: merge the
-    # pair-count and channel dims, not double the row count -- OpenCV wants
-    # a flat (h/2, w) byte plane below the Y plane, matching the shape
-    # DecodedFrame.shape itself reports for the whole NV12 buffer.
-    uv_bytes = uv.reshape(uv.shape[0], uv.shape[1] * uv.shape[2])
-    nv12 = np.concatenate([y, uv_bytes], axis=0)
-    return cv2.cvtColor(nv12, cv2.COLOR_YUV2BGR_NV12)
-
-
 class GpuDecodeSource:
     """Same interface as LocalSocketSource (frame_sources.py) -- peek_newest
-    / find_closest / discard_through / close -- so process_streams() can use
-    either interchangeably based on config. Internally: decodes on GPU via
-    PyNvVideoCodec instead of subscribing to already-decoded frames.
+    / find_closest / discard_older_than / close -- so process_streams() can
+    use either interchangeably based on config. Internally: decodes on GPU
+    via PyNvVideoCodec instead of subscribing to already-decoded frames.
 
-    Buffered items are ((y_tensor, uv_tensor), t_seconds), NV12, not the
-    BGR numpy frames LocalSocketSource buffers -- see module docstring."""
+    Buffered items are (rgb_tensor, t_seconds) -- rgb_tensor a single
+    (3, H, W) CUDA uint8 tensor, not the BGR numpy frames LocalSocketSource
+    buffers, and not a (y, uv) tuple either -- see module docstring."""
 
     is_live = True
 
-    def __init__(self, socket_path, t0, buffer_duration_sec, nominal_fps, target_fps, gpu_id=0):
+    def __init__(self, socket_path, t0, max_buffer_ahead_sec, nominal_fps, gpu_id=0):
         self._socket_path = socket_path
         self._t0 = t0
         self._gpu_id = gpu_id
-        # Sized by target_fps, not nominal_fps like LocalSocketSource:
-        # decimation happens before buffering here (post-decode, see module
-        # docstring), so the buffer only ever holds target_fps-rate frames
-        # to begin with -- sizing it any larger would just waste GPU memory.
-        maxlen = max(1, int(buffer_duration_sec * target_fps))
-        self._buffer = deque(maxlen=maxlen)  # [((y, uv), t_seconds), ...], oldest first
+        # No decimation on the way in any more -- every decoded frame is
+        # buffered, keyed by abs_time (see module docstring and
+        # process_video.py's real-time-basis sync loop, which does its own
+        # closest-match selection against a fixed clock rather than
+        # relying on a pre-decimated stream). maxlen is purely an OOM
+        # guard against a channel getting ahead of consumption (the sync
+        # loop prunes every tick in steady state, so this is a ceiling,
+        # not the expected working size) -- explicitly a config knob
+        # (ingestion.max_buffer_ahead_sec), not tuned here.
+        maxlen = max(1, int(max_buffer_ahead_sec * nominal_fps))
+        self._buffer = deque(maxlen=maxlen)  # [(rgb_tensor, t_seconds), ...], oldest first
         self._lock = threading.Lock()
         self._stopped = False
 
         self.calibrator = ChannelClockCalibrator()
         self._unwrapped_ticks = None
         self._last_wire_ts = None
-
-        # Decoded-frame decimation: keep a frame only once at least
-        # 1/target_fps seconds (in RTP ticks) have passed since the last
-        # kept one. Gates what gets *kept*, never what gets *decoded* --
-        # see module docstring for why that distinction is load-bearing.
-        self._min_gap_ticks = RTP_CLOCK_HZ / target_fps
-        self._last_kept_ticks = None
 
         # HEALTH log counters (decoded vs. kept access units), reset each
         # log interval -- see _maybe_log_health.
@@ -188,6 +185,12 @@ class GpuDecodeSource:
             gpuid=self._gpu_id,
             codec=nvc.cudaVideoCodec.H264,
             usedevicememory=1,
+            # Planar RGB, decoded on-GPU by NVIDIA's own colour-conversion
+            # code rather than hand-rolled YUV math downstream -- see module
+            # docstring for the empirical checks this was verified with
+            # (accepted on this packet-fed path, 3 separate (H,W) plane
+            # views in R,G,B order).
+            outputColorType=nvc.OutputColorType.RGBP,
             # Minimize NVDEC's own internal reorder latency -- default
             # (NATIVE) buffers 4 frames for display-order reordering, which
             # this stream has no use for: it has no B-frames (confirmed via
@@ -264,7 +267,6 @@ class GpuDecodeSource:
         self.calibrator = ChannelClockCalibrator()
         self._last_output_ticks_seen = None
         self._stuck_output_count = 0
-        self._last_kept_ticks = None
         # Everything buffered belongs to the old session -- discarding it
         # is correct, not a loss: an RTSP reset is a genuine network
         # discontinuity, so there's no continuity across it worth
@@ -280,7 +282,7 @@ class GpuDecodeSource:
         # value is what gets fed to the decoder as pkt.pts (NVDEC echoes it
         # back on the matching output frame via getPTS(), so there's no
         # separate ns<->ticks conversion needed the way GStreamer's buffer
-        # PTS required) and what decimation paces against.
+        # PTS required).
         if self._last_wire_ts is None:
             self._unwrapped_ticks = raw_rtp_ts
         else:
@@ -336,13 +338,6 @@ class GpuDecodeSource:
                     )
                 continue
 
-            keep = (
-                self._last_kept_ticks is None
-                or (output_ticks - self._last_kept_ticks) >= self._min_gap_ticks
-            )
-            if not keep:
-                continue
-
             abs_time = self.calibrator.to_abs_time(output_ticks)
             if abs_time is None:
                 continue  # no RTCP SR anchor yet -- not calibrated, not usable
@@ -361,21 +356,24 @@ class GpuDecodeSource:
                 )
                 continue
 
-            self._last_kept_ticks = output_ticks
             self._kept_count += 1
 
             # MUST clone: PyNvVideoCodec recycles its surface pool, so the
             # views returned by frame.cuda() alias memory the next
             # Decode() call may overwrite. Kept frames sit in the buffer
-            # for up to buffer_duration_sec -- well past "the next call" --
+            # for up to the configured max_buffer_ahead_sec -- well past
+            # "the next call" --
             # confirmed necessary directly, not a defensive guess.
-            y_view, uv_view = frame.cuda()
-            y_tensor = torch.as_tensor(y_view, device=f"cuda:{self._gpu_id}").clone()
-            uv_tensor = torch.as_tensor(uv_view, device=f"cuda:{self._gpu_id}").clone()
+            r_view, g_view, b_view = frame.cuda()
+            device = f"cuda:{self._gpu_id}"
+            rgb_tensor = torch.stack(
+                [torch.as_tensor(v, device=device) for v in (r_view, g_view, b_view)],
+                dim=0,
+            ).clone()  # (3, H, W) uint8
 
             t = abs_time - self._t0
             with self._lock:
-                self._buffer.append(((y_tensor, uv_tensor), t))
+                self._buffer.append((rgb_tensor, t))
 
         self._maybe_log_health()
 
@@ -431,9 +429,15 @@ class GpuDecodeSource:
                 return None
             return best_idx, best_item[0], best_item[1]
 
-    def discard_through(self, index):
+    def discard_older_than(self, threshold_t):
+        """Drop buffered frames with t < threshold_t, keeping anything at
+        or after it -- including the frame just matched this tick, which
+        the sync loop's basis keeps by design (see process_video.py:
+        pruning to basis - 1/target_fps, not through the match itself, in
+        case a frame just before that point turns out to be the *next*
+        tick's closest match)."""
         with self._lock:
-            for _ in range(min(index + 1, len(self._buffer))):
+            while self._buffer and self._buffer[0][1] < threshold_t:
                 self._buffer.popleft()
 
     def close(self):

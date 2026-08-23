@@ -13,7 +13,7 @@ ingestion:
   #   only valid on a machine that's also running that pipeline.
   # local_file:   read a video file from disk (path).
   # aws_kvs:      pull an HLS stream from AWS Kinesis Video Streams (stream name).
-  mode: local_socket
+  mode: gpu_decode
   # The camera's real source rate -- used only to size the cross-channel
   # timestamp-alignment tolerance (live sources only, see process_video.py).
   nominal_fps: 30
@@ -29,15 +29,31 @@ ingestion:
   # worst-case -- 8s is ~13GB worst-case, only reached under sustained
   # misalignment, not steady-state operation.
   sync_buffer_seconds: 4
+  # gpu_decode only: GpuDecodeSource buffers every decoded frame (no
+  # decimation), so this is purely an OOM guard against a channel getting
+  # ahead of consumption -- 3s * 30fps * ~14.7MB/frame * 4 channels ~=
+  # 5.3GB worst-case (all 4 buffers simultaneously full), not the expected
+  # steady-state size (the sync loop prunes every tick). Worth watching
+  # against the free VRAM budget with Carla resident if this ever needs
+  # raising -- not a tuning knob otherwise.
+  max_buffer_ahead_sec: 3.0
+  # How many consecutive ticks one channel may miss before the sync loop
+  # halts, waits for all four to be stable again, and re-locks the basis,
+  # rather than continuing to skip ticks indefinitely.
+  max_consecutive_skips: 5
   channels:
+    # gpu_decode mode: these point at demux's broadcast (compressed H.264),
+    # not decode's -- GpuDecodeSource does its own NVDEC decode from here.
+    # Same socket_path field local_socket mode uses, different meaning --
+    # see ingest/gpu_decode_source.py and config.py's validation.
     - channel: 0
-      socket_path: /tmp/camera_decode_ch0.sock
+      socket_path: /tmp/camera_demux_ch0.sock
     - channel: 1
-      socket_path: /tmp/camera_decode_ch1.sock
+      socket_path: /tmp/camera_demux_ch1.sock
     - channel: 2
-      socket_path: /tmp/camera_decode_ch2.sock
+      socket_path: /tmp/camera_demux_ch2.sock
     - channel: 3
-      socket_path: /tmp/camera_decode_ch3.sock
+      socket_path: /tmp/camera_demux_ch3.sock
 
 detection:
   model_path: models/yolov8n.pt
