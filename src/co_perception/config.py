@@ -69,6 +69,7 @@ class PipelineConfig:
     sync_buffer_seconds: float
     max_buffer_ahead_sec: float
     max_consecutive_skips: int
+    sync_margin_sec: float
     model_path: str
     conf: float
     imgsz: int
@@ -145,6 +146,10 @@ def load_config(config_path: str | Path, repo_root: str | Path) -> PipelineConfi
     # may get ahead of consumption before frames start being evicted. An
     # OOM guard, not a tuning knob -- the sync loop prunes every tick in
     # steady state, so actual usage should stay far below this ceiling.
+    # Frames are letterboxed to the inference resolution before buffering
+    # (~3.69MB/frame at imgsz=1280 on this camera's resolution, not the
+    # ~14.7MB/frame full-res figure this comment used to cite) -- worst
+    # case is ~1.3GB across 4 channels at the default below, not ~5.3GB.
     max_buffer_ahead_sec = float(ingestion.get("max_buffer_ahead_sec", 3.0))
     if max_buffer_ahead_sec <= 0:
         raise ValueError(f"ingestion.max_buffer_ahead_sec must be positive, got {max_buffer_ahead_sec}")
@@ -156,6 +161,29 @@ def load_config(config_path: str | Path, repo_root: str | Path) -> PipelineConfi
     max_consecutive_skips = int(ingestion.get("max_consecutive_skips", 5))
     if max_consecutive_skips <= 0:
         raise ValueError(f"ingestion.max_consecutive_skips must be positive, got {max_consecutive_skips}")
+
+    # Live sources only: how far basis_0 is locked BEHIND the freshest
+    # jointly-available timestamp at (re)lock time -- a jitter-buffer
+    # margin trading added end-to-end latency for tolerance of delivery
+    # bursts (see process_video.py's wait_for_stable_and_lock_basis).
+    # Replaces what used to be a hardcoded 1/target_fps (100ms), which
+    # doesn't survive real delivery bursts -- measured directly this
+    # session: one channel showed recurring ~240-290ms delivery gaps every
+    # ~2s despite perfectly smooth 33ms-spaced content timestamps
+    # underneath (a delivery-side stall-then-burst, not real frame drops
+    # or a timestamp problem). 1.0s was chosen as >3x that worst case.
+    # Must be comfortably less than max_buffer_ahead_sec -- a margin wider
+    # than the buffer's own retention window asks for history that's
+    # already been evicted.
+    sync_margin_sec = float(ingestion.get("sync_margin_sec", 1.0))
+    if sync_margin_sec <= 0:
+        raise ValueError(f"ingestion.sync_margin_sec must be positive, got {sync_margin_sec}")
+    if sync_margin_sec >= max_buffer_ahead_sec:
+        raise ValueError(
+            f"ingestion.sync_margin_sec ({sync_margin_sec}) must be less than "
+            f"ingestion.max_buffer_ahead_sec ({max_buffer_ahead_sec}) -- a margin this "
+            "wide needs history the buffer wouldn't retain"
+        )
 
     detection = raw["detection"]
     cameras = [CameraConfig(**cam) for cam in detection["cameras"]]
@@ -191,6 +219,7 @@ def load_config(config_path: str | Path, repo_root: str | Path) -> PipelineConfi
         sync_buffer_seconds=sync_buffer_seconds,
         max_buffer_ahead_sec=max_buffer_ahead_sec,
         max_consecutive_skips=max_consecutive_skips,
+        sync_margin_sec=sync_margin_sec,
         model_path=detection["model_path"],
         conf=float(detection.get("conf", 0.25)),
         imgsz=imgsz,

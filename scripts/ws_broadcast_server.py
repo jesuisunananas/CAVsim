@@ -35,8 +35,13 @@ WS_PORT = 8766
 
 def local_broadcast_reader(socket_path, loop, clients, clients_lock):
     """Runs on its own thread: blocks on BroadcastClient reads (the local
-    Unix socket transport is synchronous) and hands each frame to the
-    asyncio event loop to fan out to every connected browser."""
+    Unix socket transport is synchronous) and hands each frame to every
+    connected browser's own queue. Each client's queue holds only its
+    latest undelivered frame (see _queue_latest) -- a slow or half-dead
+    browser connection drops stale frames instead of an unbounded backlog
+    of scheduled sends piling up in memory, which is what let this
+    process grow to 52GB anon-rss and get OOM-killed after ~5 days
+    (2026-08-23 incident)."""
     while True:
         try:
             client = BroadcastClient(socket_path)
@@ -51,21 +56,33 @@ def local_broadcast_reader(socket_path, loop, clients, clients_lock):
                 if msg_type != MSG_ANNOTATED_FRAME:
                     continue
                 with clients_lock:
-                    targets = list(clients)
-                for ws in targets:
-                    asyncio.run_coroutine_threadsafe(_safe_send(ws, payload, clients, clients_lock), loop)
+                    targets = list(clients.values())
+                for queue in targets:
+                    loop.call_soon_threadsafe(_queue_latest, queue, payload)
         except ConnectionError:
             pass
         client.close()
         print(f"ws_broadcast_server: {socket_path} disconnected, reconnecting")
 
 
-async def _safe_send(ws, payload, clients, clients_lock):
-    try:
+def _queue_latest(queue, payload):
+    """Keep only the newest frame per client: if the previous one hasn't
+    been sent yet, drop it rather than let anything accumulate. Must run
+    on the event loop thread (scheduled via call_soon_threadsafe) --
+    asyncio.Queue isn't thread-safe to touch directly from the reader
+    thread."""
+    if queue.full():
+        queue.get_nowait()
+    queue.put_nowait(payload)
+
+
+async def _sender_loop(ws, queue):
+    """One per connected browser: sends whatever's newest in its queue,
+    waiting for the next frame once caught up. A client stuck behind is
+    always at most one frame's backlog, never unbounded."""
+    while True:
+        payload = await queue.get()
         await ws.send(payload)
-    except websockets.exceptions.ConnectionClosed:
-        with clients_lock:
-            clients.discard(ws)
 
 
 async def main():
@@ -75,7 +92,7 @@ async def main():
         print("ws_broadcast_server: output.broadcast.enabled is false in config -- nothing to bridge, exiting")
         return
 
-    clients = set()
+    clients = {}  # ws -> asyncio.Queue(maxsize=1), latest-frame-only per client
     clients_lock = threading.Lock()
     loop = asyncio.get_running_loop()
 
@@ -87,14 +104,17 @@ async def main():
     reader_thread.start()
 
     async def handler(ws):
+        queue = asyncio.Queue(maxsize=1)
         with clients_lock:
-            clients.add(ws)
+            clients[ws] = queue
         print(f"ws_broadcast_server: browser connected ({len(clients)} total)")
         try:
-            await ws.wait_closed()
+            await _sender_loop(ws, queue)
+        except websockets.exceptions.ConnectionClosed:
+            pass
         finally:
             with clients_lock:
-                clients.discard(ws)
+                clients.pop(ws, None)
             print(f"ws_broadcast_server: browser disconnected ({len(clients)} total)")
 
     async with websockets.serve(handler, WS_HOST, WS_PORT):

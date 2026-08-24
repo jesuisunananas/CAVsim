@@ -30,17 +30,25 @@ ingestion:
   # misalignment, not steady-state operation.
   sync_buffer_seconds: 4
   # gpu_decode only: GpuDecodeSource buffers every decoded frame (no
-  # decimation), so this is purely an OOM guard against a channel getting
-  # ahead of consumption -- 3s * 30fps * ~14.7MB/frame * 4 channels ~=
-  # 5.3GB worst-case (all 4 buffers simultaneously full), not the expected
-  # steady-state size (the sync loop prunes every tick). Worth watching
-  # against the free VRAM budget with Carla resident if this ever needs
-  # raising -- not a tuning knob otherwise.
+  # decimation), letterboxed to the inference resolution before buffering
+  # (see ingest/gpu_decode_source.py), so this is purely an OOM guard
+  # against a channel getting ahead of consumption -- 3s * 30fps *
+  # ~3.69MB/frame * 4 channels ~= 1.3GB worst-case (all 4 buffers
+  # simultaneously full), not the expected steady-state size (the sync
+  # loop prunes every tick). Worth watching against the free VRAM budget
+  # with Carla resident if this ever needs raising -- not a tuning knob
+  # otherwise.
   max_buffer_ahead_sec: 3.0
   # How many consecutive ticks one channel may miss before the sync loop
   # halts, waits for all four to be stable again, and re-locks the basis,
   # rather than continuing to skip ticks indefinitely.
   max_consecutive_skips: 5
+  # Jitter-buffer margin: how far basis_0 is locked behind the freshest
+  # jointly-available timestamp at (re)lock time. Was hardcoded to
+  # 1/target_fps (100ms) before -- too tight to survive real delivery
+  # bursts (measured ~240-290ms recurring gaps on one channel this
+  # session). See config.py's validation/comment for the full rationale.
+  sync_margin_sec: 1.0
   channels:
     # gpu_decode mode: these point at demux's broadcast (compressed H.264),
     # not decode's -- GpuDecodeSource does its own NVDEC decode from here.

@@ -11,7 +11,6 @@ from ultralytics.utils import nms
 import cv2
 import numpy as np
 import json
-import math
 import uuid
 import time
 import torch
@@ -19,6 +18,12 @@ import torch.nn.functional as F
 import requests
 from co_perception.perception import tracking_utils
 from co_perception.ingest.frame_sources import build_frame_source
+from co_perception.ingest.gpu_image_ops import (
+    LETTERBOX_PAD_VALUE,
+    LetterboxShapeResolver,
+    letterbox_target_shape,
+    track_input_from_uint8_batch,
+)
 from co_perception.output.broadcast_sink import BroadcastSink
 from co_perception import config as pipeline_config
 from datetime import datetime, timezone, timedelta
@@ -44,24 +49,6 @@ from co_perception.perception.tracking_utils import AppearanceExtractor, KalmanT
 # are therefore in letterboxed-tensor space, not the original 2560x1920
 # frame's space compute_3d_detections expects. _rescale_xyxy_from_letterbox
 # below undoes this.
-LETTERBOX_PAD_VALUE = 114
-LETTERBOX_STRIDE = 32
-
-
-def _letterbox_target_shape(src_h, src_w, long_side, stride=LETTERBOX_STRIDE):
-    """Target (h, w) scaling src's long side to `long_side`, each dimension
-    then rounded up to a multiple of stride -- mirrors Ultralytics' own
-    check_imgsz(..., min_dim=2) + LetterBox sizing. Passing imgsz as a bare
-    scalar to .track() instead forces a SQUARE target (check_imgsz pads a
-    length-1 list to [imgsz, imgsz]) with real padding, not the long-side
-    scaling this pipeline actually wants -- computed here explicitly rather
-    than relying on that scalar behavior."""
-    scale = long_side / max(src_h, src_w)
-    new_h = math.ceil((src_h * scale) / stride) * stride
-    new_w = math.ceil((src_w * scale) / stride) * stride
-    return new_h, new_w
-
-
 def _letterbox(img_bgr, new_shape):
     """Resize+pad one HWC uint8 BGR image to new_shape=(h, w). Replicates
     LetterBox.__call__ with auto=False, scale_fill=False, scaleup=True,
@@ -100,59 +87,6 @@ def _letterboxed_batch_to_tensor(letterboxed_bgr_list, device):
     return tensor.float() / 255.0
 
 
-def _gpu_letterbox(rgb_tensor, new_shape):
-    """GPU equivalent of _letterbox(), for the gpu_decode ingestion path
-    only -- frames there are born in VRAM (see gpu_decode_source.py's
-    RGBP decode) and should never cross back to host memory for this
-    step; local_socket keeps using _letterbox/_letterboxed_batch_to_tensor
-    unchanged, this is a parallel implementation, not a replacement.
-
-    Pure geometry (resize + pad) -- no colour math belongs here. NVDEC's
-    own RGBP output already handles BT.601/BT.709 and video-range/full-
-    range conversion (see gpu_decode_source.py's module docstring), so
-    unlike _letterbox this never touches BGR<->RGB at all: the input is
-    already RGB and stays RGB.
-
-    Same algorithm as _letterbox(): same r computation, same round()
-    convention for split padding, same 114/255 pad value, same center-
-    padding. Returns (padded_float_tensor, r, pad_left, pad_top,
-    content_h, content_w) -- the first four match what _letterbox()
-    returns, so _rescale_xyxy_from_letterbox works unchanged regardless
-    of which letterbox path produced a given frame's boxes. content_h/w
-    (the pre-padding resized content size) are extra, for the output path
-    to crop padding back off this same tensor -- see
-    _unletterbox_uint8_to_bgr_numpy.
-
-    rgb_tensor: (3, H, W) CUDA uint8. Returns (3, new_h, new_w) CUDA
-    float32 in [0, 1].
-    """
-    _, h, w = rgb_tensor.shape
-    new_h, new_w = new_shape
-    r = min(new_h / h, new_w / w)
-    new_unpad_w, new_unpad_h = round(w * r), round(h * r)
-    dw, dh = new_w - new_unpad_w, new_h - new_unpad_h
-    dw /= 2
-    dh /= 2
-
-    x = rgb_tensor.unsqueeze(0).float() / 255.0  # (1, 3, H, W), [0, 1]
-    if (new_unpad_h, new_unpad_w) != (h, w):
-        # align_corners=False (half-pixel-center convention) is the
-        # standard match for cv2.INTER_LINEAR's own behavior -- the two
-        # implementations can still differ by sub-pixel interpolation
-        # detail, which is expected and fine (pure geometry, not a
-        # correctness-critical exact match the way pad value/BGR order
-        # were for the numpy path).
-        x = F.interpolate(x, size=(new_unpad_h, new_unpad_w), mode="bilinear", align_corners=False)
-
-    top, bottom = round(dh - 0.1), round(dh + 0.1)
-    left, right = round(dw - 0.1), round(dw + 0.1)
-    # F.pad pads from the last dim backward: (left, right, top, bottom)
-    # for a 4D NCHW tensor's W then H dims.
-    x = F.pad(x, (left, right, top, bottom), mode="constant", value=LETTERBOX_PAD_VALUE / 255.0)
-
-    return x.squeeze(0), r, left, top, new_unpad_h, new_unpad_w
-
-
 def _gpu_frame_to_bgr_numpy(rgb_tensor, target_hw=None):
     """CHW CUDA RGB uint8 -> HWC CPU BGR uint8 numpy, downscaling on GPU
     first if target_hw=(h, w) is given -- so annotation (off the hot
@@ -188,19 +122,18 @@ def _gpu_crop_to_bgr_numpy(rgb_tensor, x1, y1, x2, y2):
     return np.ascontiguousarray(hwc_rgb[:, :, ::-1])
 
 
-def _unletterbox_uint8_to_bgr_numpy(letterboxed_float, pad_left, pad_top, content_h, content_w):
-    """Output-path counterpart to _gpu_letterbox's forward transform:
-    reuses the tensor already computed for inference (1280x960, already
-    in GPU memory) instead of re-touching the full-resolution frame for
-    drawing. Converts to uint8 on GPU first (3.7MB to transfer instead of
-    the 14.7MB a float32 transfer -- or the original frame -- would cost),
-    crops padding off using the same values _gpu_letterbox produced, then
-    converts to BGR numpy. After cropping, image (0,0) matches original-
-    frame (0,0) scaled by r, with no pad offset left to account for --
-    draw_detections_3d's scale=r alone is correct on the result (see
-    process_tick's drawing block)."""
-    uint8 = (letterboxed_float * 255.0).round().clamp(0, 255).to(torch.uint8)
-    cropped = uint8[:, pad_top:pad_top + content_h, pad_left:pad_left + content_w]
+def _unletterbox_uint8_to_bgr_numpy(letterboxed_uint8, pad_left, pad_top, content_h, content_w):
+    """Output-path counterpart to gpu_letterbox_to_uint8's forward
+    transform: reuses the tensor already computed for inference (1280x960,
+    already in GPU memory, already uint8 -- see gpu_decode_source.py,
+    which now letterboxes at buffer time) instead of re-touching the
+    full-resolution frame for drawing. Crops padding off using the same
+    values the letterbox transform produced, then converts to BGR numpy.
+    After cropping, image (0,0) matches original-frame (0,0) scaled by r,
+    with no pad offset left to account for -- draw_detections_3d's
+    scale=r alone is correct on the result (see process_tick's drawing
+    block)."""
+    cropped = letterboxed_uint8[:, pad_top:pad_top + content_h, pad_left:pad_left + content_w]
     hwc_rgb = cropped.permute(1, 2, 0).contiguous().cpu().numpy()
     return np.ascontiguousarray(hwc_rgb[:, :, ::-1])
 
@@ -215,6 +148,23 @@ def _rescale_xyxy_from_letterbox(x1, y1, x2, y2, r, pad_left, pad_top):
         (y1 - pad_top) / r,
         (x2 - pad_left) / r,
         (y2 - pad_top) / r,
+    )
+
+
+def _scale_xyxy_to_letterbox(x1, y1, x2, y2, r, pad_left, pad_top):
+    """Exact inverse of _rescale_xyxy_from_letterbox: original-frame-space
+    box -> letterboxed-tensor-space box. Needed because det_2d/det_3d's
+    stored bbox is in original-frame space (compute_3d_detections' camera
+    projection needs it there), but the gpu_decode Re-ID crop now reads
+    from the letterboxed tensor (GpuDecodeSource letterboxes at buffer
+    time -- see gpu_decode_source.py), not the original-resolution frame
+    -- cropping original-space coordinates out of a letterboxed tensor
+    without this conversion would cut the wrong patch."""
+    return (
+        x1 * r + pad_left,
+        y1 * r + pad_top,
+        x2 * r + pad_left,
+        y2 * r + pad_top,
     )
 
 
@@ -479,8 +429,8 @@ class MultiCameraPipeline:
                 (all cameras currently share one global value -- see
                 config.py).
             imgsz: Long-side target for the batched letterbox (see
-                _letterbox_target_shape) -- same tunable as Commit 2's
-                imgsz, now consumed here instead of per-call.
+                gpu_image_ops.letterbox_target_shape) -- same tunable as
+                Commit 2's imgsz, now consumed here instead of per-call.
             device: torch device the batched inference tensor is built on.
 
         Returns:
@@ -504,6 +454,12 @@ class MultiCameraPipeline:
         # not per-channel.
         self._letterbox_shape = None
         self._black_frame = None
+        # gpu_decode only: (r, pad_left, pad_top, content_h, content_w)
+        # from the letterbox transform every channel's GpuDecodeSource
+        # already applied at buffer time -- read once from the first
+        # present channel's own letterbox_params (see process_tick),
+        # instead of recomputing it here every tick.
+        self._gpu_letterbox_params = None
 
     @staticmethod
     def haversine_distance_meters(lat1, lon1, lat2, lon2):
@@ -668,7 +624,7 @@ class MultiCameraPipeline:
     
     def process_streams(self, sources, show_live=True, upload=False, output_json=None, output_video=None,
                          output_image=None, output_validate=False, broadcast_sink=None,
-                         target_fps=None, nominal_fps=30, max_consecutive_skips=5):
+                         target_fps=None, nominal_fps=30, max_consecutive_skips=5, sync_margin_sec=1.0):
         """
         Processes multiple videos in parallel, running YOLO, 3D math, and deduplication.
 
@@ -697,6 +653,12 @@ class MultiCameraPipeline:
                 ticks one channel may miss before the sync loop halts,
                 waits for all four to be stable again, and re-locks the
                 basis (config.py's ingestion.max_consecutive_skips).
+            sync_margin_sec: Live sources only -- how far basis_0 is locked
+                behind the freshest jointly-available timestamp at (re)lock
+                time (config.py's ingestion.sync_margin_sec). A jitter-
+                buffer margin: wide enough to absorb real delivery bursts
+                (measured up to ~290ms on one channel), not just
+                1/target_fps.
 
         Returns:
             None
@@ -779,9 +741,10 @@ class MultiCameraPipeline:
             )
 
             # Commit 3: one batched .track() call across all 4 channels
-            # instead of four sequential per-channel calls -- see the module
-            # docstring above _letterbox_target_shape for why every step
-            # here has to replicate Ultralytics' own preprocessing exactly.
+            # instead of four sequential per-channel calls -- see the
+            # Commit 3 comment block near the top of this file for why
+            # every step here has to replicate Ultralytics' own
+            # preprocessing exactly.
             #
             # Two frame representations flow through here depending on
             # ingestion.mode: local_socket gives BGR HWC numpy frames,
@@ -798,12 +761,21 @@ class MultiCameraPipeline:
             is_gpu_tensor = isinstance(first_frame, torch.Tensor)
             if first_frame is not None and self._letterbox_shape is None:
                 if is_gpu_tensor:
-                    _, h, w = first_frame.shape  # CHW
+                    # Frames arrive already letterboxed now -- GpuDecodeSource
+                    # letterboxes at buffer time (see gpu_decode_source.py),
+                    # so the incoming shape already IS the inference target
+                    # shape, not a source resolution to derive one from.
+                    _, h, w = first_frame.shape  # CHW, already the target shape
+                    self._letterbox_shape = (h, w)
                     self._black_frame = torch.zeros((3, h, w), dtype=torch.uint8, device=self.device)
+                    first_idx = next(i for i, f in enumerate(frames_to_process) if f is not None)
+                    params = caps[first_idx].letterbox_params
+                    assert params is not None, f"channel {first_idx} produced a frame but has no letterbox_params yet"
+                    self._gpu_letterbox_params = params
                 else:
                     h, w = first_frame.shape[:2]  # HWC
                     self._black_frame = np.zeros((h, w, 3), dtype=np.uint8)
-                self._letterbox_shape = _letterbox_target_shape(h, w, self.imgsz)
+                    self._letterbox_shape = letterbox_target_shape(h, w, self.imgsz)
                 print(
                     f"letterbox target shape: {self._letterbox_shape} (source {h}x{w}, "
                     f"imgsz={self.imgsz}, gpu_tensor={is_gpu_tensor})"
@@ -825,11 +797,22 @@ class MultiCameraPipeline:
                 is_black = [f is None for f in frames_to_process]
                 batch_src = [f if f is not None else self._black_frame for f in frames_to_process]
                 if is_gpu_tensor:
-                    letterboxed = []
-                    for f in batch_src:
-                        padded, letterbox_r, letterbox_pad_left, letterbox_pad_top, content_h, content_w = _gpu_letterbox(f, self._letterbox_shape)
-                        letterboxed.append(padded)
-                    tensor = torch.stack(letterboxed, dim=0)
+                    # Already letterboxed uint8 (GpuDecodeSource does this
+                    # at buffer time now) -- no per-frame letterbox call
+                    # here any more, just stack and defer the float
+                    # normalize to the small stacked batch.
+                    letterboxed = batch_src
+                    # A channel-resolution mismatch should fail with a
+                    # clear message here, not a cryptic torch.stack error
+                    # -- newly meaningful now that every channel is
+                    # expected to already agree on one letterboxed shape
+                    # at buffer time (see gpu_image_ops.LetterboxShapeResolver).
+                    assert all(t.shape == letterboxed[0].shape for t in letterboxed), (
+                        f"channel letterboxed shapes disagree: {[tuple(t.shape) for t in letterboxed]}"
+                    )
+                    stacked_uint8 = torch.stack(letterboxed, dim=0)
+                    tensor = track_input_from_uint8_batch(stacked_uint8)
+                    letterbox_r, letterbox_pad_left, letterbox_pad_top, content_h, content_w = self._gpu_letterbox_params
                 else:
                     letterboxed = []
                     for f in batch_src:
@@ -901,8 +884,17 @@ class MultiCameraPipeline:
                             # Crop on GPU first -- only the small patch
                             # AppearanceExtractor needs crosses back to
                             # host memory, never the full-resolution
-                            # frame (see _gpu_crop_to_bgr_numpy).
-                            crop_bgr = _gpu_crop_to_bgr_numpy(frame, bbox['x1'], bbox['y1'], bbox['x2'], bbox['y2'])
+                            # frame (see _gpu_crop_to_bgr_numpy). bbox is
+                            # in original-frame space (compute_3d_detections
+                            # needs it there); `frame` here is the
+                            # letterboxed tensor GpuDecodeSource buffers now
+                            # -- must convert before cropping, or this cuts
+                            # the wrong patch (see _scale_xyxy_to_letterbox).
+                            lb_x1, lb_y1, lb_x2, lb_y2 = _scale_xyxy_to_letterbox(
+                                bbox['x1'], bbox['y1'], bbox['x2'], bbox['y2'],
+                                letterbox_r, letterbox_pad_left, letterbox_pad_top,
+                            )
+                            crop_bgr = _gpu_crop_to_bgr_numpy(frame, lb_x1, lb_y1, lb_x2, lb_y2)
                             if crop_bgr is not None:
                                 ch, cw = crop_bgr.shape[:2]
                                 emb = self.extractor.extract(crop_bgr, {'x1': 0, 'y1': 0, 'x2': cw, 'y2': ch})
@@ -919,19 +911,20 @@ class MultiCameraPipeline:
                 if show_live or writer or output_image or broadcast_sink:
                     t_draw0 = time.monotonic()  # TEMPORARY, see top of file
                     if is_gpu_tensor:
-                        # Reuse the letterboxed tensor already computed
-                        # for inference (1280x960, already in GPU memory)
-                        # instead of re-touching the full 2560x1920 frame:
-                        # that full-res round-trip was measured taking
-                        # real GPU->CPU bandwidth every tick for a result
-                        # that just got downscaled and discarded anyway.
-                        # Strip padding using the SAME r/pad_left/pad_top/
-                        # content_h/content_w _gpu_letterbox produced this
-                        # tick (identical for every channel, since all 4
-                        # share one native resolution and target shape) --
-                        # see _unletterbox_uint8_to_bgr_numpy. After that
-                        # crop, scale=r alone (no additive pad offset) is
-                        # correct for draw_detections_3d, matching how
+                        # Reuse the letterboxed tensor already buffered by
+                        # GpuDecodeSource (1280x960, already in GPU memory,
+                        # already uint8) instead of touching the full
+                        # 2560x1920 frame -- that full-res round-trip was
+                        # measured taking real GPU->CPU bandwidth every
+                        # tick for a result that just got downscaled and
+                        # discarded anyway. Strip padding using the SAME
+                        # r/pad_left/pad_top/content_h/content_w every
+                        # channel's letterbox transform produced (identical
+                        # for every channel, since all 4 share one native
+                        # resolution and target shape) -- see
+                        # _unletterbox_uint8_to_bgr_numpy. After that crop,
+                        # scale=r alone (no additive pad offset) is correct
+                        # for draw_detections_3d, matching how
                         # extract_detections' rescale already put boxes in
                         # original-frame space.
                         annotated = _unletterbox_uint8_to_bgr_numpy(
@@ -1047,20 +1040,47 @@ class MultiCameraPipeline:
                 # "Stable" for the boot/reset-recovery wait below: each
                 # channel producing at roughly nominal_fps, not just having
                 # produced one frame (the first frame back from a reset is
-                # the start of recovery, not evidence of it).
-                min_stable_frames_per_sec = round(nominal_fps * 25 / 30)
+                # the start of recovery, not evidence of it). 20/s, not
+                # 30/s or 25/s: observed directly (both at startup and
+                # after a reset) that a stricter bar took a very long time
+                # to satisfy -- decode's own counters confirmed the real
+                # rate was a steady 30/s the whole time (450 frames over a
+                # 15s HEALTH interval, exactly 30.0/s), so the slowness was
+                # this stability check's own polling measurement (a 50Hz
+                # peek_newest() loop across 4 channels, each behind its own
+                # lock, contending with the reader threads) undercounting
+                # the true rate, not channels actually being unstable. 20/s
+                # still rejects a channel that's genuinely not producing (a
+                # stalled channel reads near 0, not high-teens/low-20s), so
+                # this doesn't weaken the "actually recovered" check, it
+                # just stops the check's own measurement noise from being
+                # pickier than target_fps=10 actually needs.
+                min_stable_frames_per_sec = round(nominal_fps * 20 / 30)
 
                 def wait_for_stable_and_lock_basis():
                     """Block until every channel clears
                     min_stable_frames_per_sec for two CONSECUTIVE 1-second
                     windows, then lock basis_0 from the minimum newest
                     abs_time across all four (the only point every channel
-                    can already serve) minus one tick, so the first real
-                    basis point is unambiguously in the past everywhere.
-                    Runs at startup and again after any channel reset --
-                    there's nothing better to do than wait when channels
-                    genuinely aren't producing frames, so this has no
-                    timeout."""
+                    can already serve) minus sync_margin_sec, so the first
+                    real basis point is unambiguously in the past
+                    everywhere -- and comfortably behind it, not just by
+                    one tick, so a delivery burst that's already resolved
+                    by lock time doesn't get re-triggered by starting the
+                    very next tick right back at the edge of "now". Runs
+                    at startup and again after any channel reset -- there's
+                    nothing better to do than wait when channels genuinely
+                    aren't producing frames, so this has no timeout.
+
+                    No basis is locked while this runs, so nothing prunes
+                    (the tick loop, where pruning happens, isn't running
+                    either) -- buffers just keep accumulating normally,
+                    bounded by their existing maxlen. That's fine now:
+                    buffered frames are letterboxed uint8 at buffer time
+                    (see gpu_decode_source.py), ~4x smaller than the old
+                    full-res buffer, and sync_margin_sec needs real rolling
+                    history near the lock point for every channel to match
+                    against -- not just the single newest frame."""
                     consecutive_ok = 0
                     while consecutive_ok < 2:
                         seen = [set() for _ in caps]
@@ -1079,7 +1099,7 @@ class MultiCameraPipeline:
                             f"consecutive_ok={consecutive_ok}/2"
                         )
                     newests = [src.peek_newest() for src in caps]
-                    locked = min(n[1] for n in newests) - 1.0 / target_fps
+                    locked = min(n[1] for n in newests) - sync_margin_sec
                     print(f"[SYNC] basis locked: basis_0={locked:.3f}")
                     return locked
 
@@ -1115,6 +1135,19 @@ class MultiCameraPipeline:
                     matches = [src.find_closest(basis, tolerance_sec) for src in caps]
                     missed = [i for i, m in enumerate(matches) if m is None]
 
+                    # Prune every tick, hit or miss -- basis advanced
+                    # either way, so anything behind it is dead either
+                    # way. Not to basis - 1/target_fps through the match
+                    # itself -- a frame just before that point may still
+                    # be the *next* tick's closest match. Pruning only on
+                    # a hit let buffers grow toward maxlen (90 frames =
+                    # 1.32GB/channel, 5.3GB across four) for as long as
+                    # any channel kept missing, since a miss used to skip
+                    # this entirely.
+                    prune_before = basis - 1.0 / target_fps
+                    for src in caps:
+                        src.discard_older_than(prune_before)
+
                     if missed:
                         needs_reset = False
                         for i in missed:
@@ -1135,13 +1168,6 @@ class MultiCameraPipeline:
                         continue  # skip this tick entirely -- no partial output, see module comment above
 
                     channel_miss_count = [0] * num_cams  # every channel matched -- clear all consecutive counters
-
-                    # Prune to basis - 1/target_fps, not through the match
-                    # itself -- a frame just before that point may still be
-                    # the *next* tick's closest match.
-                    prune_before = basis - 1.0 / target_fps
-                    for src in caps:
-                        src.discard_older_than(prune_before)
 
                     frames_to_process = [m[1] for m in matches]
                     actual_t = min(m[2] for m in matches)
@@ -1702,9 +1728,14 @@ if __name__ == "__main__":
     # Shared t0 so every local-socket channel's msec is measured from the
     # same instant -- see frame_sources.LocalSocketSource.
     t0 = time.time()
+    # gpu_decode only: shared across all 4 channels so every one letterboxes
+    # to the SAME target shape, regardless of which channel's decoder
+    # produces the first usable frame -- see gpu_image_ops.LetterboxShapeResolver.
+    letterbox_resolver = LetterboxShapeResolver(cfg.imgsz)
     sources = [
         build_frame_source(ch, cfg.ingestion_mode, t0, cfg.nominal_fps, cfg.sync_buffer_seconds,
-                            cfg.target_fps, cfg.max_buffer_ahead_sec)
+                            cfg.target_fps, cfg.max_buffer_ahead_sec,
+                            imgsz=cfg.imgsz, letterbox_resolver=letterbox_resolver)
         for ch in cfg.channels
     ]
     print(f"ingestion sources built: {[type(s).__name__ for s in sources]} (mode={cfg.ingestion_mode!r})")
@@ -1727,6 +1758,7 @@ if __name__ == "__main__":
             target_fps=cfg.target_fps,
             nominal_fps=cfg.nominal_fps,
             max_consecutive_skips=cfg.max_consecutive_skips,
+            sync_margin_sec=cfg.sync_margin_sec,
             output_validate=False,
             broadcast_sink=broadcast_sink,
         )

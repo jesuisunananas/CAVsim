@@ -216,7 +216,7 @@ class LocalSocketSource(FrameSource):
 
 
 def build_frame_source(channel_cfg, mode, t0, nominal_fps=30.0, sync_buffer_seconds=8.0,
-                        target_fps=None, max_buffer_ahead_sec=3.0):
+                        target_fps=None, max_buffer_ahead_sec=3.0, imgsz=None, letterbox_resolver=None):
     if mode == "local_socket":
         return LocalSocketSource(channel_cfg.socket_path, t0, sync_buffer_seconds, nominal_fps)
     if mode == "gpu_decode":
@@ -228,8 +228,10 @@ def build_frame_source(channel_cfg, mode, t0, nominal_fps=30.0, sync_buffer_seco
         # sync_buffer_seconds/target_fps: GpuDecodeSource buffers every
         # decoded frame now (no decimation), sized as an OOM guard against
         # a channel getting ahead of consumption -- see its own docstring.
+        # imgsz/letterbox_resolver: gpu_decode letterboxes at buffer time
+        # now, see gpu_decode_source.py's module docstring.
         return GpuDecodeSource(
-            channel_cfg.socket_path, t0, max_buffer_ahead_sec, nominal_fps
+            channel_cfg.socket_path, t0, max_buffer_ahead_sec, nominal_fps, imgsz, letterbox_resolver
         )
     if mode == "local_file":
         return VideoCaptureSource(channel_cfg.file_path)

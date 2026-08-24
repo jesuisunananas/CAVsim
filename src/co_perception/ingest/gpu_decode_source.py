@@ -39,6 +39,14 @@ Downsampling now happens exactly once, in process_video.py's sync loop,
 by selecting the buffered frame closest to each tick's basis -- see
 its docstring.
 
+Buffered frames are letterboxed to the inference target shape (uint8)
+immediately after decode, not the raw full-resolution decode output --
+see gpu_image_ops.gpu_letterbox_to_uint8. This is a real memory decision,
+not just convenience: it's what makes a wider cross-channel sync margin
+(process_video.py's sync_margin_sec) affordable -- a 1-second buffer of
+full-res frames costs ~442MB/channel, the same second at letterboxed
+uint8 costs ~111MB/channel.
+
 Buffered frame representation: planar RGB (outputColorType=RGBP), not NV12.
 Colour conversion (BT.601/BT.709, limited/full range) happens inside
 NVIDIA's decoder, not in this codebase -- the entire silent-corruption risk
@@ -82,6 +90,7 @@ from co_perception.ingest.demux_protocol import (
     unpack_video,
 )
 from co_perception.ingest.frame_sources import MAX_ABS_TIME_SKEW_SEC
+from co_perception.ingest.gpu_image_ops import gpu_letterbox_to_uint8
 from co_perception.ingest.rtp_time_calibration import ChannelClockCalibrator, wrapped_diff
 
 RTP_CLOCK_HZ = 90000
@@ -126,16 +135,25 @@ class GpuDecodeSource:
     use either interchangeably based on config. Internally: decodes on GPU
     via PyNvVideoCodec instead of subscribing to already-decoded frames.
 
-    Buffered items are (rgb_tensor, t_seconds) -- rgb_tensor a single
-    (3, H, W) CUDA uint8 tensor, not the BGR numpy frames LocalSocketSource
-    buffers, and not a (y, uv) tuple either -- see module docstring."""
+    Buffered items are (letterboxed_tensor, t_seconds) -- letterboxed_tensor
+    a single (3, H, W) CUDA uint8 tensor already resized+padded to the
+    inference target shape, not the raw full-resolution decode output, not
+    the BGR numpy frames LocalSocketSource buffers, and not a (y, uv) tuple
+    either -- see module docstring."""
 
     is_live = True
 
-    def __init__(self, socket_path, t0, max_buffer_ahead_sec, nominal_fps, gpu_id=0):
+    def __init__(self, socket_path, t0, max_buffer_ahead_sec, nominal_fps, imgsz, letterbox_resolver, gpu_id=0):
         self._socket_path = socket_path
         self._t0 = t0
         self._gpu_id = gpu_id
+        self._imgsz = imgsz
+        self._letterbox_resolver = letterbox_resolver
+        # (r, pad_left, pad_top, content_h, content_w) -- constant for this
+        # channel's lifetime (its native resolution doesn't change),
+        # cached on first frame so process_video.py can read it once
+        # instead of recomputing every tick. See letterbox_params property.
+        self._letterbox_params = None
         # No decimation on the way in any more -- every decoded frame is
         # buffered, keyed by abs_time (see module docstring and
         # process_video.py's real-time-basis sync loop, which does its own
@@ -146,7 +164,7 @@ class GpuDecodeSource:
         # not the expected working size) -- explicitly a config knob
         # (ingestion.max_buffer_ahead_sec), not tuned here.
         maxlen = max(1, int(max_buffer_ahead_sec * nominal_fps))
-        self._buffer = deque(maxlen=maxlen)  # [(rgb_tensor, t_seconds), ...], oldest first
+        self._buffer = deque(maxlen=maxlen)  # [(letterboxed_tensor, t_seconds), ...], oldest first
         self._lock = threading.Lock()
         self._stopped = False
 
@@ -369,11 +387,23 @@ class GpuDecodeSource:
             rgb_tensor = torch.stack(
                 [torch.as_tensor(v, device=device) for v in (r_view, g_view, b_view)],
                 dim=0,
-            ).clone()  # (3, H, W) uint8
+            ).clone()  # (3, H, W) uint8, full resolution
+
+            # Letterbox to the inference target shape immediately, before
+            # buffering -- not the raw full-res frame. This is what makes
+            # a wider sync_margin_sec buffer affordable (~4x smaller per
+            # frame; see module docstring). Must return uint8, not the
+            # float32-in-[0,1] scripts/process_video.py's own _gpu_letterbox
+            # returns -- that would cost the same bytes as full-res and
+            # defeat the point (see gpu_letterbox_to_uint8's docstring).
+            target_shape = self._letterbox_resolver.resolve(rgb_tensor.shape[1], rgb_tensor.shape[2])
+            letterboxed, r, pad_left, pad_top, content_h, content_w = gpu_letterbox_to_uint8(rgb_tensor, target_shape)
+            if self._letterbox_params is None:
+                self._letterbox_params = (r, pad_left, pad_top, content_h, content_w)
 
             t = abs_time - self._t0
             with self._lock:
-                self._buffer.append((rgb_tensor, t))
+                self._buffer.append((letterboxed, t))
 
         self._maybe_log_health()
 
@@ -439,6 +469,14 @@ class GpuDecodeSource:
         with self._lock:
             while self._buffer and self._buffer[0][1] < threshold_t:
                 self._buffer.popleft()
+
+    @property
+    def letterbox_params(self):
+        """(r, pad_left, pad_top, content_h, content_w) from this channel's
+        letterbox transform, or None if no frame has been decoded yet.
+        Constant for the channel's lifetime -- process_video.py reads this
+        once instead of recomputing it every tick."""
+        return self._letterbox_params
 
     def close(self):
         self._stopped = True
