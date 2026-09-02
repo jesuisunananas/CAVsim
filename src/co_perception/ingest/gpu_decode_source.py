@@ -407,6 +407,9 @@ class GpuDecodeSource:
 
         self._maybe_log_health()
 
+    def to_abs_time(self, timestamp):
+        return self._t0 + timestamp
+
     def _decode(self, h264_bytes, pts_ticks):
         # bsl_data must be a raw pointer that stays valid for the duration
         # of Decode() -- ctypes.addressof() on a temporary is a use-after-

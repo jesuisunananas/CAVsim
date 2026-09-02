@@ -266,9 +266,18 @@ output:
   save:      { enabled: true, json_path: output/multi_cam_detections.json, video_path: null }
   upload:    { enabled: false, endpoint: https://.../detections }
   broadcast: { enabled: true, socket_path: /tmp/coperception_output.sock }
+  http:      { enabled: true, host: 127.0.0.1, port: 8091 }
 ```
 
-All three can be on at once — save is local-file persistence, upload is the external V2X API push, broadcast is the new local Unix-socket fan-out (channel-tagged, JPEG-encoded annotated frames) that `scripts/ws_broadcast_server.py` picks up to feed the live viewer. `save.video_path: null` means don't write an mp4; set a path to enable it.
+All four can be on at once: save persists records after the run, upload pushes batches to the external V2X API, broadcast sends channel-tagged annotated JPEGs to `scripts/ws_broadcast_server.py`, and HTTP keeps only the latest in-memory detection frame per camera. `save.video_path: null` disables mp4 output.
+
+#### Local detections endpoint
+
+With `output.http.enabled`, `GET http://127.0.0.1:8091/detections/latest` returns calibrated frame timestamps and projected detections; channels 0–3 map to `ch1`–`ch4`. `GET /health` reports each camera's timestamp, age, and detection count.
+
+```json
+{"cameras":{"ch1":{"ts":1770000000.25,"detections":[{"object_id":"car-camera-1-42","object_type":"car","confidence":0.91,"gps_location":{"lat":37.9156,"lon":-122.3348},"bbox":{"x1":10.0,"y1":20.0,"x2":30.0,"y2":40.0},"camera":"ch1"}]}}}
+```
 
 ## Running the Pipeline
 

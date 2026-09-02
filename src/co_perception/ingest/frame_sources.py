@@ -42,6 +42,10 @@ class FrameSource:
         process_streams' global_msec synchronization."""
         raise NotImplementedError
 
+    def to_abs_time(self, timestamp):
+        """Convert this source's relative timestamp to epoch seconds."""
+        raise NotImplementedError
+
     def close(self):
         pass
 
@@ -147,11 +151,15 @@ class LocalSocketSource(FrameSource):
                     t = abs_time - self._t0
                     with self._lock:
                         self._buffer.append((frame, t))
+
             except ConnectionError:
                 pass
             client.close()
             if not self._stopped:
                 time.sleep(1.0)  # decode restarted or briefly gone -- retry
+
+    def to_abs_time(self, timestamp):
+        return self._t0 + timestamp
 
     def peek_newest(self):
         """Returns (frame, t_seconds) for the most recently arrived frame,
