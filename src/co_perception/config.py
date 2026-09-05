@@ -59,6 +59,12 @@ class BroadcastOutputConfig:
 
 
 @dataclass
+class HttpOutputConfig:
+    enabled: bool = False
+    host: str = "127.0.0.1"
+    port: int = 8091
+
+@dataclass
 class PipelineConfig:
     repo_root: Path
     show_live: bool
@@ -77,6 +83,7 @@ class PipelineConfig:
     save: SaveOutputConfig
     upload: UploadOutputConfig
     broadcast: BroadcastOutputConfig
+    http: HttpOutputConfig
 
     def resolve(self, path: str | None) -> str | None:
         """Resolve a config-relative path against the repo root, so the
@@ -204,10 +211,13 @@ def load_config(config_path: str | Path, repo_root: str | Path) -> PipelineConfi
     save = SaveOutputConfig(**out.get("save", {}))
     upload = UploadOutputConfig(**out.get("upload", {}))
     broadcast = BroadcastOutputConfig(**out.get("broadcast", {}))
+    http = HttpOutputConfig(**out.get("http", {}))
     if upload.enabled and not upload.endpoint:
         raise ValueError("output.upload.enabled is true but no endpoint is set")
     if broadcast.enabled and not broadcast.socket_path:
         raise ValueError("output.broadcast.enabled is true but no socket_path is set")
+    if http.enabled and not (1 <= http.port <= 65535):
+        raise ValueError(f"output.http.port must be between 1 and 65535, got {http.port}")
 
     return PipelineConfig(
         repo_root=repo_root,
@@ -227,4 +237,5 @@ def load_config(config_path: str | Path, repo_root: str | Path) -> PipelineConfi
         save=save,
         upload=upload,
         broadcast=broadcast,
+        http=http,
     )

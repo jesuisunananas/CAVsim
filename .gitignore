@@ -7,7 +7,7 @@ train/*
 training/yolo/10k/images
 training/yolo/10k/labels
 training/yolo/10k/runs
-output
+/output/
 !output/local_panos
 !output/detections_map.html
 !output/calibration_errors_root.csv

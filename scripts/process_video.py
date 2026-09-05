@@ -25,6 +25,7 @@ from co_perception.ingest.gpu_image_ops import (
     track_input_from_uint8_batch,
 )
 from co_perception.output.broadcast_sink import BroadcastSink
+from co_perception.output.http_sink import HttpSink
 from co_perception import config as pipeline_config
 from datetime import datetime, timezone, timedelta
 from math import radians, cos, sin, asin, sqrt
@@ -623,7 +624,7 @@ class MultiCameraPipeline:
         return tracked_buffer
     
     def process_streams(self, sources, show_live=True, upload=False, output_json=None, output_video=None,
-                         output_image=None, output_validate=False, broadcast_sink=None,
+                         output_image=None, output_validate=False, broadcast_sink=None, http_sink=None,
                          target_fps=None, nominal_fps=30, max_consecutive_skips=5, sync_margin_sec=1.0):
         """
         Processes multiple videos in parallel, running YOLO, 3D math, and deduplication.
@@ -642,6 +643,8 @@ class MultiCameraPipeline:
             broadcast_sink: Optional output.broadcast_sink.BroadcastSink -- if set,
                 each channel's annotated frame is JPEG-broadcast locally every tick
                 for ws_broadcast_server.py to relay to browsers.
+            http_sink: Optional output.http_sink.HttpSink -- if set, keeps each
+                channel's latest detection frame available over loopback HTTP.
             target_fps: Live sources only -- process at this rate (config.py's
                 ingestion.target_fps). Must be <= nominal_fps. Defaults to
                 nominal_fps (no downsampling) if not given.
@@ -703,7 +706,8 @@ class MultiCameraPipeline:
 
         last_valid_frames = [None] * len(caps)
 
-        def process_tick(frames_to_process, current_utc_str, current_epoch, channels_present=None):
+        def process_tick(frames_to_process, current_utc_str, current_epoch, channels_present=None,
+                         frame_epochs=None):
             """One synchronized batch: detect+track on whatever channels
             have an aligned frame this tick, dedupe/upload/write/broadcast
             the result. Returns False if the caller should stop (q pressed
@@ -714,7 +718,10 @@ class MultiCameraPipeline:
             where every channel is always present by construction) to mean
             "all of them." A live channel absent from this set has None in
             frames_to_process -- see the live sync loop below for why that
-            happens routinely now, not just during an outage."""
+            happens routinely now, not just during an outage.
+            frame_epochs: Per-channel calibrated epoch timestamps for live
+                sources. Other source modes use current_epoch for each frame.
+            """
             t_tick_start = time.monotonic()  # TEMPORARY, see top of file
             nonlocal frame_count
             frame_count += 1
@@ -860,12 +867,17 @@ class MultiCameraPipeline:
 
                 last_valid_frames[i] = frame.clone() if is_gpu_tensor else frame.copy()
                 result = batch_results[i]
+                frame_epoch = frame_epochs[i] if frame_epochs is not None else current_epoch
+                frame_utc_str = (
+                    datetime.fromtimestamp(frame_epoch, timezone.utc)
+                    .strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+                )
 
                 t_proj0 = time.monotonic()  # TEMPORARY, see top of file
                 det_2d = detector.extract_detections(
                     result, frame_count, letterbox_params=(letterbox_r, letterbox_pad_left, letterbox_pad_top)
                 )
-                det_3d = detector.compute_3d_detections(det_2d, current_utc_str, current_epoch)
+                det_3d = detector.compute_3d_detections(det_2d, frame_utc_str, frame_epoch)
 
                 if i == 0 and warmed_up and len(_STAGE_MS["projection"]) < 500:  # TEMPORARY
                     _STAGE_MS["projection"].append((time.monotonic() - t_proj0) * 1000)
@@ -907,6 +919,8 @@ class MultiCameraPipeline:
                         det['embedding'] = None
 
                 raw_buffer.extend(det_3d)
+                if http_sink:
+                    http_sink.update_frame(i, frame_epoch, det_3d)
 
                 if show_live or writer or output_image or broadcast_sink:
                     t_draw0 = time.monotonic()  # TEMPORARY, see top of file
@@ -1170,11 +1184,13 @@ class MultiCameraPipeline:
                     channel_miss_count = [0] * num_cams  # every channel matched -- clear all consecutive counters
 
                     frames_to_process = [m[1] for m in matches]
-                    actual_t = min(m[2] for m in matches)
-                    current_epoch = global_start_epoch + actual_t
-                    current_time = global_start_time + timedelta(seconds=actual_t)
+                    frame_epochs = [src.to_abs_time(match[2]) for src, match in zip(caps, matches)]
+                    current_epoch = min(frame_epochs)
+                    current_time = datetime.fromtimestamp(current_epoch, timezone.utc)
                     current_utc_str = current_time.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
-                    if not process_tick(frames_to_process, current_utc_str, current_epoch):
+                    if not process_tick(
+                        frames_to_process, current_utc_str, current_epoch, frame_epochs=frame_epochs
+                    ):
                         break
 
                     if time.monotonic() - last_log >= 1.0:
@@ -1746,6 +1762,13 @@ if __name__ == "__main__":
         )
 
     broadcast_sink = BroadcastSink(cfg.broadcast.socket_path) if cfg.broadcast.enabled else None
+    http_sink = None
+    if cfg.http.enabled:
+        try:
+            http_sink = HttpSink(cfg.http.host, cfg.http.port)
+            print(f"HTTP detections endpoint listening on http://{cfg.http.host}:{http_sink.port}")
+        except Exception as exc:
+            print(f"HTTP detections endpoint disabled after startup error: {exc}")
 
     try:
         pipeline.process_streams(
@@ -1761,10 +1784,13 @@ if __name__ == "__main__":
             sync_margin_sec=cfg.sync_margin_sec,
             output_validate=False,
             broadcast_sink=broadcast_sink,
+            http_sink=http_sink,
         )
     finally:
         if broadcast_sink:
             broadcast_sink.close()
+        if http_sink:
+            http_sink.close()
 
     # Or upload all at once after processing:
     # detector.upload_all()

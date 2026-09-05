@@ -135,3 +135,7 @@ output:
   broadcast:
     enabled: true
     socket_path: /tmp/coperception_output.sock
+  http:
+    enabled: true
+    host: 127.0.0.1
+    port: 8091
